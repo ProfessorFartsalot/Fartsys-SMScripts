@@ -2,7 +2,7 @@
  *
  *   A FEW THINGS TO KNOW: ONE.... THIS IS INTENDED TO BE USED WITH UBERUPGRADES.
  *   TWO..... THE MUSIC USED WITH THIS MOD MAY OR MAY NOT BE COPYRIGHTED. WE HAVE NO INTENTION ON INFRINGEMENT. THIS PROJECT IS PURELY NON PROFIT AND JUST FOR FUN. SHOULD COPYRIGHT HOLDERS WISH THIS PROJECT BE TAKEN DOWN, I (Fartsy) SHALL OBLIGE WITHOUT HESITATION.
- *   THREE..... THIS MOD IS INTENDED FOR USE ON THE FIREHOSTREDUX SERVERS ONLY. SUPPORT IS LIMITED.
+ *   THREE..... THIS MOD IS INTENDED FOR USE ON THE HYDROGENHOSTING SERVERS ONLY. EXPECT LIMITED SUPPORT.
  *   FOUR..... THIS WAS A NIGHTMARE TO FIGURE OUT AND BUG FIX. I HOPE IT WAS WORTH IT.
  *   FIVE..... PLEASE HAVE FUN AND ENJOY YOURSELF!
  *   SIX..... THE DURATION OF MUSIC TIMERS SHOULD BE SET DEPENDING WHAT SONG IS USED. SET THIS USING THE CONFIG FILES. SONG DUR IN SECONDS / 0.0151515151515 = REFIRE TIME.
@@ -27,7 +27,6 @@
 
 #pragma newdecls required
 #pragma semicolon 1
-
 public Database Get_Ass_Database(){
   return Ass_Database;
 }
@@ -37,7 +36,7 @@ public Plugin myinfo = {
   author = "Fartsy",
   description = "Framework for Fartsy's Ass (MvM Mods)",
   version = PLUGIN_VERSION,
-  url = "https://forums.firehostredux.com"
+  url = "https://wiki.hydrogenhosting.org"
 };
 
 public void OnPluginStart() {
@@ -92,5 +91,5 @@ public void OnGameFrame() {
   if(WeatherManager.TornadoWarning) WeatherManager.TickSiren();
   if (AudioManager.shouldTick) AudioManager.TickBGM();
   if (BossHandler.shouldTick) BossHandler.Tick();
-  WeatherManager.TickFogDensity();
+  WeatherManager.TickFog();
 }

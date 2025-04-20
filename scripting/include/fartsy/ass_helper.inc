@@ -76,6 +76,7 @@ enum struct COREDATA {
   int CodeEntry;
   int curWave;
   int failsafeCount;
+  int gamemode;
   int lastAdmin;
   int refireTime;
   int sacPoints;
@@ -410,7 +411,7 @@ BULKFIRE crusaderAtk[64];
 //Configure all variables
 void SetupCoreData(){
   AssLogger(LOGLVL_INFO, "Setting up core data...");
-  ass[0].name = "[10] Kissone Bath Salts";
+  ass[0].name = "[10] Bath Salts";
   ass[1].name = "[20] Summon Goobbue or Kirby";
   ass[2].name = "[30] Robot Trap (Wave Fail-safe)";
   ass[3].name = "[40] Explosives Paradise";
