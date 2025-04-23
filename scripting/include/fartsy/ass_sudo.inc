@@ -13,6 +13,7 @@ void sudo(int task) {
       ServerCommand("fb_startmoney 50000");
       CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}PROFESSOR'S ASS {white}v0x20 (Core-v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", PLUGIN_VERSION);
       FastFire2("rain", "Alpha", "0", 0.0, false);
+      UpdateGamemode();
     }
     //Wave init
     case 2: {
@@ -1011,6 +1012,9 @@ public Action TimedOperator(Handle timer, int job) {
     CircleAOEenabled[i] = false;
     CreateTimer(3.0, TimedOperator, 200);
     return Plugin_Stop;
+    }
+    case 420:{ //Init from Wave Null.
+      UpdateGamemode();
     }
     case 6969: {
       if (!core.isWave){

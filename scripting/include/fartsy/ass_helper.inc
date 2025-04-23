@@ -406,8 +406,6 @@ enum struct BULKFIRE {
 }
 BULKFIRE crusaderAtk[64];
 
-
-
 //Configure all variables
 void SetupCoreData(){
   AssLogger(LOGLVL_INFO, "Setting up core data...");
@@ -788,6 +786,17 @@ void SetupCoreData(){
   HookEvent("mvm_bomb_alarm_triggered", EventWarning);
   HookEventEx("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
   AssLogger(1, "Core data setup complete!");
+}
+
+void UpdateGamemode(){
+  char logdata[256];
+  char popfile[128];
+  int ent = FindEntityByClassname(-1, "tf_objective_resource");
+  if (ent == -1) return;
+  GetEntPropString(ent, Prop_Send, "m_iszMvMPopfileName", popfile, sizeof(popfile));
+  core.gamemode = (StrContains(popfile, "tacobell") != -1 ? 1 : (StrContains(popfile, "wavenull") != -1) ? 2 : 0);
+  Format(logdata, sizeof(logdata), "Testing if popfile contains tacobell or wavenull, result %i", core.gamemode);
+  AssLogger(LOGLVL_DEBUG, logdata);
 }
 //Messages to be printed when the fail safe has been triggered.
 char failsafe[][256] = {
