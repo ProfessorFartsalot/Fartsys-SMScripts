@@ -105,6 +105,7 @@ enum struct BOSSHANDLER {
                             FastFire2("FB.MetalBase", "SetHealth", "320000", 0.0, false);
                             FastFire2("FB.MetalBase", "SetMaxHealth", "320000", 0.0, false);
                             FastFire2("FB.MetalBase", "AddOutput", "health 320000", 0.0, false);
+                            FastFire2("FB.MetalFace", "Enable", "", 0.0, false);
                         }
                         case 2:{
                             //PrintToChatAll("Recognized 1 -> 2, things are heating up!");
