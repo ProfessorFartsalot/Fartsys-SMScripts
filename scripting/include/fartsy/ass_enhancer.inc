@@ -9,7 +9,7 @@ enum struct BGM {
   int ticksOffset;
   int SNDLVL;
 }
-BGM BGMArray[32];
+BGM BGMArray[48];
 
 //All sound effects
 enum struct SFXARRAY {
@@ -254,11 +254,12 @@ MAPLIGHTING MapLighting[15];
 
 //Weather Manager
 BULKFIRE lightningStrike[16];
-BULKFIRE lightningFlash[13];
+BULKFIRE lightningFlash[17];
 enum struct WEATHERMANAGER {
   bool canTornado;
   bool hasTornado;
   bool powerSurging;
+  bool reset;
   bool sirenExplode;
   bool sirenExploded;
   bool tickWeather;
@@ -272,23 +273,23 @@ enum struct WEATHERMANAGER {
   float defFogDensity;
   float fogTarget;
   float fogChangeRate;
+  float fogChangeRateRGB;
   float sirenPitch;
   float sirenPitchRate;
   float sirenPitchTarget;
-  int fogColorR;
-  int fogColorG;
-  int fogColorB;
-  int fogColorRTarget;
-  int fogColorGTarget;
-  int fogColorBTarget;
+  float fogColorR;
+  float fogColorG;
+  float fogColorB;
+  float fogColorRTarget;
+  float fogColorGTarget;
+  float fogColorBTarget;
   int intensity;
   int mIntensity;
   void Activate(){
     this.Reset();
     sudo(1001); //Stop any BGM
-    FastFire2("Weather.Sky", "Enable", "", 0.0, false);
     this.tickWeather = true;
-    this.PerformRandomWeather(); //Start weather system
+    if (GetGameMode() != 2) this.PerformRandomWeather(); //Start weather system ONLY IF NOT IN GAMEMODE 2.
   }
   void doLightning(){
     sudo(1003);
@@ -577,9 +578,16 @@ enum struct WEATHERMANAGER {
   void Reset(){
     AssLogger(LOGLVL_DEBUG, "[Fartsy's Enhancer] WeatherManager has been reset!");
     this.fogDensity = 0.50;
+    this.fogColorRTarget = 35.0;
+    this.fogColorGTarget = 55.0;
+    this.fogColorBTarget = 55.0;
     this.Dissipate();
+    this.reset = true;
     this.tickWeather = false;
     FastFire2("rain", "Alpha", "0", 0.0, false);
+    FastFire2("Weather.Sky", "Enable", "", 0.0, false);
+    FastFire2("Weather.Sky", "Skin", "0", 0.0, false);
+    FastFire2("Weather.FogSky", "Enable", "", 2.0, false);
   }
   void SetFogStartQueued(const char[] fsq){
     FastFire2("Weather.FogOutdoor", "SetStartDistLerpTo", fsq, 0.0, false);
@@ -591,25 +599,27 @@ enum struct WEATHERMANAGER {
     FastFire2("Weather.FogOutdoor", "StartFogTransition", "", 0.0, false);
   }
   void TickFog(){
-    if(this.fogDensity != this.fogTarget){
+    if(this.fogDensity != this.fogTarget || this.reset){
+      char targetAlpha[4];
       char targetDensity[24];
       this.fogDensity = (this.fogDensity < this.fogTarget) ? FloatMin(this.fogDensity+=this.fogChangeRate, this.fogTarget) : FloatMax(this.fogDensity-=this.fogChangeRate, this.fogTarget);
+      IntToString(RoundFloat(FloatMin(255.0 * (this.fogDensity * 1.20), 255.0)), targetAlpha, sizeof(targetAlpha));
       FloatToString(this.fogDensity, targetDensity, sizeof(targetDensity));
       FastFire2("Weather.FogOutdoor", "SetMaxDensity", targetDensity, 0.0, false);
+      FastFire2("Weather.FogSky", "Alpha", targetAlpha, 0.0, false);
     }
-    if(this.fogColorR != this.fogColorRTarget || this.fogColorG != this.fogColorGTarget || this.fogColorB != this.fogColorBTarget){
-      char target[15];
-      char targetR[3];
-      char targetG[3];
-      char targetB[3];
-      this.fogColorR = (this.fogColorR < this.fogColorRTarget) ? FloatMin(this.fogColorR+=this.fogChangeRate, this.fogColorRTarget) : FloatMax(this.fogColorR-=this.fogChangeRate, this.fogColorRTarget);
-      this.fogColorG = (this.fogColorG < this.fogColorGTarget) ? FloatMin(this.fogColorG+=this.fogChangeRate, this.fogColorGTarget) : FloatMax(this.fogColorG-=this.fogChangeRate, this.fogColorGTarget);
-      this.fogColorB = (this.fogColorB < this.fogColorBTarget) ? FloatMin(this.fogColorB+=this.fogChangeRate, this.fogColorBTarget) : FloatMax(this.fogColorB-=this.fogChangeRate, this.fogColorBTarget);
-      IntToString(this.fogColorR, targetR, sizeof(targetR));
-      IntToString(this.fogColorG, targetG, sizeof(targetG));
-      IntToString(this.fogColorB, targetB, sizeof(targetB));
-      Format(target, sizeof(target), "%i %i %i", targetR, targetG, targetB);
+    if(this.fogColorR != this.fogColorRTarget || this.fogColorG != this.fogColorGTarget || this.fogColorB != this.fogColorBTarget || this.reset){
+      char target[24];
+      this.fogColorR = (this.fogColorR < this.fogColorRTarget) ? FloatMin(this.fogColorR+=this.fogChangeRateRGB, this.fogColorRTarget) : FloatMax(this.fogColorR-=this.fogChangeRateRGB, this.fogColorRTarget);
+      this.fogColorG = (this.fogColorG < this.fogColorGTarget) ? FloatMin(this.fogColorG+=this.fogChangeRateRGB, this.fogColorGTarget) : FloatMax(this.fogColorG-=this.fogChangeRateRGB, this.fogColorGTarget);
+      this.fogColorB = (this.fogColorB < this.fogColorBTarget) ? FloatMin(this.fogColorB+=this.fogChangeRateRGB, this.fogColorBTarget) : FloatMax(this.fogColorB-=this.fogChangeRateRGB, this.fogColorBTarget);
+      Format(target, sizeof(target), "%i %i %i", RoundFloat(this.fogColorR), RoundFloat(this.fogColorG), RoundFloat(this.fogColorB));
+      FastFire2("Weather.FogIndoor", "SetColor", target, 0.0, false);
+      FastFire2("Weather.FogIndoor", "SetColorSecondary", target, 0.0, false);
       FastFire2("Weather.FogOutdoor", "SetColor", target, 0.0, false);
+      FastFire2("Weather.FogOutdoor", "SetColorSecondary", target, 0.0, false);
+      FastFire2("Weather.FogSky", "Color", target, 0.0, false);
+      this.reset = false;
     }
   }
   void TickSiren(){

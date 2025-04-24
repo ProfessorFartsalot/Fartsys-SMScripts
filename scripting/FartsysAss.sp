@@ -30,6 +30,9 @@
 public Database Get_Ass_Database(){
   return Ass_Database;
 }
+public int GetGameMode(){
+  return core.gamemode;
+}
 
 public Plugin myinfo = {
   name = "Fartsy's Ass - Framework",

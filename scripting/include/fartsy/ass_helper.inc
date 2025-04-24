@@ -426,6 +426,7 @@ void SetupCoreData(){
   WeatherManager.defFogEndDist = "3000";
   WeatherManager.defFogDensity = 0.55;
   WeatherManager.fogChangeRate = 0.001;
+  WeatherManager.fogChangeRateRGB = 0.25;
   WeatherManager.hasTornado = false;
   MapLighting[0].arcs = "MapLighting.StreetLamp00.arcs";
   MapLighting[1].arcs = "MapLighting.StreetLamp01.arcs";

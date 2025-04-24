@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.1.0a";
+public char PLUGIN_VERSION[8] = "8.1.0c";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -17,6 +17,7 @@ void sudo(int task) {
     }
     //Wave init
     case 2: {
+      UpdateGamemode();
       core.curWave = GetCurWave();
       PerformWaveSetup();
       float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
@@ -624,6 +625,25 @@ void sudo(int task) {
   case 305: {
     EmitSoundToAll(BGMArray[6].realPath, _, AudioManager.chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
+  case 420:{ //Init from Wave Null.
+    UpdateGamemode();
+  }
+  case 421:{
+    FastFire2("weather.sky", "Skin", "2", 0.0, false);
+    AudioManager.ChangeBGM(28);
+    WeatherManager.fogColorRTarget = 95.0;
+    WeatherManager.fogColorGTarget = 35.0;
+    WeatherManager.fogColorBTarget = 35.0;
+  }
+  case 422:{
+    AudioManager.ChangeBGM(29);
+  }
+  case 423:{
+    AudioManager.ChangeBGM(30);
+  }
+  case 424:{
+    AudioManager.ChangeBGM(31);
+  }
   //LOOP SYSTEM
   case 500: {
     AudioManager.indexBGM = 9;
@@ -1012,9 +1032,6 @@ public Action TimedOperator(Handle timer, int job) {
     CircleAOEenabled[i] = false;
     CreateTimer(3.0, TimedOperator, 200);
     return Plugin_Stop;
-    }
-    case 420:{ //Init from Wave Null.
-      UpdateGamemode();
     }
     case 6969: {
       if (!core.isWave){
