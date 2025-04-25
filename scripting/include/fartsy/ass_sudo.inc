@@ -625,8 +625,10 @@ void sudo(int task) {
   case 305: {
     EmitSoundToAll(BGMArray[6].realPath, _, AudioManager.chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
-  case 420:{ //Init from Wave Null.
+  case 420:{ //Init/Reset Wave Null.
     UpdateGamemode();
+    FastFire2("Weather.Sky", "Skin", "3", 0.0, false);
+    WeatherManager.fogDensity = 0.1;
   }
   case 421:{
     FastFire2("weather.sky", "Skin", "2", 0.0, false);
@@ -643,6 +645,29 @@ void sudo(int task) {
   }
   case 424:{
     AudioManager.ChangeBGM(31);
+  }
+  case 425:{
+    for (int i = 0; i < 32; i++) {
+      if (IsValidClient(i)) BossHandler.bustNukeTarget = i;
+    }
+    BossHandler.tickBusterNuclear = true;
+  }
+  case 426:{
+//    FastFire2("NukeTankBusterThing", "ForceSpawn", "", 0.0, false);
+    FastFire2("PL.CannonPitch", "SetPosition", "1.0", 0.0, false);
+    FastFire2("PL.SentCart", "ForceSpawn", "", 5.0, false);
+    FastFire2("PL.SentPhys", "Wake", "", 5.1, false);
+    FastFire2("PL.CannonFodder", "Enable", "", 5.1, false);
+    FastFire2("PL.CannonSND", "PlaySound", "", 5.1, false);
+    FastFire2("PL.CannonFodder", "Disable", "", 5.3, false);
+    FastFire2("PL.SentCartPhys", "Break", "", 6.0, false);
+  }
+  case 427:{
+    FastFire2("PL.NukeCart", "ForceSpawn", "", 0.0, false);
+    FastFire2("PL.NukeCartPhys", "Break", "", 1.25, false);
+    FastFire2("PL.NukeCartParticle", "Start", "", 1.25, false);
+    FastFire2("PL.NukeCartShake", "StartShake", "", 1.25, false);
+    FastFire2("PL.NukeCartExplo", "Explode", "", 1.25, false);
   }
   //LOOP SYSTEM
   case 500: {

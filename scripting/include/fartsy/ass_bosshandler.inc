@@ -7,9 +7,11 @@ enum struct BOSSHANDLER {
     bool shouldTick;
     bool shouldTickBGM;
     bool tickBuster;
+    bool tickBusterNuclear;
     float fAng[3];
     float fPos[3];
     int bustTarget;
+    int bustNukeTarget;
     int iBossEnt;
     int iBossEntHealth;
     int iBossEntMaxHealth;
@@ -232,6 +234,42 @@ enum struct BOSSHANDLER {
             PrintToServer("Dropping a tank buster on %N, they have %i HP, the tank buster will do %s.", this.bustTarget, iHealth, sDamage);
             CreateTimer(7.0, ResetTickBuster);
         }
+    }
+    //Tank buster thing
+    void TickBusterNuclear(){
+        float cPos[3]; //Client's Position
+        float pPos[3]; //Ground Particle Target Position
+        float sPos[3]; //Sign/Arrow's Target Position
+        float rPos[3];
+        float nPos[3];
+        float fVelocity[3]; //Velocity for teleporting entities, used for angles as well so we don't need two vectors.
+        int iAirParticle = FindEntityByTargetname("FB.TankBuster.AirParticle", "func_brush");
+        int iBuster = FindEntityByTargetname("FB.TankBuster", "trigger_hurt");
+        int iExploParticle = FindEntityByTargetname("FB.TankBuster.ExplodeParticle", "info_particle_system");
+        int iParticle = FindEntityByTargetname("FB.TankBuster.GroundParticle", "info_particle_system");
+        int iSign = FindEntityByTargetname("FB.TankBuster.Sign", "func_rotating");
+        int iSpin = FindEntityByTargetname("FB.TankBuster.Spinner", "func_rotating");
+        int iNukeTemplate = FindEntityByTargetname("PL.NukeCart", "env_entity_maker");
+        GetClientAbsOrigin(this.bustNukeTarget, cPos);
+        rPos[0] = cPos[0];
+        rPos[1] = cPos[1];
+        rPos[2] = cPos[2] + 50.0;
+        pPos[0] = cPos[0];
+        pPos[1] = cPos[1];
+        pPos[2] = cPos[2] + 25.0;
+        sPos[0] = cPos[0];
+        sPos[1] = cPos[1];
+        sPos[2] = cPos[2] + 150.0;
+        nPos[0] = cPos[0];
+        nPos[1] = cPos[1];
+        nPos[2] = cPos[2] + 750.0;
+        TeleportEntity(iAirParticle, rPos, fVelocity, fVelocity);
+        TeleportEntity(iParticle, pPos, fVelocity, fVelocity);
+        TeleportEntity(iExploParticle, pPos, fVelocity, fVelocity);
+        TeleportEntity(iBuster, cPos, fVelocity, fVelocity);
+        TeleportEntity(iSign, sPos, fVelocity, fVelocity); 
+        TeleportEntity(iSpin, pPos, fVelocity, fVelocity);
+        TeleportEntity(iNukeTemplate, nPos, fVelocity, fVelocity);
     }
     //Boss was slain
     void TriggerDeath(){

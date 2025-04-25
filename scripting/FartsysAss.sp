@@ -94,5 +94,6 @@ public void OnGameFrame() {
   if(WeatherManager.TornadoWarning) WeatherManager.TickSiren();
   if (AudioManager.shouldTick) AudioManager.TickBGM();
   if (BossHandler.shouldTick) BossHandler.Tick();
+  if (BossHandler.tickBusterNuclear) BossHandler.TickBusterNuclear();
   WeatherManager.TickFog();
 }
