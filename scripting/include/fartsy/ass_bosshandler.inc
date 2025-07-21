@@ -160,7 +160,7 @@ enum struct BOSSHANDLER {
                 int eCount = 0;
                 for (int i = 1; i <= MaxClients; i++) {
                   if (!IsClientInGame(i)) continue;
-                  if (GetClientTeam(i) == TFTeam_Red && TF2_GetPlayerClass(i) == TFClass_Engineer) eCount++;
+                  if (GetClientTeam(i) == 2 && TF2_GetPlayerClass(i) == TFClass_Engineer) eCount++;
                 }
                 int sCount = 0;
                 int ent = -1
@@ -170,7 +170,7 @@ enum struct BOSSHANDLER {
                         SetEntProp(ent, Prop_Send, "m_iTeamNum", TFTeam_Blue);
                         SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity", 0);
                     }
-                    if (GetEntProp(ent, Prop_Send, "m_iTeamNum") == TFTeam_Red) {
+                    if (GetEntProp(ent, Prop_Send, "m_iTeamNum") == 2) {
                         sCount++;
                         PrintToChatAll("Found %i sentry guns. I'm watching your ass...", sCount);
                         if (sCount > eCount * 7){
@@ -274,7 +274,7 @@ enum struct BOSSHANDLER {
             CreateTimer(7.0, ResetTickBuster);
         }
     }
-    //Tank buster thing
+    // Tank buster - Potato cannon edition!
     void TickBusterNuclear(){
         float cPos[3]; //Client's Position
         float pPos[3]; //Ground Particle Target Position

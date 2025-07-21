@@ -1,6 +1,4 @@
 //Fartsy's Scene Enhancer v1.0.0 (Inspired by Mrbt0907/Weather2Remastered)
-
-bool Enhancer_IsWave;
 //All background music
 enum struct BGM {
   char realPath[64];
@@ -327,7 +325,7 @@ enum struct WEATHERMANAGER {
     this.fogTarget = this.defFogDensity;
     g_PowerOutage = false;
     this.hasTornado = false;
-    if(Enhancer_IsWave){
+    if(GetCoreData().isWave){
       this.mIntensity = 5;
       this.intensity = 7; 
     } else {

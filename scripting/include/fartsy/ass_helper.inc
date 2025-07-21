@@ -65,6 +65,9 @@ enum struct COREDATA {
   bool tickMusic;
   bool tickBGMOffset;
   char cachedPath[64];
+  char configDefault[72];
+  char configTacoBell[72];
+  char configWaveNull[72];
   char songName[64];
   float HWNMin;
   float HWNMax;
@@ -96,7 +99,6 @@ enum struct COREDATA {
   }
 }
 COREDATA core;
-
 Database Ass_Database;
 int attemptSpawn = 0;
 bool isGoobbue = false;
@@ -407,6 +409,9 @@ BULKFIRE crusaderAtk[64];
 //Configure all variables
 void SetupCoreData(){
   AssLogger(LOGLVL_INFO, "Setting up core data...");
+  strcopy(core.configDefault, sizeof(core.configDefault),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults.ini");
+  strcopy(core.configTacoBell, sizeof(core.configTacoBell),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_TacoBell.ini");
+  strcopy(core.configWaveNull, sizeof(core.configWaveNull),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_WaveNull.ini");
   ass[0].name = "[10] Bath Salts";
   ass[1].name = "[20] Summon Goobbue or Kirby";
   ass[2].name = "[30] Robot Trap (Wave Fail-safe)";
@@ -741,7 +746,7 @@ void SetupCoreData(){
     if (IsEndOfFile(confCoreData)) break;
   }
   AssLogger(1, "[CORE] Setting up Wave Defaults...");
-  confCoreData = OpenFile("addons/sourcemod/configs/FartsysAss/Core/WaveDefaults.ini", "rt", false);
+  confCoreData = OpenFile(OVERRIDE_AND_GET_COREDATA(), "rt", false);
   int defIndexHW, defIndexTornado, defIndexBGM, defIndexBS, defIndexBSM, defIndexSPM; // Start at 0 because we don't have a wave 0
   if(confCoreData == INVALID_HANDLE) return;
   while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))){
@@ -786,16 +791,19 @@ void SetupCoreData(){
   HookEventEx("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
   AssLogger(1, "Core data setup complete!");
 }
-
+// Checks if the gamemode has changed, if it has, reinitialise all core data.
 void UpdateGamemode(){
-  char logdata[256];
-  char popfile[128];
+  char logdata[192], popfile[128];
   int ent = FindEntityByClassname(-1, "tf_objective_resource");
   if (ent == -1) return;
   GetEntPropString(ent, Prop_Send, "m_iszMvMPopfileName", popfile, sizeof(popfile));
-  core.gamemode = (StrContains(popfile, "tacobell") != -1 ? 1 : (StrContains(popfile, "wavenull") != -1) ? 2 : 0);
-  Format(logdata, sizeof(logdata), "Testing if popfile contains tacobell or wavenull, result %i", core.gamemode);
-  AssLogger(LOGLVL_DEBUG, logdata);
+  int gamemode = (StrContains(popfile, "tacobell") != -1 ? 1 : (StrContains(popfile, "wavenull") != -1) ? 2 : 0);
+  if(core.gamemode != gamemode) {
+    Format(logdata, sizeof(logdata), "Current gamemode %i does not match detected gamemode %i! Someone must have changed the gamemode! Setting up core data immediately!!!", core.gamemode, gamemode);
+    AssLogger(LOGLVL_DEBUG, logdata);
+    core.gamemode = gamemode;
+    SetupCoreData();
+  }
 }
 //Messages to be printed when the fail safe has been triggered.
 char failsafe[][256] = {
@@ -1746,4 +1754,31 @@ void SendHudTextAll(int channel, const char[] text, float posX, float posY, floa
             ShowHudText(i, channel, text);
         }
     }
+}
+// WIPE MECHANIC - If all players  die, the wave fails.
+void TickBodyCheck() {
+  int alive = 0;
+  for (int i = 1; i <= MaxClients; i++) if (IsPlayerAlive(i) && GetClientTeam(i) == 2) alive++;
+  if (alive == 0) {
+    CPrintToChatAll("{red}You've all died! Are you happy?");
+    FastFire2("bots_win", "roundwin", "", 0.0, false);
+  }
+}
+//Gets config file based on the game mode, we use the struct because returning differing array sizes is impossible otherwise.
+char[] OVERRIDE_AND_GET_COREDATA() {
+  switch (core.gamemode) {
+    case 0: {
+      return core.configDefault;
+    }
+    case 1: {
+      return core.configTacoBell;
+    }
+    case 2: {
+      return core.configWaveNull;
+    }
+    default: {
+      LogError("Gamemode %i out of bounds. Reverting to defaults.", core.gamemode);
+      return core.configDefault;
+    }
+  }
 }

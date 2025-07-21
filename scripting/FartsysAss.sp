@@ -21,13 +21,16 @@
 
 #pragma newdecls required
 #pragma semicolon 1
-Database Get_Ass_Database(){
+Database Get_Ass_Database() {
   return Ass_Database;
 }
-BOSSHANDLER Get_Boss_Handler(){
+COREDATA GetCoreData() {
+  return core;
+}
+BOSSHANDLER Get_Boss_Handler() {
   return BossHandler;
 }
-int GetGameMode(){
+int GetGameMode() {
   return core.gamemode;
 }
 
@@ -43,7 +46,8 @@ public void OnPluginStart() {
   AssLogger(LOGLVL_INFO, "####### STARTUP SEQUENCE INITIATED... PREPARE FOR THE END TIMES #######");
   RegisterAndPrecacheAllFiles();
   RegisterAllCommands();
-  SetupCoreData();
+  UpdateGamemode();
+  if (core.gamemode == 0) SetupCoreData();
   UpdateAllHealers();
   CreateTimer(1.0, UpdateMedicHealing);
   CPrintToChatAll("{darkred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
@@ -61,10 +65,10 @@ public void OnFastFire2Ready(){
 
 //Process ticks and requests in real time
 public void OnGameFrame() {
-  if (Enhancer_IsWave != core.isWave) Enhancer_IsWave = core.isWave;
   if(WeatherManager.TornadoWarning) WeatherManager.TickSiren();
   if (AudioManager.shouldTick) AudioManager.TickBGM();
   if (BossHandler.shouldTick) BossHandler.Tick();
   if (BossHandler.tickBusterNuclear) BossHandler.TickBusterNuclear();
+  if (core.gamemode == 2 && core.isWave) TickBodyCheck();
   WeatherManager.TickFog();
 }

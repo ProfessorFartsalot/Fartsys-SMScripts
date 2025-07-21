@@ -23,6 +23,7 @@ void sudo(int task) {
       float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
       CreateTimer(hwn, HWBosses);
       AudioManager.ChangeBGM(core.tacobell ? tacoBellBGMIndex[core.curWave] : DefaultsArray[core.curWave].defBGMIndex);
+      PrintToChatAll("WARNING, AUDIOMANAGER'S CHANGEBGM FUNCTION IS DEPRECATED IN FAVOR OF THE NEW CONFIGS. FIX THIS IMMEDIATELY.");
       return;
     }
   //Force Tornado
