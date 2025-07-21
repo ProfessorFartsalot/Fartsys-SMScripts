@@ -6,6 +6,7 @@ enum struct BOSSHANDLER {
     bool isAlive;
     bool shouldTick;
     bool shouldTickBGM;
+    bool sOverflow;
     bool tickBuster;
     bool tickBusterNuclear;
     float fAng[3];
@@ -48,7 +49,18 @@ enum struct BOSSHANDLER {
         if(this.tickBuster) this.TickBuster();
         switch(this.bossID){
             case 0:{
-
+                float pos[3], ang[3], vel[3], newPos[3];
+                vel[0] = 0.0;
+                vel[1] = 0.0;
+                vel[2] = 0.0;
+                int BossEnt = FindEntityByTargetname("FB.BruteJusticeTrain", "func_tracktrain");
+                int BossTP = FindEntityByTargetname("FB.OnslaughterBase", "base_boss");
+                GetEntPropVector(BossEnt, Prop_Send, "m_vecOrigin", pos);
+                GetEntPropVector(BossEnt, Prop_Data, "m_angRotation", ang);
+                newPos[0] = pos[0];
+                newPos[1] = pos[1];
+                newPos[2] = pos[2] + 0.0;
+                TeleportEntity(BossTP, newPos, ang, vel);
             }
             case 1:{
 
@@ -140,6 +152,33 @@ enum struct BOSSHANDLER {
                             AudioManager.ChangeBGM(26);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT3x0", 3.00, false);
                             FastFire2("FB.MetalFace.GigaBuster", "ForceSpawn", "", 10.0, false);
+                        }
+                    }
+                }
+            }
+            case 69:{
+                int eCount = 0;
+                for (int i = 1; i <= MaxClients; i++) {
+                  if (!IsClientInGame(i)) continue;
+                  if (GetClientTeam(i) == TFTeam_Red && TF2_GetPlayerClass(i) == TFClass_Engineer) eCount++;
+                }
+                int sCount = 0;
+                int ent = -1
+                while ((ent = FindEntityByClassname(ent, "obj_sentrygun")) != -1) {
+                    if (!IsValidEntity(ent)) continue;
+                    if (this.sOverflow) {
+                        SetEntProp(ent, Prop_Send, "m_iTeamNum", TFTeam_Blue);
+                        SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity", 0);
+                    }
+                    if (GetEntProp(ent, Prop_Send, "m_iTeamNum") == TFTeam_Red) {
+                        sCount++;
+                        PrintToChatAll("Found %i sentry guns. I'm watching your ass...", sCount);
+                        if (sCount > eCount * 7){
+                            PrintToChatAll("[FARTSY.DLL] TOO MANY SENTRIES DETECTED. PREPARE TO DIE. WOLOLOOOOOOO!");
+                            this.sOverflow = true;
+                            ent = -1;
+                            sCount = 0;
+                            CreateTimer(3.0, TimedOperator, 42690);
                         }
                     }
                 }

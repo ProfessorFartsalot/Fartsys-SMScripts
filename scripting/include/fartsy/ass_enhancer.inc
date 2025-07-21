@@ -135,15 +135,15 @@ public Action Command_Music(int client, int args) {
 public void ShowFartsyMusicMenu(int client) {
   Menu menu = new Menu(MenuHandlerFartsyMusic, MENU_ACTIONS_DEFAULT);
   char buffer[100];
-  menu.SetTitle("FartsysAss Music Menu");
+  menu.SetTitle("Fartsy's Music Menu");
   for (int i = 0; i < sizeof(BGMArray); i++) menu.AddItem(buffer, BGMArray[i].songName);
-  menu.Display(client, 20);
+  menu.Display(client, MENU_TIME_FOREVER);
   menu.ExitButton = true;
 }
 
 //Set Fartsy Sound menu
-public void FartsysSNDSelected(int client, CookieMenuAction action, any info, char[] buffer, int maxlen) {
-  if (action == CookieMenuAction_SelectOption) ShowFartsyMenu(client);
+public void FartsysSNDSelected(int client, MenuAction action, any info, char[] buffer, int maxlen) {
+  if (action == MenuAction_Select) ShowFartsyMenu(client);
 }
 
 // Get clients sound preferences then send them the menu
@@ -164,7 +164,7 @@ public Action Command_Sounds(int client, int args) {
 public void ShowFartsyMenu(int client) {
   Menu menu = new Menu(MenuHandlerFartsy, MENU_ACTIONS_DEFAULT);
   char buffer[100];
-  menu.SetTitle("FartsysAss Sound Menu");
+  menu.SetTitle("Fartsy's Sound Menu");
   menu.AddItem(buffer, "Disable ALL");
   menu.AddItem(buffer, "Music Only");
   menu.AddItem(buffer, "Sound Effects Only");
@@ -588,6 +588,7 @@ enum struct WEATHERMANAGER {
     FastFire2("Weather.Sky", "Enable", "", 0.0, false);
     FastFire2("Weather.Sky", "Skin", "0", 0.0, false);
     FastFire2("Weather.FogSky", "Enable", "", 2.0, false);
+    for (int i = 0; i < sizeof(MapLighting); i++) MapLighting[i].Repair();
   }
   void SetFogStartQueued(const char[] fsq){
     FastFire2("Weather.FogOutdoor", "SetStartDistLerpTo", fsq, 0.0, false);

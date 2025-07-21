@@ -21,7 +21,14 @@ void InjectFastFire2(){
   OnFastFire2Ready();
 }
 
-//Execute inputs - EXPERT MODE
+/* Fartsy's ent_fire interface
+* @param target The target entity
+* @param input The input to execute
+* @param param Parameters if applicable
+* @param delay The delay before executing
+* @param isLegacy Whether this is legacy or not. isLegacy will use the target param as the entire fire string. Example: `FastFire2("OnUser1 Operator,Command,sm_example,0.69,1", "", "", 0.0, true);`
+* OnUser1 is mandatory before the fire string when using legacy mode. Legacy mode also requries `,1` after the string so it only fires once instead of per function call.
+*/
 public void FastFire2(const char[] target, const char[] input, const char[] param, const float delay, bool isLegacy) {
   int ff2 = EntRefToEntIndex(ff2Ref);
   char FireStr[128];

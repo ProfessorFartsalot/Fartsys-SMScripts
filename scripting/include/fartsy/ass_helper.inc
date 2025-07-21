@@ -9,7 +9,6 @@ enum {
 enum struct PLAYERDATA {
   char classname;
   char name;
-  
 }
 void AssLogger(int logLevel, const char[] logData, any...) {
   char buffer[256];
@@ -97,7 +96,6 @@ enum struct COREDATA {
   }
 }
 COREDATA core;
-bool tickOnslaughter;
 
 Database Ass_Database;
 int attemptSpawn = 0;
@@ -1000,6 +998,16 @@ stock int TF2_GetPlayerMaxHealth(int client) {
 }
 
 void RegisterAndPrecacheAllFiles(){
+  PrecacheSound(TBGM0, true);
+  PrecacheSound(TBGM2, true);
+  PrecacheSound(TBGM3, true);
+  PrecacheSound(TBGM4, true);
+  PrecacheSound(TBGM5, true);
+  PrecacheSound(TBGM6, true);
+  PrintToServer("PRECACHING THESE SOUNDS SO EARLY IS NOT INTENTIONAL, PLEASE FIX THIS FARTSY.");
+  PrecacheSound("fartsy/misc/brawler/fartsy_dll/intro.mp3", true);
+  PrecacheSound("fartsy/misc/brawler/fartsy_dll/terror.mp3", true);
+  PrecacheSound("fartsy/music/tcmusic/humanhypothesis.wav", true);
   AssLogger(0, "Loading EVERYTHING to RAM...");
   Handle confBGM = OpenFile("addons/sourcemod/configs/FartsysAss/Files/music.ini", "rt", false);
   Handle confSFX = OpenFile("addons/sourcemod/configs/FartsysAss/Files/sfx.ini", "rt", false);
@@ -1382,7 +1390,8 @@ public Action PerformWaveSetup() {
       for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
     }
     case 5, 12, 19: {
-      tickOnslaughter = true;
+      Get_Boss_Handler().bossID = 0;
+      Get_Boss_Handler().shouldTick = true;
       core.HWNMax = 260.0;
       core.HWNMin = 140.0;
       for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
@@ -1714,4 +1723,27 @@ public void OnClientPostAdminCheck(int client) {
     Format(queryID, sizeof(queryID), "SELECT soundprefs from ass_activity WHERE steamid = '%d';", steamID);
     Ass_Database.Query(SQL_SNDPrefs, queryID, client);
   }
+}
+/* Sends hud text to players
+* @param channel The channel to use (1 - 4)
+* @param text The text to display
+* @param posX X pos L-R (0 to 1)
+* @param posY Y pos U-D (0 to 1)
+* @param holdTime Time to display the text
+* @param color1[4] Target Color rgba
+* @param color2[4] Initial Color rgba
+* @param effect 0/1 Fade In / Out, 2 = Scan Out
+* @param fxTime Time it takes for the effect to run
+* @param fadeIn Time it takes for the text to fade in
+* @param fadeOut Time it takes for the text to fade out
+*/
+void SendHudTextAll(int channel, const char[] text, float posX, float posY, float holdTime, int color1[4], int color2[4], int effect, float fxTime, float fadeIn, float fadeOut){
+  for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsClientInGame(i))
+        {
+            SetHudTextParamsEx(posX, posY, holdTime, color1, color2, effect, fxTime, fadeIn, fadeOut);
+            ShowHudText(i, channel, text);
+        }
+    }
 }

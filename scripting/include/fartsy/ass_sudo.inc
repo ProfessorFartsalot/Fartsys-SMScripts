@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.1.0c";
+public char PLUGIN_VERSION[8] = "8.2.0a";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -11,7 +11,7 @@ void sudo(int task) {
     case 1: {
       core.tacobell = false;
       ServerCommand("fb_startmoney 50000");
-      CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}PROFESSOR'S ASS {white}v0x20 (Core-v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", PLUGIN_VERSION);
+      CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}PROFESSOR'S ASS {white}v0x22 (Core-v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", PLUGIN_VERSION);
       FastFire2("rain", "Alpha", "0", 0.0, false);
       UpdateGamemode();
     }
@@ -541,10 +541,11 @@ void sudo(int task) {
   }
   //Onslaughter dead
   case 137:{
-    tickOnslaughter = false;
+    BossHandler.shouldTick = false;
     FastFire2("OnslaughterTank", "SetHealth", "1", 0.0, false);
     FastFire2("TankRelayDMG", "Enable", "", 0.0, false);
     FastFire2("TankRelayDMG", "Disable", "", 10.0, false);
+    BossHandler.isAlive = false;
   }
   //Sephiroth dead (future code)
   case 138:{
@@ -585,7 +586,6 @@ void sudo(int task) {
   }
   //Reset Map
   case 300: {
-    tickOnslaughter = false;
     AudioManager.Reset();
     BossHandler.shouldTick = false;
     core.Reset();
@@ -625,7 +625,8 @@ void sudo(int task) {
   case 305: {
     EmitSoundToAll(BGMArray[6].realPath, _, AudioManager.chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
-  case 420:{ //Init/Reset Wave Null.
+  case 420:{ // Init/Reset Wave Null.
+    CPrintToChatAll("{red} [CORE] WARNING: Initializing Wave Null... Welcome to a new kind of tension, everything isn't meant to be okay. :')");
     UpdateGamemode();
     FastFire2("Weather.Sky", "Skin", "3", 0.0, false);
     WeatherManager.fogDensity = 0.1;
@@ -892,8 +893,44 @@ void sudo(int task) {
   case 20000:{
     BossHandler.EmitSpawnSound(2);
   }
+  case 42690:{
+    BossHandler.bossID = 69;
+    BossHandler.shouldTick = true;
+    BossHandler.isAlive = true;
+    EmitSoundToAll("fartsy/misc/brawler/fartsy_dll/intro.mp3");
+    PrintToConsoleAll("Loading FARTSY.DLL from C:\\Windows\\System32 ...");
+    PrintToServer("Loading FARTSY.IMG from /boot/efi ...");
+    PrintToChatAll("FARTSY.DLL has joined the game");
+    ServerCommand("sm_mortal @all");
+    AddCommandListener(CommandOverride, "sm_buddha");
+    AddCommandListener(CommandOverride, "sm_gimme");
+    AddCommandListener(CommandOverride, "sm_givew");
+    AddCommandListener(CommandOverride, "sm_gi");
+    AddCommandListener(CommandOverride, "sm_god");
+    AddCommandListener(CommandOverride, "sm_admin");
+    AddCommandListener(CommandOverride, "sm_noclip");
+    AddCommandListener(CommandOverride, "sm_noclipme");
+    CreateTimer(6.1, TimedOperator, 50000);
+  }
+  case 42696:{
+    RemoveCommandListener(CommandOverride, "sm_buddha");
+    RemoveCommandListener(CommandOverride, "sm_god");
+    RemoveCommandListener(CommandOverride, "sm_gimme");
+    RemoveCommandListener(CommandOverride, "sm_givew");
+    RemoveCommandListener(CommandOverride, "sm_gi");
+    RemoveCommandListener(CommandOverride, "sm_admin");
+    RemoveCommandListener(CommandOverride, "sm_noclip");
+    RemoveCommandListener(CommandOverride, "sm_noclipme");
+  }
   }
   return;
+}
+
+public Action CommandOverride(int client, const char[] command, int argc)
+{
+  ServerCommand(GetRandomInt(0, 1 == 1) ? "sm_slay #%i" : "sm_smite #i", GetClientUserId(client));
+  PrintToChatAll ("[FARTSY.DLL] Did you REALLY think I would let you cheat, %N? How about instead of using %s you actually play the game, loser!", client, command);
+  return Plugin_Handled;
 }
 
 //Timed commands
@@ -1065,6 +1102,87 @@ public Action TimedOperator(Handle timer, int job) {
       }
       BEM++;
       Emerge(BEM);
+      return Plugin_Stop;
+    }
+    case 42690: {
+      BossHandler.sOverflow = false;
+      return Plugin_Stop;
+    }
+    case 50000: {
+      ServerCommand("sv_cheats 1");
+      for (int client = 1; client <= MaxClients; client++) if (IsClientInGame(client)) ClientCommand(client, "r_screenoverlay fartsy/fartsy_dll_core");
+      ServerCommand("sv_cheats 0");
+      FastFire2("FB.FadeBLCK", "Alpha", "127", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(1, "Did you think this would be easy...?", 0.1, 0.15, 9.0, {0, 160, 0, 255}, {0, 255, 0, 255}, 2, 0.5, 0.05, 0.75);
+      EmitSoundToAll("fartsy/misc/brawler/fartsy_dll/terror.mp3");
+      CreateTimer(3.0, TimedOperator, 50001);
+      return Plugin_Stop;
+    }
+    case 50001: {
+      FastFire2("FB.FadeBLCK", "Alpha", "127", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(2, "You can't possibly expect the same old tricks to work.... can you?~", 0.2, 0.2, 3.0, {0, 160, 0, 192}, {0, 255, 0, 192}, 2, 0.75, 0.05, 0.75);
+      CreateTimer(5.0, TimedOperator, 50002);
+      return Plugin_Stop;
+    }
+    case 50002: {
+      FastFire2("FB.FadeBLCK", "Alpha", "127", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(1, "LAUGH IT UP. You and I both know this is 'just another boss fight'...", 0.15, 0.25, 7.0, {0, 160, 0, 192}, {0, 255, 0, 192}, 2, 0.5, 0.05, 0.75);
+      CreateTimer(5.0, TimedOperator, 50003);
+      return Plugin_Stop;
+    }
+    case 50003: {
+      FastFire2("FB.FadeBLCK", "Alpha", "192", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(2, "...or is it?~", 0.2, 0.3, 2.0, {0, 160, 0, 192}, {0, 255, 0, 192}, 2, 0.5, 0.05, 0.75);
+      CreateTimer(4.0, TimedOperator, 50004);
+      return Plugin_Stop;
+    }
+    case 50004:{
+      FastFire2("FB.FadeBLCK", "Alpha", "224", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(1, "ARE YOU HAPPY? All of you who knew what was happening...~", 0.25, 0.35, 7.0, {0, 160, 0, 192}, {0, 255, 0, 192}, 2, 0.5, 0.05, 0.75);
+      CreateTimer(5.0, TimedOperator, 50005);
+      return Plugin_Stop;
+    }
+    case 50005:{
+      FastFire2("FB.FadeBLCK", "Alpha", "224", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(2, "Every last one of you...", 0.35, 0.4, 5.0, {0, 160, 0, 192}, {0, 255, 0, 192}, 1, 0.5, 0.5, 0.75);
+      CreateTimer(5.0, TimedOperator, 50006);
+      return Plugin_Stop;
+    }
+    case 50006:{
+      FastFire2("FB.FadeBLCK", "Alpha", "192", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(1, "I hope you're as happy as I am...~", 0.15, 0.45, 7.0, {0, 160, 0, 192}, {0, 255, 0, 192}, 2, 0.5, 0.05, 0.75);
+      CreateTimer(4.0, TimedOperator, 50007);
+      return Plugin_Stop;
+    }
+    case 50007:{
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      SendHudTextAll(2, "...knowing you all just spent all your time here~", 0.25, 0.5, 5.0, {0, 160, 0, 192}, {0, 255, 0, 192}, 2, 0.5, 0.05, 0.75);
+      CreateTimer(5.0, TimedOperator, 50008);
+      return Plugin_Stop;
+    }
+    case 50008:{
+      FastFire2("FB.FadeBLCK", "Alpha", "255", 0.0, false);
+      FastFire2("FB.FadeBLCK", "Fade", "", 0.0, false);
+      ServerCommand("sv_cheats 1");
+      for (int client = 1; client <= MaxClients; client++) if (IsClientInGame(client)) ClientCommand(client, "r_screenoverlay fartsy/fartsy_dll_anon");
+      ServerCommand("sv_cheats 0");
+      FastFire2("FB.FadeBLCK", "Fade", "", 3.0, false);
+      SendHudTextAll(1, "JUST TO DIE!!!", 0.4, 0.6, 7.0, {255, 0, 0, 255}, {255, 0, 0, 255}, 1, 0.5, 0.05, 0.75);
+      CreateTimer(5.75, TimedOperator, 50009);
+      return Plugin_Stop;
+    }
+    case 50009:{
+      ServerCommand("sv_cheats 1");
+      for (int client = 1; client <= MaxClients; client++) if (IsClientInGame(client)) ClientCommand(client, "r_screenoverlay \\");
+      ServerCommand("sv_cheats 0");
+      EmitSoundToAll("fartsy/music/tcmusic/humanhypothesis.wav");
       return Plugin_Stop;
     }
     }

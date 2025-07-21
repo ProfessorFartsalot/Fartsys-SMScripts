@@ -10,7 +10,6 @@ public Action Command_AOE(int client, int args){
 }
 
 public Action Command_SetFogDensity(int client, int args){
-  tickOnslaughter = true;
   char arg1[5];
   GetCmdArg(1, arg1, sizeof(arg1));
   WeatherManager.fogTarget = StringToFloat(arg1);
