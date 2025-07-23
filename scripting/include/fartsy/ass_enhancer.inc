@@ -90,7 +90,7 @@ enum struct AUDIOMANAGER {
       this.refireBGM = BGMArray[this.indexBGM].refireTime;
       this.ticksBGM = (this.tickBGMOffset ? BGMArray[this.indexBGM].ticksOffset : 0);
       for (int i = 0; i < MaxClients; i++){
-        //if(tacobell && isClientInEvent(i)) return;// To test if client is experiencing anything odd.....
+        //if(core.gamemode > 0 && isClientInEvent(i)) continue;// To test if client is experiencing anything odd.....
         CSEClient(i, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
       }
       //CustomSoundEmitter(BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);

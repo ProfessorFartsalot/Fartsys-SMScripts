@@ -18,21 +18,10 @@
 #include <fartsy/ass_commands>
 #include <fartsy/ass_events>
 #include <fartsy/ass_sudo>
+#include <fartsy/ass_serverutils.inc>
 
 #pragma newdecls required
 #pragma semicolon 1
-Database Get_Ass_Database() {
-  return Ass_Database;
-}
-COREDATA GetCoreData() {
-  return core;
-}
-BOSSHANDLER Get_Boss_Handler() {
-  return BossHandler;
-}
-int GetGameMode() {
-  return core.gamemode;
-}
 
 public Plugin myinfo = {
   name = "Fartsy's Ass - Framework",
@@ -53,6 +42,7 @@ public void OnPluginStart() {
   CPrintToChatAll("{darkred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
   cvarSNDDefault = CreateConVar("sm_fartsysass_sound", "3", "Default sound for new users, 3 = Everything, 2 = Sounds Only, 1 = Music Only, 0 = Nothing");
   AssLogger(LOGLVL_INFO, "####### STARTUP COMPLETE (v%s) #######", PLUGIN_VERSION);
+  CreateTimer(15.0, StatsTracker);
 }
 
 //Begin executing IO when ready
