@@ -386,9 +386,7 @@ enum struct BOSSHANDLER {
     }
 }
 BOSSHANDLER BossHandler;
-BOSSHANDLER Get_Boss_Handler() {
-  return BossHandler;
-}
+
 //Player specific async tick process
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon){
   if (BossHandler.shouldTick) BossHandler.TickForClient(client);

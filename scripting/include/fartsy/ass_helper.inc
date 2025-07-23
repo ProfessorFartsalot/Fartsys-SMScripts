@@ -99,18 +99,7 @@ enum struct COREDATA {
   }
 }
 COREDATA core;
-COREDATA GetCoreData() {
-  return core;
-}
-
-int GetGameMode() {
-  return core.gamemode;
-}
-
 Database Ass_Database;
-Database Get_Ass_Database() {
-  return Ass_Database;
-}
 int attemptSpawn = 0;
 bool isGoobbue = false;
 bool CircleAOEenabled[] = {
@@ -955,7 +944,6 @@ void RegisterAllCommands(){
 //Connect to database
 public void OnConfigsExecuted() {
   if (!Ass_Database) Database.Connect(Database_OnConnect, "ass");
-  if (!Get_Ass_Database_ServerMetrics()) Database.Connect(Database_OnMetricsConnect, "ass_servermetrics");
 }
 //Format database if needed
 public void Database_OnConnect(Database db, char[] error, any data) {
@@ -980,21 +968,6 @@ public void Database_OnConnect(Database db, char[] error, any data) {
       Ass_Database.Query(SQL_SNDPrefs, query, i);
     }
   }
-}
-//Connect to metrics db
-public void Database_OnMetricsConnect(Database db, char[] error, any data) {
-  if (!db) {
-    AssLogger(3, error);
-    return;
-  }
-  char buffer[64];
-  db.Driver.GetIdentifier(buffer, sizeof(buffer));
-  if (!StrEqual(buffer, "mysql", false)) {
-    delete db;
-    AssLogger(3, "Could not connect to the database: expected mysql database.");
-    return;
-  }
-  Set_Ass_Database_ServerMetrics(db);
 }
 //Database Fastquery Manager
 public void Database_FastQuery(Database db, DBResultSet results,
