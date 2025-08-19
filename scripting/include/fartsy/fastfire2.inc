@@ -8,7 +8,7 @@ public void OnMapStart() {
 
 void InjectFastFire2(){
   int ff2 = FindEntityByTargetname("FastFire2", "info_target");
-  AssLogger(LOGLVL_INFO, "Injecting FastFire2!");
+  AssLogger(LOGLVL_INFO, "OnMapStart Received: Injecting FastFire2!");
   if (!IsValidEntity(ff2)){
     ff2 = CreateEntityByName("info_target");
     if (!IsValidEdict(ff2)) SetFailState("Could not inject FastFire2, aborting!!!");

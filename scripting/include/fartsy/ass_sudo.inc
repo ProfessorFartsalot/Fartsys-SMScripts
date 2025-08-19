@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.3.0a";
+public char PLUGIN_VERSION[8] = "8.3.0b";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {

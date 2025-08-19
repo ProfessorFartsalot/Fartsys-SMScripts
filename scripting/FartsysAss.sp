@@ -32,7 +32,12 @@ public Plugin myinfo = {
 };
 
 public void OnPluginStart() {
-  AssLogger(LOGLVL_INFO, "####### STARTUP SEQUENCE INITIATED... PREPARE FOR THE END TIMES #######");
+  AssLogger(LOGLVL_INFO, "Starting up Fartsy's Framework! Waiting for Map Start...");
+}
+
+//Begin executing IO when ready
+public void OnFastFire2Ready(){
+  AssLogger(LOGLVL_INFO, "####### FASTFIRE2 IS READY! INITIATE STARTUP SEQUENCE... PREPARE FOR THE END TIMES #######");
   RegisterAndPrecacheAllFiles();
   RegisterAllCommands();
   UpdateGamemode();
@@ -43,10 +48,6 @@ public void OnPluginStart() {
   cvarSNDDefault = CreateConVar("sm_fartsysass_sound", "3", "Default sound for new users, 3 = Everything, 2 = Sounds Only, 1 = Music Only, 0 = Nothing");
   AssLogger(LOGLVL_INFO, "####### STARTUP COMPLETE (v%s) #######", PLUGIN_VERSION);
   CreateTimer(15.0, StatsTracker);
-}
-
-//Begin executing IO when ready
-public void OnFastFire2Ready(){
   AudioManager.Reset();
   WeatherManager.Reset();
   CreateTimer(1.0, SelectAdminTimer);
