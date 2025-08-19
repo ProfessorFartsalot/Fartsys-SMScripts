@@ -3,8 +3,8 @@
 enum struct BGM {
   char realPath[64];
   char songName[64];
-  int refireTime;
-  int ticksOffset;
+  float introSeconds;
+  float loopSeconds;
   int SNDLVL;
 }
 BGM BGMArray[48];
@@ -34,66 +34,77 @@ public void SQL_SNDPrefs(Database db, DBResultSet results, const char[] error, i
   if (!IsValidClient(client)) return;
   if (results.FetchRow()) soundPreference[client] = results.FetchInt(0);
 }
-//Music system rewrite for the 6th time. I will never make a change. My code will never mend. Still everything's the same and it all just fades to math.
+//Music system rewrite for the 7th time. I will never make a change. My code will never mend. Still everything's the same and it all just fades to math. Stage 7, Luigi. I don't even know what that is but it's bad!
 enum struct AUDIOMANAGER {
   bool bgmPlaying;
   bool shouldTick;
   bool stopBGM;
-  bool tickBGMOffset;
+  bool hasTimeOffset;
   char cachedPath[128];
   char songName[128];
-  int indexBGM;
-  int refireBGM;
+  float timeSeconds;
+  float loopSeconds;
+  float introSeconds;
   int chanBGM;
-  int ticksBGM;
+  int indexBGM;
+  int loops;
   int VIPBGM;
-  void ChangeBGM(int bgm){
+  /** Gets the engine time, accounting for intro offset seconds **/
+  float engineSecondsAdjusted() {
+    return GetEngineTime() + this.introSeconds;
+  }
+  /** Changes the current music. 
+   * @param bgm - The index of the music to be played
+   * @param instant - True = stops music NOW and changes, False = play current song then change
+  **/
+  void ChangeBGM(int bgm, bool instant) {
+    if (instant) {
+      //this.ticksBGM = -2;
+      this.timeSeconds = 0.0;
+    }
     this.indexBGM = (this.VIPBGM >= 0 ? this.VIPBGM : bgm);
-    this.ticksBGM = -2;
-    this.refireBGM = 2;
     this.shouldTick = true;
-    this.tickBGMOffset = BGMArray[this.indexBGM].ticksOffset > 0 ? true : false;
+    this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
     this.stopBGM = (!StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) ? true : false);
     this.bgmPlaying = true;
-    if (this.indexBGM >= 20) for (int i = 0; i < MaxClients; i++) for (int s = 19; s < bgm; s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
+    //if (this.indexBGM >= 20) for (int i = 0; i < MaxClients; i++) for (int s = 19; s < bgm; s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
   }
   void Reset() {
     this.stopBGM = true;
+    this.loops = 0;
     this.indexBGM = GetRandomInt(1, 4);
-    this.ticksBGM = -2;
-    this.refireBGM = 2;
-    for (int i = 0; i < MaxClients; i++) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
+    this.timeSeconds = 0.0;
+    for (int i = 0; ++i < MaxClients;) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
     AssLogger(LOGLVL_DEBUG, "AudioManager has been reset!");
   }
   void Stop() {
     this.bgmPlaying = false;
+    this.loops = 0;
     this.stopBGM = true;
-    this.ticksBGM = -2;
-    this.refireBGM = 2;
+    this.timeSeconds = 0.0;
     this.shouldTick = false;
   }
   void TickBGM() {
-    this.ticksBGM++;
-    if (this.ticksBGM >= this.refireBGM) {
-      if (this.stopBGM){
-        for (int i = 0; i < MaxClients; ++i) {
+    if (this.engineSecondsAdjusted() > this.timeSeconds + this.loopSeconds) {
+      this.timeSeconds = GetEngineTime();
+      this.loops++;
+      for (int i = 0; ++i < MaxClients;) {
+        if (this.stopBGM) {
           StopSound(i, this.chanBGM, this.cachedPath);
-          this.stopBGM = false;
+          this.loops = 0;
         }
+        //if(core.gamemode > 0 && isClientInEvent(i)) continue;// To test if client is experiencing anything odd.....
+        CSEClient(i, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
       }
+      this.stopBGM = false;
       if (GetClientCount(true) == 0) {
         AssLogger(LOGLVL_INFO, "Server is empty. Music queue stopped.");
         this.indexBGM = GetRandomInt(1, 4);
         this.Stop();
       }
       strcopy(this.songName, sizeof(this.songName), BGMArray[this.indexBGM].songName);
-      this.refireBGM = BGMArray[this.indexBGM].refireTime;
-      this.ticksBGM = (this.tickBGMOffset ? BGMArray[this.indexBGM].ticksOffset : 0);
-      for (int i = 0; i < MaxClients; i++){
-        //if(core.gamemode > 0 && isClientInEvent(i)) continue;// To test if client is experiencing anything odd.....
-        CSEClient(i, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
-      }
-      //CustomSoundEmitter(BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
+      this.introSeconds = this.loops >= 1 ? BGMArray[this.indexBGM].introSeconds : 0.0;
+      this.loopSeconds = BGMArray[this.indexBGM].loopSeconds;
       CreateTimer(1.0, SyncMusic, this.indexBGM);
     }
   }

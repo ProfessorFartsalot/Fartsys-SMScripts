@@ -123,7 +123,7 @@ enum struct BOSSHANDLER {
                         }
                         case 2:{
                             //PrintToChatAll("Recognized 1 -> 2, things are heating up!");
-                            AudioManager.ChangeBGM(22);
+                            AudioManager.ChangeBGM(22, false);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT1x0", 3.00, false);
                             FastFire2("FB.MetalFace.SkeleSpawner", "Enable", "", 0.0, false);
                             FastFire2("FB.MetalFace.SkeleSpawner", "Disable", "", 120.0, false);
@@ -137,7 +137,7 @@ enum struct BOSSHANDLER {
                         }
                         case 3:{
                             //PrintToChatAll("Recognized 2 -> 3, oh boi");
-                            AudioManager.ChangeBGM(24);
+                            AudioManager.ChangeBGM(24, false);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT2x0", 3.00, false);
                             FastFire2("FB.MetalFace.MerasmusSpawner", "ForceSpawn", "", 5.0, false); //Spawn halloween bosses at MetalFace's location
                             FastFire2("FB.MetalFace.MonoculusSpawner", "ForceSpawn", "", 7.0, false); //Spawn halloween bosses at MetalFace's location
@@ -149,7 +149,7 @@ enum struct BOSSHANDLER {
                         }
                         case 4:{
                             //PrintToChatAll("Recognized 3 -> 4, OHSHITOHFUCKOHNO");
-                            AudioManager.ChangeBGM(26);
+                            AudioManager.ChangeBGM(26, true);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT3x0", 3.00, false);
                             FastFire2("FB.MetalFace.GigaBuster", "ForceSpawn", "", 10.0, false);
                         }

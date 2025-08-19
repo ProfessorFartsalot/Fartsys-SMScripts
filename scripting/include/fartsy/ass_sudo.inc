@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.2.0c";
+public char PLUGIN_VERSION[8] = "8.3.0a";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -22,7 +22,7 @@ void sudo(int task) {
       PerformWaveSetup();
       float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
       CreateTimer(hwn, HWBosses);
-      AudioManager.ChangeBGM(core.tacobell ? tacoBellBGMIndex[core.curWave] : DefaultsArray[core.curWave].defBGMIndex);
+      AudioManager.ChangeBGM(core.tacobell ? tacoBellBGMIndex[core.curWave] : DefaultsArray[core.curWave].defBGMIndex, true);
       PrintToChatAll("WARNING, AUDIOMANAGER'S CHANGEBGM FUNCTION IS DEPRECATED IN FAVOR OF THE NEW CONFIGS. FIX THIS IMMEDIATELY.");
       return;
     }
@@ -634,19 +634,19 @@ void sudo(int task) {
   }
   case 421:{
     FastFire2("weather.sky", "Skin", "2", 0.0, false);
-    AudioManager.ChangeBGM(28);
+    AudioManager.ChangeBGM(28, false);
     WeatherManager.fogColorRTarget = 95.0;
     WeatherManager.fogColorGTarget = 35.0;
     WeatherManager.fogColorBTarget = 35.0;
   }
   case 422:{
-    AudioManager.ChangeBGM(29);
+    AudioManager.ChangeBGM(29, false);
   }
   case 423:{
-    AudioManager.ChangeBGM(30);
+    AudioManager.ChangeBGM(30, false);
   }
   case 424:{
-    AudioManager.ChangeBGM(31);
+    AudioManager.ChangeBGM(31, false);
   }
   case 425:{
     for (int i = 0; i < 32; i++) {
@@ -686,9 +686,10 @@ void sudo(int task) {
     AudioManager.indexBGM = 11;
     AudioManager.stopBGM = true;
   }
-  // FINAL Music system rewrite (again) AGAINNNNNNNNNNNN.... and again!
+  // FINAL Music system rewrite (again) AGAINNNNNNNNNNNN.... and again!... and again :p
   case 1000: {
-    AudioManager.ChangeBGM(AudioManager.indexBGM);
+    AudioManager.shouldTick = true;
+    AudioManager.ChangeBGM(AudioManager.indexBGM, true);
   }
   //Stop current song
   case 1001: {
@@ -978,8 +979,8 @@ public Action TimedOperator(Handle timer, int job) {
     //DO THE THING ALREADY
     case 7: {
       core.sephiroth = true;
-      AudioManager.ticksBGM = 0;
-      AudioManager.refireBGM = BGMArray[16].refireTime;
+      //AudioManager.ticksBGM = 0;
+      AudioManager.loopSeconds = BGMArray[16].loopSeconds;
     }
     //Signal boss to actually spawn after delay.
     case 8: {

@@ -629,7 +629,6 @@ void SetupCoreData(){
   core.tacobell = false;
   core.tickingClientHealth = false;
   AudioManager.shouldTick = false;
-  AudioManager.tickBGMOffset = false;
   WeatherManager.TornadoWarning = false;
   AudioManager.cachedPath = "null";
   AudioManager.songName = "null";
@@ -641,11 +640,10 @@ void SetupCoreData(){
   core.curWave = 0;
   core.failsafeCount = 0;
   core.lastAdmin = 0;
-  AudioManager.refireBGM = 0;
+  AudioManager.loopSeconds = 0.0;
   core.sacPoints = 0;
   core.sacPointsMax = 60;
   AudioManager.chanBGM = 6;
-  AudioManager.ticksBGM = 0;
   AudioManager.VIPBGM = -1;
   core.VIPIndex = 0;
   core.waveFlags = 0;
@@ -757,6 +755,7 @@ void SetupCoreData(){
     if (IsEndOfFile(confCoreData)) break;
   }
   AssLogger(1, "[CORE] Setting up Wave Defaults...");
+  PrintToServer("confCoreData returned %s", OVERRIDE_AND_GET_COREDATA());
   confCoreData = OpenFile(OVERRIDE_AND_GET_COREDATA(), "rt", false);
   int defIndexHW, defIndexTornado, defIndexBGM, defIndexBS, defIndexBSM, defIndexSPM; // Start at 0 because we don't have a wave 0
   if(confCoreData == INVALID_HANDLE) return;
@@ -1056,29 +1055,29 @@ void RegisterAndPrecacheAllFiles(){
   int sfxIndex = -1;
   if(confBGM == INVALID_HANDLE) return;
   if(confSFX == INVALID_HANDLE) return;
-  while (ReadFileLine(confBGM, bufferBGM, sizeof(bufferBGM))){
+  while (ReadFileLine(confBGM, bufferBGM, sizeof(bufferBGM))) {
     TrimString(bufferBGM);
-    if (!StrContains(bufferBGM, "Path:")){
+    if (!StrContains(bufferBGM, "Path:")) {
       bgmIndex++;
       ReplaceString(bufferBGM, sizeof(bufferBGM), "Path:", "", true);
       Format(BGMArray[bgmIndex].realPath, 64, bufferBGM);
     }
-    else if (!StrContains(bufferBGM, "Title:")){
+    else if (!StrContains(bufferBGM, "Title:")) {
       bgmNameIndex++;
       ReplaceString(bufferBGM, sizeof(bufferBGM), "Title:", "", true);
       Format(BGMArray[bgmNameIndex].songName, 128, bufferBGM);
     }
-    else if (!StrContains(bufferBGM, "RefireTime:")){
+    else if (!StrContains(bufferBGM, "LoopSeconds:")) {
       bgmRefire++;
-      ReplaceString(bufferBGM, sizeof(bufferBGM), "RefireTime:", "", true);
-      BGMArray[bgmRefire].refireTime = StringToInt(bufferBGM);
+      ReplaceString(bufferBGM, sizeof(bufferBGM), "LoopSeconds:", "", true);
+      BGMArray[bgmRefire].loopSeconds = StringToFloat(bufferBGM);
     }
-    else if (!StrContains(bufferBGM, "OffsetTicks:")){
+    else if (!StrContains(bufferBGM, "IntroSeconds:")) {
       bgmOffset++;
-      ReplaceString(bufferBGM, sizeof(bufferBGM), "OffsetTicks:", "", true);
-      BGMArray[bgmOffset].ticksOffset = StringToInt(bufferBGM);
+      ReplaceString(bufferBGM, sizeof(bufferBGM), "IntroSeconds:", "", true);
+      BGMArray[bgmOffset].introSeconds = StringToFloat(bufferBGM);
     }
-    else if (!StrContains(bufferBGM, "Volume:")){
+    else if (!StrContains(bufferBGM, "Volume:")) {
       bgmVol++;
       ReplaceString(bufferBGM, sizeof(bufferBGM), "Volume:", "", true);
       BGMArray[bgmVol].SNDLVL = StringToInt(bufferBGM);
@@ -1086,10 +1085,10 @@ void RegisterAndPrecacheAllFiles(){
     if (IsEndOfFile(confBGM)) break;
   }
   PrintToServer("Precaching BGMs...");
-  if(confBGM != INVALID_HANDLE){
+  if(confBGM != INVALID_HANDLE) {
 		CloseHandle(confBGM);
 	}
-  while (ReadFileLine(confSFX, bufferSFX, sizeof(bufferSFX))){
+  while (ReadFileLine(confSFX, bufferSFX, sizeof(bufferSFX))) {
     TrimString(bufferSFX);
     if (!StrContains(bufferSFX, "Path:")){
       sfxIndex++;
@@ -1103,7 +1102,7 @@ void RegisterAndPrecacheAllFiles(){
 	}
   for (int i = 1; i < sizeof(BGMArray); i++){ //We start at index 1 because index 0 is used for restoring default bgm in the VIP music menu...
    if(!StrEqual(BGMArray[i].realPath, "")){ 
-    AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %i ticks, Start Loop Point %i ticks, Volume %i   @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].refireTime, BGMArray[i].ticksOffset, BGMArray[i].SNDLVL, i);
+    AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %f seconds, Start Loop Point %i seconds, Volume %i   @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].loopSeconds, BGMArray[i].introSeconds, BGMArray[i].SNDLVL, i);
     PrecacheSound(BGMArray[i].realPath, true);
    }
   }
@@ -1119,8 +1118,7 @@ void RegisterAndPrecacheAllFiles(){
 //Used to keep StopSound from stopping the music we're trying to play - now with support for loop offsets!
 public Action SyncMusic(Handle timer, int index) {
   AudioManager.cachedPath = BGMArray[index].realPath;
-  AudioManager.tickBGMOffset = (BGMArray[index].ticksOffset > 0 ? true : false);
-  AssLogger(LOGLVL_INFO, "We are on wave %i, now playing: %s (from %s) for %i ticks. It will start looping at %i ticks.", core.curWave, AudioManager.songName, BGMArray[index].realPath, AudioManager.refireBGM, BGMArray[index].ticksOffset);
+  AssLogger(LOGLVL_INFO, "We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping in %f seconds.", core.curWave, AudioManager.songName, BGMArray[index].realPath, AudioManager.loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }
 
@@ -1539,8 +1537,9 @@ public Action PerformWaveAdverts(Handle timer) {
     int emnity;
     char tbuffer[16];
     char HintText[256];
-    int sPos = RoundToFloor(AudioManager.ticksBGM / 66.6666666666);
-    int tPos = RoundToFloor(AudioManager.refireBGM / 66.6666666666);
+    //int sPos = RoundToFloor((AudioManager.timeSeconds() / (GetEngineTime() + AudioManager.loopSeconds)) * AudioManager.loopSeconds);
+    int sPos = RoundToFloor(AudioManager.engineSecondsAdjusted() - AudioManager.timeSeconds);
+    int tPos = RoundToFloor(AudioManager.loopSeconds);
     Format(buffer, 16, "%02d:%02d", sPos / 60, sPos % 60);
     Format(tbuffer, 16, "%02d:%02d", tPos / 60, tPos % 60);
     Format(HintText, sizeof(HintText), (bombState[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : bombState[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)"), bombState[0].state, bombState[0].stateMax, core.sacPoints, core.sacPointsMax, AudioManager.songName, buffer, tbuffer);
@@ -1750,7 +1749,7 @@ public void OnClientPostAdminCheck(int client) {
       CreateTimer(1.0, TickClientHealth);
       core.tickingClientHealth = true;
     }
-    if (!AudioManager.bgmPlaying) AudioManager.ChangeBGM(GetRandomInt(1, 4));
+    if (!AudioManager.bgmPlaying) AudioManager.ChangeBGM(GetRandomInt(1, 4), true);
     char query[1024];
     Format(query, sizeof(query), "INSERT INTO ass_activity (name, steamid, date, damagedealtsession, killssession, deathssession, bombsresetsession, sacrificessession) VALUES ('%N', %d, CURRENT_DATE, 0, 0, 0, 0, 0) ON DUPLICATE KEY UPDATE name = '%N', date = CURRENT_DATE, damagedealtsession = 0, killssession = 0, deathssession = 0, bombsresetsession = 0, sacrificessession = 0;", client, steamID, client);
     Ass_Database.Query(Database_FastQuery, query);

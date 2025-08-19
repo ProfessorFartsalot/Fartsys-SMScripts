@@ -30,7 +30,7 @@ public Action StatsTracker(Handle timer) {
   FastFire2("FBMetric.TimeHH", "SetTextureIndex", hour, 0.0, false);
   FastFire2("FBMetric.TimeMM", "SetTextureIndex", minute, 0.0, false);
   FastFire2("FBMetric.TimeAMPM", "SetTextureIndex", ampm, 0.0, false);
-  PrintToChatAll("Current time is %s:%s %s", hour, minute, StringToInt(ampm) == 0 ? "AM" : "PM");
+  //PrintToChatAll("Current time is %s:%s %s", hour, minute, StringToInt(ampm) == 0 ? "AM" : "PM");
   CreateTimer(15.0, StatsTracker);
   if (!Get_Ass_Database()) return Plugin_Stop;
   char query[512];
