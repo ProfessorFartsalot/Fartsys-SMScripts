@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.4.0";
+public char PLUGIN_VERSION[8] = "8.4.1";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -892,6 +892,14 @@ void sudo(int task) {
   }
   case 20000:{
     BossHandler.EmitSpawnSound(2);
+  }
+  case 21000:{
+    int i = FindTarget(0, "Professor", true, false);
+    AudioManager[i].EnterEventMode(30);
+  }
+  case 22000:{
+    int i = FindTarget(0, "Professor", true, false);
+    AudioManager[i].ExitEventMode();
   }
   // WAVE NULL Init
   case 40000: {

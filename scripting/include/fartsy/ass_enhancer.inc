@@ -1,5 +1,5 @@
 //Fartsy's Scene Enhancer (Inspired by Mrbt0907/Weather2Remastered)
-char FSE_VER[8] = "2.0.0";
+char FSE_VER[8] = "2.1.0";
 //All background music
 enum struct BGM {
   char realPath[64];
@@ -55,11 +55,16 @@ enum struct AUDIOMANAGER {
   char cachedPath[128];
   char songName[128];
   float timeSeconds;
+  float savedTimeSeconds;
   float loopSeconds;
+  float savedLoopSeconds;
   float introSeconds;
+  float savedIntroSeconds;
   int Client;
+  int savedIndexBGM;
   int indexBGM;
   int loops;
+  int savedLoops;
   int VIPBGM;
   bool isEventMode() {
     return this.EventMode;
@@ -73,13 +78,39 @@ enum struct AUDIOMANAGER {
    * @param instant - True = stops music NOW and changes, False = play current song then change
   **/
   void ChangeBGM(int bgm, bool instant) {
+    this.indexBGM = this.VIPBGM > 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
+    PrintToChatAll("%i = %i >=0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
     if (instant) { this.timeSeconds = GetEngineTime() - this.loopSeconds; }
-    this.indexBGM = this.VIPBGM >= 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
     this.shouldTick = true;
     this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
-    this.stopBGM = !StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) ? true : false;
+    this.stopBGM = !StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) && !this.EventMode ? true : false;
     this.bgmPlaying = true;
+    CreateTimer(1.0, SyncMusic, this.Client);
     //if (this.indexBGM >= 20) for (int i = 0; i < MaxClients; i++) for (int s = 19; s < bgm; s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
+  }
+  void EnterEventMode(int bgm) {
+    PrintToChat(this.Client, "Saving %i for you", this.indexBGM);
+    this.savedIndexBGM = this.indexBGM;
+    this.savedTimeSeconds = this.timeSeconds;
+    this.savedLoopSeconds = this.loopSeconds;
+    this.savedIntroSeconds = this.introSeconds;
+    this.savedLoops = this.loops;
+    this.EventMode = true;
+    CSEClient(this.Client, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 0.05, 100);
+    this.ChangeBGM(bgm, true);
+    PrintToServer("[AudioManager] Entering event mode with song %s", BGMArray[bgm].songName);
+  }
+  void ExitEventMode() {
+    StopSound(this.Client, g_chanBGM, BGMArray[this.indexBGM].realPath);
+    this.indexBGM = this.savedIndexBGM;
+    this.loops = this.savedLoops;
+    this.introSeconds = this.savedIntroSeconds;
+    this.loopSeconds = this.savedLoopSeconds;
+    this.timeSeconds = this.savedTimeSeconds;
+    CSEClient(this.Client, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
+    this.EventMode = false;
+    CreateTimer(1.0, SyncMusic, this.Client);
+    PrintToServer("[AudioManager] Exiting event mode with song %s", BGMArray[this.indexBGM].songName);
   }
   void Reset() {
     this.stopBGM = true;
@@ -105,6 +136,15 @@ enum struct AUDIOMANAGER {
       this.Stop();
       return;
     }
+    if (this.EventMode) {
+      if (this.savedIndexBGM != g_indexBGM && this.VIPBGM <= 0) this.savedIndexBGM = g_indexBGM;
+      if (this.engineSecondsAdjusted() > this.savedTimeSeconds + this.savedLoopSeconds) {
+        this.savedTimeSeconds = GetEngineTime();
+        this.savedLoops++;
+        this.savedIntroSeconds = this.savedLoops >= 1 ? BGMArray[this.savedIndexBGM].introSeconds : 0.0;
+        this.savedLoopSeconds = BGMArray[this.savedIndexBGM].loopSeconds;
+      }
+    }
     if (this.indexBGM == 0) this.indexBGM = g_indexBGM;
     if (this.engineSecondsAdjusted() > this.timeSeconds + this.loopSeconds) {
       this.timeSeconds = GetEngineTime();
@@ -118,7 +158,6 @@ enum struct AUDIOMANAGER {
       strcopy(this.songName, sizeof(this.songName), BGMArray[this.indexBGM].songName);
       this.introSeconds = this.loops >= 1 ? BGMArray[this.indexBGM].introSeconds : 0.0;
       this.loopSeconds = BGMArray[this.indexBGM].loopSeconds;
-      CreateTimer(1.0, SyncMusic, this.Client);
     }
   }
   /**When a client joins the server, set this audio manager to theirs */
