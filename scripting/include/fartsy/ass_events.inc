@@ -12,6 +12,7 @@ public void OnClientDisconnect(int client) {
   GetClientInfo(client, "name", clientName, 128);
   Format(query, sizeof(query), "INSERT INTO ass_activity (name, steamid, date, seconds) VALUES ('%s', %d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE name = '%s', seconds = seconds + VALUES(seconds);", clientName, steamID, GetClientMapTime(client), clientName);
   Ass_Database.Query(Database_FastQuery, query);
+  if (GetClientCount(false) == 0) { CreateTimer(600.0, TimedOperator, 99999);}
 }
 //Check who spawned and log their class
 public Action EventSpawn(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {

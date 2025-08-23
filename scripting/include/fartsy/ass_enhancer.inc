@@ -62,7 +62,7 @@ enum struct AUDIOMANAGER {
       //this.ticksBGM = -2;
       this.timeSeconds = 0.0;
     }
-    this.indexBGM = (this.VIPBGM >= 0 ? this.VIPBGM : bgm);
+    this.indexBGM = (this.VIPBGM >= 0 ? this.VIPBGM : bgm == 0 ? GetRandomInt(1,4) : bgm);
     this.shouldTick = true;
     this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
     this.stopBGM = (!StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) ? true : false);
@@ -74,7 +74,7 @@ enum struct AUDIOMANAGER {
     this.loops = 0;
     this.indexBGM = GetRandomInt(1, 4);
     this.timeSeconds = 0.0;
-    for (int i = 0; ++i < MaxClients;) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
+    for (int i = 0; ++i < MaxClients;) if (IsValidClient(i)) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
     AssLogger(LOGLVL_DEBUG, "AudioManager has been reset!");
   }
   void Stop() {

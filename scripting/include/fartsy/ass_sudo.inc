@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.3.0b";
+public char PLUGIN_VERSION[8] = "8.3.0c";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -14,6 +14,10 @@ void sudo(int task) {
       CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}PROFESSOR'S ASS {white}v0x22 (Core-v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", PLUGIN_VERSION);
       FastFire2("rain", "Alpha", "0", 0.0, false);
       UpdateGamemode();
+      PrintToChatAll("%i", core.gamemode);
+      if (core.gamemode == 2) {
+        PrintToChatAll("UH OH");
+      }
     }
     //Wave init
     case 2: {
@@ -895,6 +899,25 @@ void sudo(int task) {
   case 20000:{
     BossHandler.EmitSpawnSound(2);
   }
+  // WAVE NULL Init
+  case 40000: {
+    UpdateGamemode();
+    if (core.gamemode != 2) return;
+    CPrintToChatAll("{fartsyred} [WARNING]: YOU HAVE CHOSEN TO LAUNCH WAVE NULL.");
+    CPrintToChatAll("{fartsyred} [WARNING]: SHOULD YOU FAIL THIS WAVE, YOU *WILL* BE RESTARTING FROM THE VERY BEGINNING WITH NO UPGRADES.");
+    CPrintToChatAll("{fartsyred} [WARNING]: THE FATE OF THIS SERVER IS IN YOUR HANDS. DO. NOT. FAIL.");
+  }
+  // WAVE NULL started!
+  case 40001: {
+    UpdateGamemode();
+    if (core.gamemode != 2) return;
+    core.curWave = GetCurWave();
+    PerformWaveSetup();
+    float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
+    CreateTimer(hwn, HWBosses);
+    AudioManager.ChangeBGM(27, true);
+    return;
+  }
   case 42690:{
     BossHandler.bossID = 69;
     BossHandler.shouldTick = true;
@@ -1186,6 +1209,13 @@ public Action TimedOperator(Handle timer, int job) {
       ServerCommand("sv_cheats 0");
       EmitSoundToAll("fartsy/music/tcmusic/humanhypothesis.wav");
       return Plugin_Stop;
+    }
+    case 51000:{
+
+    }
+    case 99999:{
+      AssLogger(LOGLVL_INFO, "Server empty for 600s, restarting!");
+      ServerCommand("_restart");
     }
     }
     return Plugin_Stop;

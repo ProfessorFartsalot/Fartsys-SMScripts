@@ -1784,7 +1784,7 @@ void SendHudTextAll(int channel, const char[] text, float posX, float posY, floa
 // WIPE MECHANIC - If all players  die, the wave fails.
 void TickBodyCheck() {
   int alive = 0;
-  for (int i = 1; i <= MaxClients; i++) if (IsPlayerAlive(i) && GetClientTeam(i) == 2) alive++;
+  for (int i = 1; i <= MaxClients; i++) if (IsValidClient(i)) if(IsPlayerAlive(i) && GetClientTeam(i) == 2) alive++;
   if (alive == 0) {
     CPrintToChatAll("{red}You've all died! Are you happy?");
     FastFire2("bots_win", "roundwin", "", 0.0, false);
