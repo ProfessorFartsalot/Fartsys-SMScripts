@@ -608,7 +608,6 @@ void SetupCoreData(){
   bombState[3].shouldFreezeBots = true;
   bombState[0].state = 0;
   bombState[0].stateMax = 0;
-  AudioManager.bgmPlaying = false;
   core.bombReset = false;
   core.brawler_emergency = false;
   core.canCrusaderNuke = false;
@@ -625,14 +624,9 @@ void SetupCoreData(){
   core.monitorColor = true;
   core.sacrificedByClient = false;
   core.sephiroth = false;
-  AudioManager.stopBGM = false;
   core.tacobell = false;
   core.tickingClientHealth = false;
-  AudioManager.shouldTick = false;
   WeatherManager.TornadoWarning = false;
-  AudioManager.cachedPath = "null";
-  AudioManager.songName = "null";
-  AudioManager.indexBGM = 1;
   core.FailedCount = 0;
   core.INCOMINGDISPLAYED = 0;
   core.camSel = 0;
@@ -640,15 +634,13 @@ void SetupCoreData(){
   core.curWave = 0;
   core.failsafeCount = 0;
   core.lastAdmin = 0;
-  AudioManager.loopSeconds = 0.0;
   core.sacPoints = 0;
   core.sacPointsMax = 60;
-  AudioManager.chanBGM = 6;
-  AudioManager.VIPBGM = -1;
   core.VIPIndex = 0;
   core.waveFlags = 0;
   core.HWNMin = 210.0;
   core.HWNMax = 380.0;
+  GlobalAudio.init();
   AssLogger(1, "Setting up bosses...");
   HWBoss[0].index = 0;
   HWBoss[0].fireCount = 2;
@@ -1116,9 +1108,10 @@ void RegisterAndPrecacheAllFiles(){
 }
 
 //Used to keep StopSound from stopping the music we're trying to play - now with support for loop offsets!
-public Action SyncMusic(Handle timer, int index) {
-  AudioManager.cachedPath = BGMArray[index].realPath;
-  AssLogger(LOGLVL_INFO, "We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping in %f seconds.", core.curWave, AudioManager.songName, BGMArray[index].realPath, AudioManager.loopSeconds, BGMArray[index].introSeconds);
+public Action SyncMusic(Handle timer, int client) {
+  int index = AudioManager[client].indexBGM;
+  AudioManager[client].cachedPath = BGMArray[index].realPath;
+  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping in %f seconds.", client, core.curWave, BGMArray[index].songName, BGMArray[index].realPath, BGMArray[index].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }
 
@@ -1380,10 +1373,10 @@ public int MenuHandlerFartsyMusic(Menu menu, MenuAction action, int client, int 
   if (action == MenuAction_Select) {
     int cWave = GetCurWave();
     CPrintToChat(client, (bgm == 0 ? "{darkgreen}[CORE] Confirmed. Next song set to {aqua}Default{darkgreen}." : "{limegreen}[CORE] Confirmed. Next song set to {aqua}%s{limegreen}."), BGMArray[bgm].songName);
-    AudioManager.indexBGM = (bgm == 0 ? (core.tacobell ? tacoBellBGMIndex[cWave] : core.sephiroth ? 16 : core.isWave ? DefaultsArray[cWave].defBGMIndex : GetRandomInt(1, 4)) : bgm);
-    AudioManager.stopBGM = (!StrEqual(AudioManager.cachedPath, BGMArray[bgm].realPath) ? true : false);
-    AudioManager.VIPBGM = (bgm == 0 ? -1 : bgm);
-    core.VIPIndex = client;
+    GlobalAudio.VIPBGM = (bgm == 0 ? -1 : bgm);
+    GlobalAudio.setBGM(bgm == 0 ? (core.tacobell ? tacoBellBGMIndex[cWave] : core.sephiroth ? 16 : core.isWave ? DefaultsArray[cWave].defBGMIndex : GetRandomInt(1, 4)) : bgm, false);
+    for (int i = 0; i < MaxClients; ++i) AudioManager[i].stopBGM = (!StrEqual(AudioManager[i].cachedPath, BGMArray[bgm].realPath) ? true : false);
+    GlobalAudio.VIPIndex = client;
   } else if (action == MenuAction_End) CloseHandle(menu);
   return 0;
 }
@@ -1538,13 +1531,13 @@ public Action PerformWaveAdverts(Handle timer) {
     char tbuffer[16];
     char HintText[256];
     //int sPos = RoundToFloor((AudioManager.timeSeconds() / (GetEngineTime() + AudioManager.loopSeconds)) * AudioManager.loopSeconds);
-    int sPos = RoundToFloor(AudioManager.engineSecondsAdjusted() - AudioManager.timeSeconds);
-    int tPos = RoundToFloor(AudioManager.loopSeconds);
-    Format(buffer, 16, "%02d:%02d", sPos / 60, sPos % 60);
-    Format(tbuffer, 16, "%02d:%02d", tPos / 60, tPos % 60);
-    Format(HintText, sizeof(HintText), (bombState[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : bombState[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)"), bombState[0].state, bombState[0].stateMax, core.sacPoints, core.sacPointsMax, AudioManager.songName, buffer, tbuffer);
     for (int i = 0; i <= MaxClients; ++i) { //might need to be i++??
       if (IsValidClient(i)) {
+        int sPos = RoundToFloor(AudioManager[i].engineSecondsAdjusted() - AudioManager[i].timeSeconds);
+        int tPos = RoundToFloor(AudioManager[i].loopSeconds);
+        Format(buffer, 16, "%02d:%02d", sPos / 60, sPos % 60);
+        Format(tbuffer, 16, "%02d:%02d", tPos / 60, tPos % 60);
+        Format(HintText, sizeof(HintText), (bombState[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : bombState[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)"), bombState[0].state, bombState[0].stateMax, core.sacPoints, core.sacPointsMax, AudioManager[i].songName, buffer, tbuffer);
         emnity = EmnityManager[i].getClientEmnity();
         PrintHintText(i, (WeatherManager.TornadoWarning ? "%s \n\n[TORNADO WARNING]" : "%s\n\nEmnity: %i٪"), HintText, emnity >= 0 ? emnity : 0);
         StopSound(i, SNDCHAN_STATIC, "UI/hint.wav");
@@ -1737,7 +1730,6 @@ public Action SacrificePointsTimer(Handle timer) {
 }
 //Queue music for new clients, also track their stats.
 public void OnClientPostAdminCheck(int client) {
-  if (!IsFakeClient(client) && AudioManager.bgmPlaying) CreateTimer(1.0, RefireMusicForClient, client);
   int steamID = GetSteamAccountID(client);
   if (!steamID || steamID <= 10000) return;
   else {
@@ -1749,7 +1741,7 @@ public void OnClientPostAdminCheck(int client) {
       CreateTimer(1.0, TickClientHealth);
       core.tickingClientHealth = true;
     }
-    if (!AudioManager.bgmPlaying) AudioManager.ChangeBGM(GetRandomInt(1, 4), true);
+    if(!IsFakeClient(client)) AudioManager[client].OnClientConnected(client);
     char query[1024];
     Format(query, sizeof(query), "INSERT INTO ass_activity (name, steamid, date, damagedealtsession, killssession, deathssession, bombsresetsession, sacrificessession) VALUES ('%N', %d, CURRENT_DATE, 0, 0, 0, 0, 0) ON DUPLICATE KEY UPDATE name = '%N', date = CURRENT_DATE, damagedealtsession = 0, killssession = 0, deathssession = 0, bombsresetsession = 0, sacrificessession = 0;", client, steamID, client);
     Ass_Database.Query(Database_FastQuery, query);

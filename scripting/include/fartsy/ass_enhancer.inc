@@ -1,4 +1,5 @@
-//Fartsy's Scene Enhancer v1.0.0 (Inspired by Mrbt0907/Weather2Remastered)
+//Fartsy's Scene Enhancer (Inspired by Mrbt0907/Weather2Remastered)
+char FSE_VER[8] = "2.0.0";
 //All background music
 enum struct BGM {
   char realPath[64];
@@ -15,6 +16,7 @@ enum struct SFXARRAY {
   int SNDLVL;
 }
 SFXARRAY SFXArray[127];
+
 //Sound preference menu
 char sndPrefs[][128] = {
   "Sounds are currently DISABLED.",
@@ -25,6 +27,7 @@ char sndPrefs[][128] = {
 };
 Handle cvarSNDDefault = INVALID_HANDLE;
 int soundPreference[MAXPLAYERS + 1];
+
 //Get client sound prefs
 public void SQL_SNDPrefs(Database db, DBResultSet results, const char[] error, int client) {
   if (!results) {
@@ -34,21 +37,33 @@ public void SQL_SNDPrefs(Database db, DBResultSet results, const char[] error, i
   if (!IsValidClient(client)) return;
   if (results.FetchRow()) soundPreference[client] = results.FetchInt(0);
 }
-//Music system rewrite for the 7th time. I will never make a change. My code will never mend. Still everything's the same and it all just fades to math. Stage 7, Luigi. I don't even know what that is but it's bad!
+
+//Music system rewrite for the 8th time. I will never make a change. My code will never mend. Still everything's the same and it all just fades to math. Stage 7, Luigi. I don't even know what that is but it's bad!
+/**I have rewritten this stupid thing 8 times now. It now exists in its final form. 
+ * This is the audio manager. It plays music. It plays music PER CLIENT. It is good at playing MUSIC.
+ * It syncs music. It tracks the EXACT MILLISECOND POSITION of the currently playing song.
+*/
+int g_chanBGM;
+int g_indexBGM;
 enum struct AUDIOMANAGER {
   bool bgmPlaying;
+  bool EventMode;
   bool shouldTick;
   bool stopBGM;
   bool hasTimeOffset;
+  bool clientIsFresh;
   char cachedPath[128];
   char songName[128];
   float timeSeconds;
   float loopSeconds;
   float introSeconds;
-  int chanBGM;
+  int Client;
   int indexBGM;
   int loops;
   int VIPBGM;
+  bool isEventMode() {
+    return this.EventMode;
+  }
   /** Gets the engine time, accounting for intro offset seconds **/
   float engineSecondsAdjusted() {
     return GetEngineTime() + this.introSeconds;
@@ -60,9 +75,9 @@ enum struct AUDIOMANAGER {
   void ChangeBGM(int bgm, bool instant) {
     if (instant) {
       //this.ticksBGM = -2;
-      this.timeSeconds = 0.0;
+      this.timeSeconds = GetEngineTime() - this.loopSeconds;
     }
-    this.indexBGM = (this.VIPBGM >= 0 ? this.VIPBGM : bgm == 0 ? GetRandomInt(1,4) : bgm);
+    this.indexBGM = (this.VIPBGM >= 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm);
     this.shouldTick = true;
     this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
     this.stopBGM = (!StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) ? true : false);
@@ -72,44 +87,118 @@ enum struct AUDIOMANAGER {
   void Reset() {
     this.stopBGM = true;
     this.loops = 0;
-    this.indexBGM = GetRandomInt(1, 4);
+    this.indexBGM = 0;
     this.timeSeconds = 0.0;
-    for (int i = 0; ++i < MaxClients;) if (IsValidClient(i)) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
+    if (IsValidClient(this.Client)) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(this.Client, g_chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
     AssLogger(LOGLVL_DEBUG, "AudioManager has been reset!");
+  }
+  void SetInEvent(bool inEvent){
+    this.EventMode = inEvent;
   }
   void Stop() {
     this.bgmPlaying = false;
+    this.indexBGM = 0;
     this.loops = 0;
     this.stopBGM = true;
     this.timeSeconds = 0.0;
     this.shouldTick = false;
   }
   void TickBGM() {
+    if (!IsValidClient(this.Client)) {
+      this.Stop();
+      return;
+    }
+    if (this.indexBGM == 0) this.indexBGM = g_indexBGM;
     if (this.engineSecondsAdjusted() > this.timeSeconds + this.loopSeconds) {
       this.timeSeconds = GetEngineTime();
       this.loops++;
-      for (int i = 0; ++i < MaxClients;) {
-        if (this.stopBGM) {
-          StopSound(i, this.chanBGM, this.cachedPath);
-          this.loops = 0;
-        }
-        //if(core.gamemode > 0 && isClientInEvent(i)) continue;// To test if client is experiencing anything odd.....
-        CSEClient(i, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
+      if (this.stopBGM) {
+        StopSound(this.Client, g_chanBGM, this.cachedPath);
+        this.loops = 0;
       }
       this.stopBGM = false;
-      if (GetClientCount(true) == 0) {
-        AssLogger(LOGLVL_INFO, "Server is empty. Music queue stopped.");
-        this.indexBGM = GetRandomInt(1, 4);
-        this.Stop();
-      }
+      CSEClient(this.Client, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
       strcopy(this.songName, sizeof(this.songName), BGMArray[this.indexBGM].songName);
       this.introSeconds = this.loops >= 1 ? BGMArray[this.indexBGM].introSeconds : 0.0;
       this.loopSeconds = BGMArray[this.indexBGM].loopSeconds;
-      CreateTimer(1.0, SyncMusic, this.indexBGM);
+      CreateTimer(1.0, SyncMusic, this.Client);
+    }
+  }
+  /**When a client joins the server, set this audio manager to theirs */
+  void OnClientConnected(int client) {
+    this.Client = client;
+    this.clientIsFresh = true;
+    PrintToServer("Handling new client: %N", client);
+  }
+  /**When a client respawns */
+  void OnClientRespawned() {
+    if (this.clientIsFresh) {
+      PrintToServer("Client respawned, %N", this.Client);
+      if (soundPreference[this.Client] == 1 || soundPreference[this.Client] == 3) CPrintToChat(this.Client, "[AudioManager v%s] Welcome! We are listening to %s", FSE_VER, BGMArray[g_indexBGM].songName);
+      this.ChangeBGM(g_indexBGM, true);
+      this.clientIsFresh = false;
     }
   }
 }
-AUDIOMANAGER AudioManager;
+AUDIOMANAGER AudioManager[MAXPLAYERS+1];
+
+enum struct AUDIOCONTROLLER {
+  bool shouldTick;
+  int VIPBGM;
+  int VIPIndex;
+  void init() {
+    AssLogger(LOGLVL_INFO, "Initializing Global Audio...");
+    g_chanBGM = 6;
+    for (int i = 0; i < MaxClients; ++i) {
+      AudioManager[i].bgmPlaying = false;
+      AudioManager[i].stopBGM = false;
+      AudioManager[i].shouldTick = false;
+      AudioManager[i].cachedPath = "null";
+      AudioManager[i].songName = "null";
+      AudioManager[i].indexBGM = 0;
+      AudioManager[i].loopSeconds = 0.0;
+      if (IsValidClient(i)){
+        AudioManager[i].Client = i;
+        for (int x = 0; x < sizeof(BGMArray); ++x) StopSound(i, g_chanBGM, BGMArray[x].realPath);
+      }
+      //this.shouldTick = true;
+      //this.UpdateBGM();
+    }
+    g_indexBGM = GetRandomInt(1, 4);
+    this.VIPBGM = -1;
+    this.VIPIndex = -1;
+    this.UpdateBGM();
+    CreateTimer(1.0, EnableAudio);
+  }
+  void Reset(){
+    g_indexBGM = GetGameMode() < 2 ? GetRandomInt(1, 4) : 28;
+    for (int i = 0; i < MaxClients; ++i) AudioManager[i].Reset();
+  }
+  void setBGM(int bgm, bool instant){
+    g_indexBGM = bgm == 0 ? GetRandomInt(1,4) : bgm;
+    for (int i = 0; i < MaxClients; ++i) AudioManager[i].ChangeBGM(bgm, instant);
+  }
+  void Stop(){
+    for (int i = 0; i < MaxClients; ++i) AudioManager[i].Stop();
+  }
+  void Tick(){
+    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i) && AudioManager[i].shouldTick) AudioManager[i].TickBGM();
+  }
+  /** Sets EVERYONE'S BGM in sync! Unless they're in an event... */
+  void UpdateBGM(){
+    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i)) {
+      if (AudioManager[i].isEventMode() || !IsValidClient(i)) continue;
+      AudioManager[i].ChangeBGM(this.VIPBGM > 0 ? this.VIPBGM : AudioManager[i].indexBGM == 0 ? g_indexBGM : AudioManager[i].indexBGM, true);
+      AudioManager[i].shouldTick = true;
+    }
+  }
+}
+AUDIOCONTROLLER GlobalAudio;
+
+public Action EnableAudio(Handle timer){
+  GlobalAudio.shouldTick = true;
+  return Plugin_Stop;
+}
 //Custom sound emitter, I don't know how many fucking times I've rewritten this! See potato.sp
 //int flags:
 //	SND_NOFLAGS= 0,             /**< Nothing */
@@ -124,13 +213,13 @@ AUDIOMANAGER AudioManager;
 void CustomSoundEmitter(char[] sndName, int TSNDLVL, bool isBGM, int flags, float vol, int pitch) {
   for (int i = 1; i <= MaxClients; i++) {
     if (!IsValidClient(i)) continue;
-    if (isBGM && (soundPreference[i] == 1 || soundPreference[i] == 3) || !isBGM && soundPreference[i] >= 2) EmitSoundToClient(i, sndName, _, AudioManager.chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
+    if (isBGM && (soundPreference[i] == 1 || soundPreference[i] == 3) || !isBGM && soundPreference[i] >= 2) EmitSoundToClient(i, sndName, _, g_chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
   }
 }
 //Play sound to client. Ripped straight from potato. Allows us to play sounds directly to people when they join.
 void CSEClient(int client, char[] sndName, int TSNDLVL, bool isBGM, int flags, float vol, int pitch) {
   if (!IsValidClient(client)) return;
-  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, _, AudioManager.chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
+  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, _, g_chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
 }
 //VIP Music Menu
 public Action Command_Music(int client, int args) {
@@ -201,7 +290,7 @@ public int MenuHandlerFartsy(Menu menu, MenuAction action, int param1, int param
 public Action RefireMusicForClient(Handle timer, int client) {
   if (IsValidClient(client)) {
     if (GetClientTeam(client) == 0) CreateTimer(1.0, RefireMusicForClient, client);
-    else if (GetClientTeam(client) == 2) CSEClient(client, BGMArray[AudioManager.indexBGM].realPath, BGMArray[AudioManager.indexBGM].SNDLVL, true, 1, 1.0, 100);
+    else if (GetClientTeam(client) == 2) CSEClient(client, BGMArray[AudioManager[client].indexBGM].realPath, BGMArray[AudioManager[client].indexBGM].SNDLVL, true, 1, 1.0, 100);
   }
   return Plugin_Stop;
 }

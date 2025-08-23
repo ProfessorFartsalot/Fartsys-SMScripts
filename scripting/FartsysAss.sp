@@ -47,7 +47,7 @@ public void OnFastFire2Ready(){
   cvarSNDDefault = CreateConVar("sm_fartsysass_sound", "3", "Default sound for new users, 3 = Everything, 2 = Sounds Only, 1 = Music Only, 0 = Nothing");
   AssLogger(LOGLVL_INFO, "####### STARTUP COMPLETE (v%s) #######", PLUGIN_VERSION);
   CreateTimer(15.0, StatsTracker);
-  AudioManager.Reset();
+  GlobalAudio.Reset();
   WeatherManager.Reset();
   CreateTimer(1.0, SelectAdminTimer);
   sudo(1002);
@@ -56,7 +56,7 @@ public void OnFastFire2Ready(){
 //Process ticks and requests in real time
 public void OnGameFrame() {
   if(WeatherManager.TornadoWarning) WeatherManager.TickSiren();
-  if (AudioManager.shouldTick) AudioManager.TickBGM();
+  if (GlobalAudio.shouldTick) GlobalAudio.Tick();
   if (BossHandler.shouldTick) BossHandler.Tick();
   if (BossHandler.tickBusterNuclear) BossHandler.TickBusterNuclear();
   if (core.gamemode == 2 && core.isWave) TickBodyCheck();

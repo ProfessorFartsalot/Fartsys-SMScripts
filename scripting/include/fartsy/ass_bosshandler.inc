@@ -32,8 +32,8 @@ enum struct BOSSHANDLER {
             //Metallizer (wip) To Do: Only change to Inferno if we're in boss attack range. Use a trigger_multiple for this. To Do, delay this by like 1 second so the DJMM sound can play properly.
             case 2:{
                 sudo(1001);
-                AudioManager.Stop();
-                AudioManager.indexBGM = 20;
+                GlobalAudio.Stop();
+                GlobalAudio.setBGM(20, true);
                 CustomSoundEmitter(SFXArray[106].realPath, 65, false, 0, 1.0, 100); //DJMM SFX
                 CreateTimer(1.5, DelayedMetalFace);
             }
@@ -123,7 +123,7 @@ enum struct BOSSHANDLER {
                         }
                         case 2:{
                             //PrintToChatAll("Recognized 1 -> 2, things are heating up!");
-                            AudioManager.ChangeBGM(22, false);
+                            GlobalAudio.setBGM(22, false);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT1x0", 3.00, false);
                             FastFire2("FB.MetalFace.SkeleSpawner", "Enable", "", 0.0, false);
                             FastFire2("FB.MetalFace.SkeleSpawner", "Disable", "", 120.0, false);
@@ -137,7 +137,7 @@ enum struct BOSSHANDLER {
                         }
                         case 3:{
                             //PrintToChatAll("Recognized 2 -> 3, oh boi");
-                            AudioManager.ChangeBGM(24, false);
+                            GlobalAudio.setBGM(24, false);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT2x0", 3.00, false);
                             FastFire2("FB.MetalFace.MerasmusSpawner", "ForceSpawn", "", 5.0, false); //Spawn halloween bosses at MetalFace's location
                             FastFire2("FB.MetalFace.MonoculusSpawner", "ForceSpawn", "", 7.0, false); //Spawn halloween bosses at MetalFace's location
@@ -149,7 +149,7 @@ enum struct BOSSHANDLER {
                         }
                         case 4:{
                             //PrintToChatAll("Recognized 3 -> 4, OHSHITOHFUCKOHNO");
-                            AudioManager.ChangeBGM(26, true);
+                            GlobalAudio.setBGM(26, true);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT3x0", 3.00, false);
                             FastFire2("FB.MetalFace.GigaBuster", "ForceSpawn", "", 10.0, false);
                         }
@@ -218,7 +218,7 @@ enum struct BOSSHANDLER {
                     CSEClient(i, BGMArray[iBGM0].realPath, BGMArray[iBGM0].SNDLVL, true, 1, 1.0, 100);
                 }
             }
-            AudioManager.indexBGM = iBGM0;
+            GlobalAudio.setBGM(iBGM0, false);
         }
     }
     //Tank buster thing
@@ -592,8 +592,7 @@ public Action ResetTickBuster(Handle time){
 
 //Spawn metal face
 public Action DelayedMetalFace(Handle timer){
-    AudioManager.indexBGM = 20;
-    AudioManager.stopBGM = true;
+    GlobalAudio.setBGM(20, true);
     CustomSoundEmitter(SFXArray[68].realPath, 65, false, 0, 1.0, 100); //Evil Laugh
     CreateTimer(3.2, QueueBossSound, GetRandomInt(10,14));
     sudo(1000);

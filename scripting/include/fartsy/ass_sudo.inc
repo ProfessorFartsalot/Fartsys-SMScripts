@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.3.0c";
+public char PLUGIN_VERSION[8] = "8.4.0";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -9,6 +9,7 @@ void sudo(int task) {
     }
     //Prepare yourself!
     case 1: {
+      GlobalAudio.Reset();
       core.tacobell = false;
       ServerCommand("fb_startmoney 50000");
       CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}PROFESSOR'S ASS {white}v0x22 (Core-v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", PLUGIN_VERSION);
@@ -26,7 +27,7 @@ void sudo(int task) {
       PerformWaveSetup();
       float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
       CreateTimer(hwn, HWBosses);
-      AudioManager.ChangeBGM(core.tacobell ? tacoBellBGMIndex[core.curWave] : DefaultsArray[core.curWave].defBGMIndex, true);
+      GlobalAudio.setBGM(core.tacobell ? tacoBellBGMIndex[core.curWave] : DefaultsArray[core.curWave].defBGMIndex, true);
       PrintToChatAll("WARNING, AUDIOMANAGER'S CHANGEBGM FUNCTION IS DEPRECATED IN FAVOR OF THE NEW CONFIGS. FIX THIS IMMEDIATELY.");
       return;
     }
@@ -591,7 +592,7 @@ void sudo(int task) {
   }
   //Reset Map
   case 300: {
-    AudioManager.Reset();
+    GlobalAudio.Reset();
     BossHandler.shouldTick = false;
     core.Reset();
     for (int i = 0; i < sizeof(EmnityManager); i++) EmnityManager[i].Reset();
@@ -618,17 +619,17 @@ void sudo(int task) {
   }
   //TEMP FUNCTIONS
   case 301: {
-    EmitSoundToAll(BGMArray[5].realPath, _, AudioManager.chanBGM, BGMArray[5].SNDLVL, SND_CHANGEVOL, 0.05, _, _, _, _, _, _);
+    EmitSoundToAll(BGMArray[5].realPath, _, g_chanBGM, BGMArray[5].SNDLVL, SND_CHANGEVOL, 0.05, _, _, _, _, _, _);
   }
   //TEMP FUNCTIONS
   case 302: {
-    EmitSoundToAll(BGMArray[5].realPath, _, AudioManager.chanBGM, BGMArray[5].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
+    EmitSoundToAll(BGMArray[5].realPath, _, g_chanBGM, BGMArray[5].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
   case 304: {
-    EmitSoundToAll(BGMArray[6].realPath, _, AudioManager.chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 0.05, _, _, _, _, _, _);
+    EmitSoundToAll(BGMArray[6].realPath, _, g_chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 0.05, _, _, _, _, _, _);
   }
   case 305: {
-    EmitSoundToAll(BGMArray[6].realPath, _, AudioManager.chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
+    EmitSoundToAll(BGMArray[6].realPath, _, g_chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
   case 420:{ // Init/Reset Wave Null.
     CPrintToChatAll("{red} [CORE] WARNING: Initializing Wave Null... Welcome to a new kind of tension, everything isn't meant to be okay. :')");
@@ -638,19 +639,19 @@ void sudo(int task) {
   }
   case 421:{
     FastFire2("weather.sky", "Skin", "2", 0.0, false);
-    AudioManager.ChangeBGM(28, false);
+    GlobalAudio.setBGM(28, false);
     WeatherManager.fogColorRTarget = 95.0;
     WeatherManager.fogColorGTarget = 35.0;
     WeatherManager.fogColorBTarget = 35.0;
   }
   case 422:{
-    AudioManager.ChangeBGM(29, false);
+    GlobalAudio.setBGM(29, false);
   }
   case 423:{
-    AudioManager.ChangeBGM(30, false);
+    GlobalAudio.setBGM(30, false);
   }
   case 424:{
-    AudioManager.ChangeBGM(31, false);
+    GlobalAudio.setBGM(31, false);
   }
   case 425:{
     for (int i = 0; i < 32; i++) {
@@ -677,29 +678,25 @@ void sudo(int task) {
   }
   //LOOP SYSTEM
   case 500: {
-    AudioManager.indexBGM = 9;
-    AudioManager.stopBGM = true;
+    GlobalAudio.setBGM(9, false);
   }
   case 501: {
-    AudioManager.indexBGM = 10;
-    AudioManager.stopBGM = true;
+    GlobalAudio.setBGM(10, false);
   }
   case 502: {
     PrintToChatAll("Got 502 but not implemented in popfile, please report this to fartsy!");
     PrintToConsoleAll("[CORE] Phase Change started... phase 4!");
-    AudioManager.indexBGM = 11;
-    AudioManager.stopBGM = true;
+    GlobalAudio.setBGM(11, false);
   }
-  // FINAL Music system rewrite (again) AGAINNNNNNNNNNNN.... and again!... and again :p
+  // FINAL Music system rewrite (again) AGAINNNNNNNNNNNN.... and again!... and again :p and again!
   case 1000: {
-    AudioManager.shouldTick = true;
-    AudioManager.ChangeBGM(AudioManager.indexBGM, true);
+    GlobalAudio.UpdateBGM();
   }
   //Stop current song
   case 1001: {
-    if (StrEqual(BGMArray[AudioManager.indexBGM].realPath, "null")) return;
-    for (int i = 1; i <= MaxClients; i++) {
-      StopSound(i, AudioManager.chanBGM, BGMArray[AudioManager.indexBGM].realPath);
+    for (int i = 1; i <= MaxClients; i++){
+      if (StrEqual(BGMArray[AudioManager[i].indexBGM].realPath, "null")) continue;
+      StopSound(i, g_chanBGM, BGMArray[AudioManager[i].indexBGM].realPath);
     }
     return;
   }
@@ -736,7 +733,7 @@ void sudo(int task) {
   }
   //Crusader
   case 1006: {
-    AudioManager.shouldTick = false;
+    GlobalAudio.shouldTick = false;
     sudo(1001);
     core.crusader = true;
     CreateTimer(1.75, CRUSADERINCOMING);
@@ -829,9 +826,6 @@ void sudo(int task) {
   case 9000: {
     CreateTimer(10.0, BossHPTimer);
   }
-  case 9001: {
-    PrintToServer("BGM State is %b", AudioManager.bgmPlaying);
-  }
   case 9010: {
     CustomSoundEmitter(TBGM6, 65, true, 1, 1.0, 100);
     CustomSoundEmitter(TBGM4, 65, true, 1, 0.05, 100);
@@ -915,7 +909,7 @@ void sudo(int task) {
     PerformWaveSetup();
     float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
     CreateTimer(hwn, HWBosses);
-    AudioManager.ChangeBGM(27, true);
+    GlobalAudio.setBGM(29, true);
     return;
   }
   case 42690:{
@@ -962,7 +956,7 @@ public Action CommandOverride(int client, const char[] command, int argc)
 public Action TimedOperator(Handle timer, int job) {
     switch (job) {
     case 0: {
-      CPrintToChatAll(AudioManager.VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", core.curWave, AudioManager.songName, core.VIPIndex);
+      for (int i = 0; i < MaxClients; ++i) CPrintToChat(i, GlobalAudio.VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", core.curWave, AudioManager[i].songName, GlobalAudio.VIPIndex);
     }
     //Boss script
     case 2: {
@@ -971,9 +965,7 @@ public Action TimedOperator(Handle timer, int job) {
     }
     //Boss script pt 2
     case 3: {
-      AudioManager.indexBGM = 16;
-      AudioManager.songName = BGMArray[AudioManager.indexBGM].songName;
-      CustomSoundEmitter(BGMArray[AudioManager.indexBGM].realPath, BGMArray[AudioManager.indexBGM].SNDLVL, true, 0, 1.0, 100);
+      GlobalAudio.setBGM(16, true);
       FastFire2("FB.FadeTotalBLCK", "Fade", "", 0.0, false);
       FastFire2("FB.FadeTotalBLCK", "Fade", "", 3.0, false);
       FastFire2("FB.FadeTotalBLCK", "Fade", "", 7.0, false);
@@ -1003,7 +995,7 @@ public Action TimedOperator(Handle timer, int job) {
     case 7: {
       core.sephiroth = true;
       //AudioManager.ticksBGM = 0;
-      AudioManager.loopSeconds = BGMArray[16].loopSeconds;
+      //AudioManager.loopSeconds = BGMArray[16].loopSeconds;
     }
     //Signal boss to actually spawn after delay.
     case 8: {

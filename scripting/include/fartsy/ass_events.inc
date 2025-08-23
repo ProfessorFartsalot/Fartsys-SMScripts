@@ -1,6 +1,8 @@
 //Sync client stats when they leave
 public void OnClientDisconnect(int client) {
   //Database Ass_Database = Get_Ass_Database();
+  AudioManager[client].Client = -1;
+  PrintToServer("[AudioManager @ %i] Client %N disconnected, shutting down gracefully!", client, client);
   int steamID = GetSteamAccountID(client);
   if (steamID) {
     iDmgHealingTotal -= EmnityManager[client].iDamage;
@@ -19,6 +21,7 @@ public Action EventSpawn(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_
   int client = GetClientOfUserId(Spawn_Event.GetInt("userid"));
   if (IsValidClient(client)) {
     int class = Spawn_Event.GetInt("class");
+    if (class) AudioManager[client].OnClientRespawned();
     int steamID = GetSteamAccountID(client);
     if (!Ass_Database || !steamID || !class) return Plugin_Handled;
     char strClass[32];
