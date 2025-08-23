@@ -910,6 +910,7 @@ void sudo(int task) {
     float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
     CreateTimer(hwn, HWBosses);
     GlobalAudio.setBGM(29, true);
+    PrintToChatAll("index 29 should be sound\\fartsy\\music\\wavenull_intro.mp3, waves should be timed so that the music changes right at the end of this intro.");
     return;
   }
   case 42690:{

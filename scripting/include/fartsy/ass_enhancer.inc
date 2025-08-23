@@ -73,14 +73,11 @@ enum struct AUDIOMANAGER {
    * @param instant - True = stops music NOW and changes, False = play current song then change
   **/
   void ChangeBGM(int bgm, bool instant) {
-    if (instant) {
-      //this.ticksBGM = -2;
-      this.timeSeconds = GetEngineTime() - this.loopSeconds;
-    }
-    this.indexBGM = (this.VIPBGM >= 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm);
+    if (instant) { this.timeSeconds = GetEngineTime() - this.loopSeconds; }
+    this.indexBGM = this.VIPBGM >= 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
     this.shouldTick = true;
     this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
-    this.stopBGM = (!StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) ? true : false);
+    this.stopBGM = !StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) ? true : false;
     this.bgmPlaying = true;
     //if (this.indexBGM >= 20) for (int i = 0; i < MaxClients; i++) for (int s = 19; s < bgm; s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
   }
@@ -89,7 +86,7 @@ enum struct AUDIOMANAGER {
     this.loops = 0;
     this.indexBGM = 0;
     this.timeSeconds = 0.0;
-    if (IsValidClient(this.Client)) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(this.Client, g_chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
+    if (IsValidClient(this.Client)) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(this.Client, g_chanBGM, BGMArray[s].realPath);
     AssLogger(LOGLVL_DEBUG, "AudioManager has been reset!");
   }
   void SetInEvent(bool inEvent){
@@ -128,12 +125,10 @@ enum struct AUDIOMANAGER {
   void OnClientConnected(int client) {
     this.Client = client;
     this.clientIsFresh = true;
-    PrintToServer("Handling new client: %N", client);
   }
   /**When a client respawns */
   void OnClientRespawned() {
     if (this.clientIsFresh) {
-      PrintToServer("Client respawned, %N", this.Client);
       if (soundPreference[this.Client] == 1 || soundPreference[this.Client] == 3) CPrintToChat(this.Client, "[AudioManager v%s] Welcome! We are listening to %s", FSE_VER, BGMArray[g_indexBGM].songName);
       this.ChangeBGM(g_indexBGM, true);
       this.clientIsFresh = false;
@@ -157,12 +152,10 @@ enum struct AUDIOCONTROLLER {
       AudioManager[i].songName = "null";
       AudioManager[i].indexBGM = 0;
       AudioManager[i].loopSeconds = 0.0;
-      if (IsValidClient(i)){
+      if (IsValidClient(i)) {
         AudioManager[i].Client = i;
         for (int x = 0; x < sizeof(BGMArray); ++x) StopSound(i, g_chanBGM, BGMArray[x].realPath);
       }
-      //this.shouldTick = true;
-      //this.UpdateBGM();
     }
     g_indexBGM = GetRandomInt(1, 4);
     this.VIPBGM = -1;
@@ -170,7 +163,7 @@ enum struct AUDIOCONTROLLER {
     this.UpdateBGM();
     CreateTimer(1.0, EnableAudio);
   }
-  void Reset(){
+  void Reset() {
     g_indexBGM = GetGameMode() < 2 ? GetRandomInt(1, 4) : 28;
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].Reset();
   }
@@ -178,14 +171,14 @@ enum struct AUDIOCONTROLLER {
     g_indexBGM = bgm == 0 ? GetRandomInt(1,4) : bgm;
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].ChangeBGM(bgm, instant);
   }
-  void Stop(){
+  void Stop() {
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].Stop();
   }
-  void Tick(){
+  void Tick() {
     for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i) && AudioManager[i].shouldTick) AudioManager[i].TickBGM();
   }
   /** Sets EVERYONE'S BGM in sync! Unless they're in an event... */
-  void UpdateBGM(){
+  void UpdateBGM() {
     for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i)) {
       if (AudioManager[i].isEventMode() || !IsValidClient(i)) continue;
       AudioManager[i].ChangeBGM(this.VIPBGM > 0 ? this.VIPBGM : AudioManager[i].indexBGM == 0 ? g_indexBGM : AudioManager[i].indexBGM, true);
@@ -285,14 +278,6 @@ public int MenuHandlerFartsy(Menu menu, MenuAction action, int param1, int param
     }
   } else if (action == MenuAction_End) CloseHandle(menu);
   return 0;
-}
-//Restart music for the new client
-public Action RefireMusicForClient(Handle timer, int client) {
-  if (IsValidClient(client)) {
-    if (GetClientTeam(client) == 0) CreateTimer(1.0, RefireMusicForClient, client);
-    else if (GetClientTeam(client) == 2) CSEClient(client, BGMArray[AudioManager[client].indexBGM].realPath, BGMArray[AudioManager[client].indexBGM].SNDLVL, true, 1, 1.0, 100);
-  }
-  return Plugin_Stop;
 }
 
 //Light Entities
