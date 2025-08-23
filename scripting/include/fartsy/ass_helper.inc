@@ -1111,7 +1111,8 @@ void RegisterAndPrecacheAllFiles(){
 public Action SyncMusic(Handle timer, int client) {
   int index = AudioManager[client].indexBGM;
   AudioManager[client].cachedPath = BGMArray[index].realPath;
-  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping in %f seconds.", client, core.curWave, BGMArray[index].songName, BGMArray[index].realPath, BGMArray[index].loopSeconds, BGMArray[index].introSeconds);
+  AudioManager[client].songName = BGMArray[index].songName;
+  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, core.curWave, AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }
 
