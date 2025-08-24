@@ -81,11 +81,20 @@ enum struct AUDIOMANAGER {
     this.indexBGM = this.VIPBGM > 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
     PrintToChatAll("%i = %i >=0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
     if (instant) { this.timeSeconds = GetEngineTime() - this.loopSeconds; }
+=======
+    PrintToChatAll("%i = %i > 0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
+    PrintToServer("Set %i for %N", this.indexBGM, this.Client);
+    if (instant) {
+      this.timeSeconds = 0.0;
+      CreateTimer(1.0, SyncMusic, this.Client);
+    }
+    PrintToServer("%f",GetEngineTime());
+>>>>>>> Stashed changes
     this.shouldTick = true;
     this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
     this.stopBGM = !StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) && !this.EventMode ? true : false;
+    PrintToServer(!StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) && !this.EventMode ? "true" : "false");
     this.bgmPlaying = true;
-    CreateTimer(1.0, SyncMusic, this.Client);
     //if (this.indexBGM >= 20) for (int i = 0; i < MaxClients; i++) for (int s = 19; s < bgm; s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
   }
   void EnterEventMode(int bgm) {
@@ -147,9 +156,11 @@ enum struct AUDIOMANAGER {
     }
     if (this.indexBGM == 0) this.indexBGM = g_indexBGM;
     if (this.engineSecondsAdjusted() > this.timeSeconds + this.loopSeconds) {
+      PrintToServer("Playing %i for %N", this.indexBGM, this.Client);
       this.timeSeconds = GetEngineTime();
       this.loops++;
       if (this.stopBGM) {
+        PrintToServer("Stopping %s", this.cachedPath);
         StopSound(this.Client, g_chanBGM, this.cachedPath);
         this.loops = 0;
       }
@@ -158,16 +169,21 @@ enum struct AUDIOMANAGER {
       strcopy(this.songName, sizeof(this.songName), BGMArray[this.indexBGM].songName);
       this.introSeconds = this.loops >= 1 ? BGMArray[this.indexBGM].introSeconds : 0.0;
       this.loopSeconds = BGMArray[this.indexBGM].loopSeconds;
+      CreateTimer(1.0, SyncMusic, this.Client);
     }
   }
   /**When a client joins the server, set this audio manager to theirs */
   void OnClientConnected(int client) {
+    if (!IsValidClient(client) || IsFakeClient(client)) {
+      PrintToServer("Invalid client %N", client);
+      return;
+    }
     this.Client = client;
     this.clientIsFresh = true;
   }
   /**When a client respawns */
   void OnClientRespawned() {
-    if (this.clientIsFresh) {
+    if (this.clientIsFresh && IsValidClient(this.Client)) {
       if (soundPreference[this.Client] == 1 || soundPreference[this.Client] == 3) CPrintToChat(this.Client, "[AudioManager v%s] Welcome! We are listening to %s", FSE_VER, BGMArray[g_indexBGM].songName);
       this.ChangeBGM(g_indexBGM, true);
       this.clientIsFresh = false;
@@ -183,7 +199,7 @@ enum struct AUDIOCONTROLLER {
   void init() {
     AssLogger(LOGLVL_INFO, "Initializing Global Audio...");
     g_chanBGM = 6;
-    for (int i = 0; i < MaxClients; ++i) {
+    for (int i = 1; i < MaxClients; ++i) {
       AudioManager[i].bgmPlaying = false;
       AudioManager[i].stopBGM = false;
       AudioManager[i].shouldTick = false;
@@ -208,7 +224,10 @@ enum struct AUDIOCONTROLLER {
   }
   void setBGM(int bgm, bool instant){
     g_indexBGM = bgm == 0 ? GetRandomInt(1,4) : bgm;
-    for (int i = 0; i < MaxClients; ++i) AudioManager[i].ChangeBGM(bgm, instant);
+    for (int i = 0; i < MaxClients; ++i) if(IsValidClient(i)) {
+      AudioManager[i].ChangeBGM(bgm, instant);
+      PrintToServer("Setting %N's BGM to %i", i, bgm);
+    }
   }
   void Stop() {
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].Stop();
@@ -218,10 +237,15 @@ enum struct AUDIOCONTROLLER {
   }
   /** Sets EVERYONE'S BGM in sync! Unless they're in an event... */
   void UpdateBGM() {
-    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i)) {
-      if (AudioManager[i].isEventMode() || !IsValidClient(i)) continue;
-      AudioManager[i].ChangeBGM(this.VIPBGM > 0 ? this.VIPBGM : AudioManager[i].indexBGM == 0 ? g_indexBGM : AudioManager[i].indexBGM, true);
-      AudioManager[i].shouldTick = true;
+    for (int i = 0; i < MaxClients; ++i) {
+      if (IsValidClient(i)) {
+        if (AudioManager[i].isEventMode() || !IsValidClient(i)) {
+          PrintToServer("Client %N valid? %s Event Mode? %s", i, IsValidClient(i) ? "true" : "false", AudioManager[i].isEventMode() ? "true" : "false");
+          continue;
+        }
+        AudioManager[i].ChangeBGM(this.VIPBGM > 0 ? this.VIPBGM : AudioManager[i].indexBGM == 0 ? g_indexBGM : AudioManager[i].indexBGM, true);
+        AudioManager[i].shouldTick = true;
+      }
     }
   }
 }

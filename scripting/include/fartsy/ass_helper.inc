@@ -80,6 +80,7 @@ enum struct COREDATA {
   int failsafeCount;
   int gamemode;
   int lastAdmin;
+  int nullIndex;
   int refireTime;
   int sacPoints;
   int sacPointsMax;
@@ -634,6 +635,7 @@ void SetupCoreData(){
   core.curWave = 0;
   core.failsafeCount = 0;
   core.lastAdmin = 0;
+  core.nullIndex = 0;
   core.sacPoints = 0;
   core.sacPointsMax = 60;
   core.VIPIndex = 0;
@@ -1110,8 +1112,8 @@ void RegisterAndPrecacheAllFiles(){
 //Used to keep StopSound from stopping the music we're trying to play - now with support for loop offsets!
 public Action SyncMusic(Handle timer, int client) {
   int index = AudioManager[client].indexBGM;
-  AudioManager[client].cachedPath = BGMArray[index].realPath;
-  AudioManager[client].songName = BGMArray[index].songName;
+  StrCopy(AudioManager[client].cachedPath, sizeof(AudioManager[client].cachedPath), BGMArray[index].realPath);
+  StrCopy(AudioManager[client].songName, sizeof(AudioManager[client].songName), BGMArray[index].songName);
   AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, core.curWave, AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }

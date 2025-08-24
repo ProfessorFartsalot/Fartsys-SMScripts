@@ -1,4 +1,4 @@
-public char PLUGIN_VERSION[8] = "8.4.1";
+public char PLUGIN_VERSION[8] = "8.4.2";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -28,7 +28,6 @@ void sudo(int task) {
       float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
       CreateTimer(hwn, HWBosses);
       GlobalAudio.setBGM(core.tacobell ? tacoBellBGMIndex[core.curWave] : DefaultsArray[core.curWave].defBGMIndex, true);
-      PrintToChatAll("WARNING, AUDIOMANAGER'S CHANGEBGM FUNCTION IS DEPRECATED IN FAVOR OF THE NEW CONFIGS. FIX THIS IMMEDIATELY.");
       return;
     }
   //Force Tornado
@@ -191,9 +190,38 @@ void sudo(int task) {
     else bombState[0].state += 2;
     return;
   }
-  //Tank deployed its bomb
+  //Tank deployed its bomb or boss reached hatch
   case 16: {
-    CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}A tank has deployed its bomb! ({limegreen}+1 pt{white})");
+    sudo(18);
+    CPrintToChatAll("{darkviolet}[{fartsyred}CORE{darkviolet}] {white}A tank has deployed its bomb!");
+    return;
+  }
+  case 17 : {
+    sudo(18);
+    CPrintToChatAll("{darkviolet}[{fartsyred}CORE{darkviolet}] {white}A robot has deployed its bomb!");
+    return;
+  }
+  case 18: {
+    if(!core.isWave) {
+      CPrintToChatAll("{fartsyred} PLEASE DO NOT ATTEMPT TO USE OPERATOR 18 WITHOUT A WAVE.");
+      return;
+    }
+    FastFire2("bots_win", "RoundWin", "", 1.0, false);
+    FastFire2("hatch_magnet_pit", "Enable", "", 1.0, false);
+    FastFire2("hatch_explo_kill_players", "Enable", "", 1.0, false);
+    FastFire2("cap_hatch_destroy_animated_prop", "Enable", "", 1.0, false);
+    FastFire2("cap_hatch_destroy_delete_prop", "Kill", "", 1.0, false);
+    FastFire2("end_pit_destroy_particle", "Start", "", 1.0, false);
+    FastFire2("trigger_hurt_hatch_fire", "Enable", "", 1.0, false);
+    FastFire2("cap_hatch_glasswindow", "Break", "", 1.0, false);
+    FastFire2("hatch_explo_kill_players", "Disable", "", 1.50, false);
+    FastFire2("hatch_magnet_pit", "Disable", "", 5.0, false);
+    FastFire2("cap_hatch_destroy_animated_prop", "SetAnimation", "explode", 1.0, false);
+    FastFire2("tank_boss", "DestroyIfAtCapturePoint", "1", 1.0, false);
+    FastFire2("tank_boss", "DestroyIfAtCapturePoint", "2", 1.0, false);
+    FastFire2("tank_boss", "DestroyIfAtCapturePoint", "3", 1.0, false);
+    EmitSoundToAll("MVM.BombExplodes");
+    return;
   }
   //Shark Enable & notify bomb push began
   case 20: {
@@ -632,20 +660,34 @@ void sudo(int task) {
     EmitSoundToAll(BGMArray[6].realPath, _, g_chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
   case 420:{ // Init/Reset Wave Null.
-    CPrintToChatAll("{red} [CORE] WARNING: Initializing Wave Null... Welcome to a new kind of tension, everything isn't meant to be okay. :')");
     UpdateGamemode();
+    if (core.gamemode != 2) return;
+    CPrintToChatAll("{fartsyred} [WARNING]: Initializing Wave Null...");
+    CPrintToChatAll("{fartsyred} [WARNING]: YOU HAVE CHOSEN TO LAUNCH WAVE NULL.");
+    CPrintToChatAll("{fartsyred} [WARNING]: SHOULD YOU FAIL THIS WAVE, YOU *WILL* BE RESTARTING FROM THE VERY BEGINNING WITH NO UPGRADES.");
+    CPrintToChatAll("{fartsyred} [WARNING]: THE FATE OF THIS SERVER IS IN YOUR HANDS. DO. NOT. FAIL.");
     FastFire2("Weather.Sky", "Skin", "3", 0.0, false);
     WeatherManager.fogDensity = 0.1;
   }
   case 421:{
+    UpdateGamemode();
+    if (core.gamemode != 2) return;
+    core.curWave = GetCurWave();
+    PerformWaveSetup();
+    //HandleWaveNull();
+    float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
+    CreateTimer(hwn, HWBosses);
+    PrintToChatAll("playing sound\\fartsy\\music\\wavenull_intro.mp3, waves should be timed so that the music changes right at the end of this intro.");
     FastFire2("weather.sky", "Skin", "2", 0.0, false);
-    GlobalAudio.setBGM(28, false);
+    sudo(1001);
+    EmitSoundToAll("sound/fartsy/music/wavenull_intro.mp3");
     WeatherManager.fogColorRTarget = 95.0;
     WeatherManager.fogColorGTarget = 35.0;
     WeatherManager.fogColorBTarget = 35.0;
   }
   case 422:{
-    GlobalAudio.setBGM(29, false);
+    GlobalAudio.setBGM(28, true);
+    //GlobalAudio.setBGM(29, false);
   }
   case 423:{
     GlobalAudio.setBGM(30, false);
@@ -694,7 +736,7 @@ void sudo(int task) {
   }
   //Stop current song
   case 1001: {
-    for (int i = 1; i <= MaxClients; i++){
+    for (int i = 0; i <= MaxClients; i++) {
       if (StrEqual(BGMArray[AudioManager[i].indexBGM].realPath, "null")) continue;
       StopSound(i, g_chanBGM, BGMArray[AudioManager[i].indexBGM].realPath);
     }
@@ -895,31 +937,11 @@ void sudo(int task) {
   }
   case 21000:{
     int i = FindTarget(0, "Professor", true, false);
-    AudioManager[i].EnterEventMode(30);
+    AudioManager[i].EnterEventMode(29);
   }
   case 22000:{
     int i = FindTarget(0, "Professor", true, false);
     AudioManager[i].ExitEventMode();
-  }
-  // WAVE NULL Init
-  case 40000: {
-    UpdateGamemode();
-    if (core.gamemode != 2) return;
-    CPrintToChatAll("{fartsyred} [WARNING]: YOU HAVE CHOSEN TO LAUNCH WAVE NULL.");
-    CPrintToChatAll("{fartsyred} [WARNING]: SHOULD YOU FAIL THIS WAVE, YOU *WILL* BE RESTARTING FROM THE VERY BEGINNING WITH NO UPGRADES.");
-    CPrintToChatAll("{fartsyred} [WARNING]: THE FATE OF THIS SERVER IS IN YOUR HANDS. DO. NOT. FAIL.");
-  }
-  // WAVE NULL started!
-  case 40001: {
-    UpdateGamemode();
-    if (core.gamemode != 2) return;
-    core.curWave = GetCurWave();
-    PerformWaveSetup();
-    float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
-    CreateTimer(hwn, HWBosses);
-    GlobalAudio.setBGM(29, true);
-    PrintToChatAll("index 29 should be sound\\fartsy\\music\\wavenull_intro.mp3, waves should be timed so that the music changes right at the end of this intro.");
-    return;
   }
   case 42690:{
     BossHandler.bossID = 69;
