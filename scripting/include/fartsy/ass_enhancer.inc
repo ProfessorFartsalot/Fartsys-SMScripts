@@ -86,6 +86,7 @@ enum struct AUDIOMANAGER {
       CreateTimer(1.0, SyncMusic, this.Client);
     }
     PrintToServer("%f",GetEngineTime());
+    if (instant) { this.timeSeconds = GetEngineTime() - this.loopSeconds; }
     this.shouldTick = true;
     this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
     this.stopBGM = !StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) && !this.EventMode ? true : false;
