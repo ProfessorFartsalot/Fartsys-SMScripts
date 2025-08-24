@@ -79,10 +79,6 @@ enum struct AUDIOMANAGER {
   **/
   void ChangeBGM(int bgm, bool instant) {
     this.indexBGM = this.VIPBGM > 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
-<<<<<<< Updated upstream
-    PrintToChatAll("%i = %i >=0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
-    if (instant) { this.timeSeconds = GetEngineTime() - this.loopSeconds; }
-=======
     PrintToChatAll("%i = %i > 0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
     PrintToServer("Set %i for %N", this.indexBGM, this.Client);
     if (instant) {
@@ -90,7 +86,6 @@ enum struct AUDIOMANAGER {
       CreateTimer(1.0, SyncMusic, this.Client);
     }
     PrintToServer("%f",GetEngineTime());
->>>>>>> Stashed changes
     this.shouldTick = true;
     this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
     this.stopBGM = !StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) && !this.EventMode ? true : false;
