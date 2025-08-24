@@ -79,6 +79,7 @@ enum struct AUDIOMANAGER {
   **/
   void ChangeBGM(int bgm, bool instant) {
     this.indexBGM = this.VIPBGM > 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
+<<<<<<< Updated upstream
     PrintToChatAll("%i = %i >=0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
     if (instant) { this.timeSeconds = GetEngineTime() - this.loopSeconds; }
 =======
