@@ -1,4 +1,5 @@
 //ASS_HELPER - Contains the config loaders and all the plugin core data entries as well as some stocks required for base functionality.
+public char PLUGIN_VERSION[8] = "8.5.0";
 //Log debug info
 enum {
   LOGLVL_DEBUG = 0,
@@ -76,9 +77,7 @@ enum struct COREDATA {
   int INCOMINGDISPLAYED;
   int camSel;
   int CodeEntry;
-  int curWave;
   int failsafeCount;
-  int gamemode;
   int lastAdmin;
   int nullIndex;
   int refireTime;
@@ -105,7 +104,7 @@ COREDATA GetCoreData() {
 }
 
 int GetGameMode() {
-  return core.gamemode;
+  return WaveSystem().mode;
 }
 
 Database Ass_Database;
@@ -166,21 +165,21 @@ float CircleAOEpos[][3] = {
   {1030.0, -1740.0, -530.0}
 };
 //Grouped AOEs
-float g1AOEpos[][3] = {
-
+/*float g1AOEpos[][3] = {
+  {0.0, 0.0, 0.0}
 };
 float g2AOEpos[][3] = {
-
+  {0.0, 0.0, 0.0}
 };
 float g3AOEpos[][3] = {
-
+  {0.0, 0.0, 0.0}
 };
 float g4AOEpos[][3] = {
-
+{0.0, 0.0, 0.0}
 };
 float g5AOEpos[][3] = {
-
-};
+{0.0, 0.0, 0.0}
+};*/
 
 //Return position
 float Return[3] = {
@@ -632,7 +631,6 @@ void SetupCoreData(){
   core.INCOMINGDISPLAYED = 0;
   core.camSel = 0;
   core.CodeEntry = 0;
-  core.curWave = 0;
   core.failsafeCount = 0;
   core.lastAdmin = 0;
   core.nullIndex = 0;
@@ -642,6 +640,7 @@ void SetupCoreData(){
   core.waveFlags = 0;
   core.HWNMin = 210.0;
   core.HWNMax = 380.0;
+  WaveSystem().wave = 0;
   GlobalAudio.init();
   AssLogger(1, "Setting up bosses...");
   HWBoss[0].index = 0;
@@ -795,20 +794,7 @@ void SetupCoreData(){
   HookEventEx("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
   AssLogger(1, "Core data setup complete!");
 }
-// Checks if the gamemode has changed, if it has, reinitialise all core data.
-void UpdateGamemode(){
-  char logdata[192], popfile[128];
-  int ent = FindEntityByClassname(-1, "tf_objective_resource");
-  if (ent == -1) return;
-  GetEntPropString(ent, Prop_Send, "m_iszMvMPopfileName", popfile, sizeof(popfile));
-  int gamemode = (StrContains(popfile, "tacobell") != -1 ? 1 : (StrContains(popfile, "wavenull") != -1) ? 2 : 0);
-  if(core.gamemode != gamemode) {
-    Format(logdata, sizeof(logdata), "Current gamemode %i does not match detected gamemode %i! Someone must have changed the gamemode! Setting up core data immediately!!!", core.gamemode, gamemode);
-    AssLogger(LOGLVL_DEBUG, logdata);
-    core.gamemode = gamemode;
-    SetupCoreData();
-  }
-}
+
 //Messages to be printed when the fail safe has been triggered.
 char failsafe[][256] = {
   "{orange}🔥Burnt Mocha🍵 {white}: FAILSAFE HAS BEEN TRIGGERED. ROBOT EXTERMINATION IN PROGRESS. [Failsafe Activated]",
@@ -1112,9 +1098,9 @@ void RegisterAndPrecacheAllFiles(){
 //Used to keep StopSound from stopping the music we're trying to play - now with support for loop offsets!
 public Action SyncMusic(Handle timer, int client) {
   int index = AudioManager[client].indexBGM;
-  StrCopy(AudioManager[client].cachedPath, sizeof(AudioManager[client].cachedPath), BGMArray[index].realPath);
-  StrCopy(AudioManager[client].songName, sizeof(AudioManager[client].songName), BGMArray[index].songName);
-  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, core.curWave, AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
+  strcopy(AudioManager[client].cachedPath, sizeof(AudioManager[client].cachedPath), BGMArray[index].realPath);
+  strcopy(AudioManager[client].songName, sizeof(AudioManager[client].songName), BGMArray[index].songName);
+  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, WaveSystem().wave, AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }
 
@@ -1344,7 +1330,7 @@ public Action TimedAOEs(Handle timer){
   return Plugin_Stop;
 }
 //Place random AOE barrage
-void GroupedAOE(){
+void GroupedAOE() {
   int ent = FindEntityByClassname(-1, "tf_objective_resource");
   int bombBotLevel = GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nFlagCarrierUpgradeLevel"));
   switch(GetRandomInt(0, bombBotLevel+1)){
@@ -1365,9 +1351,11 @@ void GroupedAOE(){
     }
   }
 }
+
 stock float FloatMin(float a, float b) {
   return a <= b ? a : b;
 }
+
 stock float FloatMax(float a, float b) { 
   return a >= b ? a : b;
 }
@@ -1383,72 +1371,7 @@ public int MenuHandlerFartsyMusic(Menu menu, MenuAction action, int client, int 
   } else if (action == MenuAction_End) CloseHandle(menu);
   return 0;
 }
-//Perform Wave Setup
-public Action PerformWaveSetup() {
-  UpdateAllHealers();
-  core.isWave = true; //It's a wave!
-  bombState[0].state = DefaultsArray[core.curWave].defBombStatus;
-  bombState[0].stateMax = DefaultsArray[core.curWave].defBombStatusMax;
-  core.canHWBoss = DefaultsArray[core.curWave].defCanHWBoss;
-  WeatherManager.canTornado = DefaultsArray[core.curWave].defCanTornado;
-  core.sacPointsMax = DefaultsArray[core.curWave].defSacPointsMax;
-  core.FailedCount = 0; //Reset fail count to zero. (See EventWaveFailed, where we play the BGM.)
-  WeatherManager.Activate(); //Activate all weather management
-  CreateTimer(0.25, TimedOperator, 0); //Print wave information to global chat
-  CreateTimer(2.5, PerformWaveAdverts); //Activate the mini hud
-  CreateTimer(0.1, BombStatusUpdater); //Activate the bomb status updater
-  CreateTimer(1.0, BombStatusAddTimer); //Activate bomb status timer
-  CreateTimer(1.0, RobotLaunchTimer); //Activate robot launch timer
-  CreateTimer(1.0, SacrificePointsTimer); //Activate sacrifice points add timer
-  CreateTimer(1.0, SacrificePointsUpdater); //Activate sacrifice points updater
-  for (int i = 0; i < sizeof(WaveSetup) - 4; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-  sudo(1002); //Feature admin
-  sudo(1007); //Choose bomb path
-  switch (core.curWave) {
-    case 2: {
-      CreateTimer(GetRandomFloat(10.0, 45.0), TimedAOEs);
-    }
-    case 3, 10, 17: {
-      core.HWNMax = 360.0;
-      for (int i = 8; i < sizeof(WaveSetup) - 3; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-      float f = GetRandomFloat(60.0, 180.0);
-      CreateTimer(f, TimedOperator, 70);
-    }
-    case 4, 11, 18: {
-      core.HWNMax = 360.0;
-      for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-    }
-    case 5, 12, 19: {
-      Get_Boss_Handler().bossID = 0;
-      Get_Boss_Handler().shouldTick = true;
-      core.HWNMax = 260.0;
-      core.HWNMin = 140.0;
-      for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-      FastFire2("w5_engie_hints", "Trigger", "", 3.0, false);
-      FastFire2("FB.OnslaughterBase", "SetHealth", "320000", 0.0, false);
-      FastFire2("FB.OnslaughterBase", "SetHealth", "320000", 1.0, false);
-      float f = GetRandomFloat(60.0, 180.0);
-      CreateTimer(f, TimedOperator, 70);
-    }
-    case 6, 13, 20: {
-      core.HWNMax = 260.0;
-      core.HWNMin = 140.0;
-      for (int i = 8; i < sizeof(WaveSetup) - 1; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-    }
-    case 7, 14, 21: {
-      core.HWNMax = 240.0;
-      core.HWNMin = 120.0;
-      for (int i = 8; i < sizeof(WaveSetup); i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-      FastFire2("w5_engie_hints", "Trigger", "", 3.0, false);
-    }
-    case 8, 15: {
-      core.HWNMax = 240.0;
-      core.HWNMin = 120.0;
-      for (int i = 8; i < sizeof(WaveSetup); i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-    }
-  }
-  return Plugin_Handled;
-}
+
 //Jump waves.
 public Action JumpToWave(int wave_number) {
   int flags = GetCommandFlags("tf_mvm_jump_to_wave");
@@ -1776,18 +1699,10 @@ void SendHudTextAll(int channel, const char[] text, float posX, float posY, floa
         }
     }
 }
-// WIPE MECHANIC - If all players  die, the wave fails.
-void TickBodyCheck() {
-  int alive = 0;
-  for (int i = 1; i <= MaxClients; i++) if (IsValidClient(i)) if(IsPlayerAlive(i) && GetClientTeam(i) == 2) alive++;
-  if (alive == 0) {
-    CPrintToChatAll("{red}You've all died! Are you happy?");
-    FastFire2("bots_win", "roundwin", "", 0.0, false);
-  }
-}
+
 //Gets config file based on the game mode, we use the struct because returning differing array sizes is impossible otherwise.
 char[] OVERRIDE_AND_GET_COREDATA() {
-  switch (core.gamemode) {
+  switch (WaveSystem().mode) {
     case 0: {
       return core.configDefault;
     }
@@ -1798,7 +1713,7 @@ char[] OVERRIDE_AND_GET_COREDATA() {
       return core.configWaveNull;
     }
     default: {
-      LogError("Gamemode %i out of bounds. Reverting to defaults.", core.gamemode);
+      LogError("Gamemode %i out of bounds. Reverting to defaults.", WaveSystem().mode);
       return core.configDefault;
     }
   }
