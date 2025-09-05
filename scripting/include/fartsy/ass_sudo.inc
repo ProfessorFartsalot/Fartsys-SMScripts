@@ -1,33 +1,18 @@
-public char PLUGIN_VERSION[8] = "8.4.2";
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
     //When the map is complete
     case 0: {
-      CPrintToChatAll(core.tacobell ? "WOWIE YOU DID IT! The server will restart in 30 seconds, prepare to do it again! LULW" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}YOU HAVE SUCCESSFULLY COMPLETED PROF'S ASS ! THE SERVER WILL RESTART IN 10 SECONDS.");
+      CPrintToChatAll(core.tacobell ? "WOW, YOU DID IT! The server will restart in 30 seconds, prepare to do it again! LULW" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}YOU HAVE SUCCESSFULLY COMPLETED PROF'S ASS ! THE SERVER WILL RESTART IN 10 SECONDS.");
       CreateTimer(10.0, TimedOperator, 100);
     }
     //Prepare yourself!
     case 1: {
-      GlobalAudio.Reset();
-      core.tacobell = false;
-      ServerCommand("fb_startmoney 50000");
-      CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}PROFESSOR'S ASS {white}v0x22 (Core-v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", PLUGIN_VERSION);
-      FastFire2("rain", "Alpha", "0", 0.0, false);
-      UpdateGamemode();
-      PrintToChatAll("%i", core.gamemode);
-      if (core.gamemode == 2) {
-        PrintToChatAll("UH OH");
-      }
+      WaveSystem().init();
     }
-    //Wave init
+    //Wave running
     case 2: {
-      UpdateGamemode();
-      core.curWave = GetCurWave();
-      PerformWaveSetup();
-      float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
-      CreateTimer(hwn, HWBosses);
-      GlobalAudio.setBGM(core.tacobell ? tacoBellBGMIndex[core.curWave] : DefaultsArray[core.curWave].defBGMIndex, true);
+      WaveSystem().run();
       return;
     }
   //Force Tornado
@@ -110,7 +95,7 @@ void sudo(int task) {
   //Signal to fastforward boss spawn.
   case 7: {
     core.waveFlags = 2;
-    if (core.curWave == 8 && !core.tacobell) {
+    if (WaveSystem().wave == 8 && !core.tacobell) {
       sudo(1001);
       CreateTimer(0.0, TimedOperator, 8);
     }
@@ -659,42 +644,6 @@ void sudo(int task) {
   case 305: {
     EmitSoundToAll(BGMArray[6].realPath, _, g_chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
-  case 420:{ // Init/Reset Wave Null.
-    UpdateGamemode();
-    if (core.gamemode != 2) return;
-    CPrintToChatAll("{fartsyred} [WARNING]: Initializing Wave Null...");
-    CPrintToChatAll("{fartsyred} [WARNING]: YOU HAVE CHOSEN TO LAUNCH WAVE NULL.");
-    CPrintToChatAll("{fartsyred} [WARNING]: SHOULD YOU FAIL THIS WAVE, YOU *WILL* BE RESTARTING FROM THE VERY BEGINNING WITH NO UPGRADES.");
-    CPrintToChatAll("{fartsyred} [WARNING]: THE FATE OF THIS SERVER IS IN YOUR HANDS. DO. NOT. FAIL.");
-    FastFire2("Weather.Sky", "Skin", "3", 0.0, false);
-    WeatherManager.fogDensity = 0.1;
-  }
-  case 421:{
-    UpdateGamemode();
-    if (core.gamemode != 2) return;
-    core.curWave = GetCurWave();
-    PerformWaveSetup();
-    //HandleWaveNull();
-    float hwn = GetRandomFloat(core.HWNMin, core.HWNMax);
-    CreateTimer(hwn, HWBosses);
-    PrintToChatAll("playing sound\\fartsy\\music\\wavenull_intro.mp3, waves should be timed so that the music changes right at the end of this intro.");
-    FastFire2("weather.sky", "Skin", "2", 0.0, false);
-    sudo(1001);
-    EmitSoundToAll("sound/fartsy/music/wavenull_intro.mp3");
-    WeatherManager.fogColorRTarget = 95.0;
-    WeatherManager.fogColorGTarget = 35.0;
-    WeatherManager.fogColorBTarget = 35.0;
-  }
-  case 422:{
-    GlobalAudio.setBGM(28, true);
-    //GlobalAudio.setBGM(29, false);
-  }
-  case 423:{
-    GlobalAudio.setBGM(30, false);
-  }
-  case 424:{
-    GlobalAudio.setBGM(31, false);
-  }
   case 425:{
     for (int i = 0; i < 32; i++) {
       if (IsValidClient(i)) BossHandler.bustNukeTarget = i;
@@ -760,9 +709,7 @@ void sudo(int task) {
   case 1004: {
     if (!core.isWave || !WeatherManager.canTornado || WeatherManager.hasTornado) return;
     WeatherManager.TornadoTimerActive = true;
-    float f = (core.curWave == 4 ? GetRandomFloat(30.0, 60.0) : GetRandomFloat(90.0, 210.0));
-    CreateTimer(f - 20.0, TimedOperator, 40);
-    CreateTimer((f + GetRandomFloat(5.0, 25.0)), TimedOperator, 41);
+    WeatherManager.StartTornadoTimer(WaveSystem().wave == 4 ? GetRandomFloat(30.0, 90.0) : GetRandomFloat(90.0, 210.0));
   }
   //Despawn the tornado
   case 1005: {
@@ -987,7 +934,7 @@ public Action CommandOverride(int client, const char[] command, int argc)
 public Action TimedOperator(Handle timer, int job) {
     switch (job) {
     case 0: {
-      for (int i = 0; i < MaxClients; ++i) CPrintToChat(i, GlobalAudio.VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", core.curWave, AudioManager[i].songName, GlobalAudio.VIPIndex);
+      for (int i = 0; i < MaxClients; ++i) CPrintToChat(i, GlobalAudio.VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().wave, AudioManager[i].songName, GlobalAudio.VIPIndex);
     }
     //Boss script
     case 2: {
@@ -1106,8 +1053,7 @@ public Action TimedOperator(Handle timer, int job) {
     }
     case 79: {
       core.crusader = false;
-      core.curWave = GetCurWave();
-      if (core.isWave && (core.curWave == 3 || core.curWave == 5)) {
+      if (core.isWave && (WaveSystem().wave == 3 || WaveSystem().wave == 5)) {
         sudo(99);
       }
       return Plugin_Stop;

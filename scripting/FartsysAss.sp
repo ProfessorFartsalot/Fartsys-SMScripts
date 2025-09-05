@@ -19,8 +19,12 @@
 #include <fartsy/ass_events>
 #include <fartsy/ass_sudo>
 #include <fartsy/ass_serverutils>
+#include <fartsy/ass_wavesystem>
 #pragma newdecls required
 #pragma semicolon 1
+char[] GET_PLUGIN_VERSION() {
+  return PLUGIN_VERSION;
+}
 
 public Plugin myinfo = {
   name = "Fartsy's Ass - Framework",
@@ -39,8 +43,8 @@ public void OnFastFire2Ready(){
   AssLogger(LOGLVL_INFO, "####### FASTFIRE2 IS READY! INITIATE STARTUP SEQUENCE... PREPARE FOR THE END TIMES #######");
   RegisterAndPrecacheAllFiles();
   RegisterAllCommands();
-  UpdateGamemode();
-  if (core.gamemode == 0) SetupCoreData();
+  WaveSystem().update();
+  if (WaveSystem().mode == 0) SetupCoreData();
   UpdateAllHealers();
   CreateTimer(1.0, UpdateMedicHealing);
   CPrintToChatAll("{fartsyred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
@@ -59,6 +63,6 @@ public void OnGameFrame() {
   if (GlobalAudio.shouldTick) GlobalAudio.Tick();
   if (BossHandler.shouldTick) BossHandler.Tick();
   if (BossHandler.tickBusterNuclear) BossHandler.TickBusterNuclear();
-  if (core.gamemode == 2 && core.isWave) TickBodyCheck();
+  if (WaveSystem().mode == 2 && core.isWave) WaveSystem().run_bodycheck();
   WeatherManager.TickFog();
 }

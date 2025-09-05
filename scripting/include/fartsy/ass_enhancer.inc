@@ -741,6 +741,10 @@ enum struct WEATHERMANAGER {
   void StartFogTransition(){
     FastFire2("Weather.FogOutdoor", "StartFogTransition", "", 0.0, false);
   }
+  void StartTornadoTimer(float t){
+    CreateTimer(t - 20.0, TimedOperator, 40);
+    CreateTimer((t + GetRandomFloat(5.0, 25.0)), TimedOperator, 41);
+  }
   void TickFog(){
     if(this.fogDensity != this.fogTarget || this.reset){
       char targetAlpha[4];
