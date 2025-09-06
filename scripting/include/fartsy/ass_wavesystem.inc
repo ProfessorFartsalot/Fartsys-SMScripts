@@ -147,7 +147,7 @@ enum struct WAVESYSTEM {
         this.mode = target;
         SetupCoreData();
     }
-    this.wave = this.mode != 2 ? GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount")) : 0;
+    this.wave = this.mode != 2 ? GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount")) : this.wave;
   }
 }
 WAVESYSTEM WS;
