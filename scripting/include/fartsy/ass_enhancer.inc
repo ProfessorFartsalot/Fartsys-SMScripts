@@ -171,6 +171,7 @@ enum struct AUDIOMANAGER {
   /** When updated by GlobalAudio */
   void UpdateBGM() {
     this.ChangeBGM(this.VIPBGM > 0 && !this.isEventMode() ? this.VIPBGM : this.indexBGM == 0 ? g_indexBGM : this.indexBGM, true);
+    this.shouldTick = true;
   }
   /**When a client joins the server, set this audio manager to theirs */
   void OnClientConnected(int client) {
@@ -248,7 +249,6 @@ enum struct AUDIOCONTROLLER {
           continue;
         }
         AudioManager[i].UpdateBGM();
-        AudioManager[i].shouldTick = true;
       }
     }
   }
