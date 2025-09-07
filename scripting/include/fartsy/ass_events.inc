@@ -3,7 +3,7 @@ public void HookAllEvents() {
   HookEvent("player_death", EventDeath);
   HookEvent("player_spawn", EventSpawn);
   HookEvent("server_cvar", Event_Cvar, EventHookMode_Pre);
-  HookEvent("mvm_wave_begin", OnWaveBegin);
+  HookEvent("mvm_begin_wave", OnWaveBegin);
   HookEvent("mvm_wave_complete", EventWaveComplete);
   HookEvent("mvm_wave_failed", EventWaveFailed);
   HookEvent("mvm_bomb_alarm_triggered", EventWarning);
