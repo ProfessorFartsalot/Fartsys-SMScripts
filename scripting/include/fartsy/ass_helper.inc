@@ -92,7 +92,7 @@ enum struct COREDATA {
     this.canHindenburg = false;
     this.canHWBoss = false;
     this.canSephNuke = false;
-    WaveSystem().IsActive = false;
+    WaveSystem().SetActive(false);
     this.sephiroth = false;
     this.waveFlags = 0;
   }
@@ -100,7 +100,7 @@ enum struct COREDATA {
 COREDATA core;
 
 int GetDefaultBGM() {
-  return WaveSystem().IsActive ? (core.sephiroth ? 16 : DefaultsArray[WaveSystem().wave].defBGMIndex) : GetRandomInt(1, 4);
+  return WaveSystem().IsActive() ? (core.sephiroth ? 16 : DefaultsArray[WaveSystem().GetWave()].defBGMIndex) : GetRandomInt(1, 4);
 }
 
 Database Ass_Database;
@@ -248,7 +248,7 @@ public int GetHealerOfClient(int client){
       char s[32];
       GetEdictClassname(medigun, s, sizeof(s));
       if (!strcmp(s, "tf_weapon_medigun", false)) {
-        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && WaveSystem().IsActive) {
+        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && WaveSystem().IsActive()) {
           if(GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") == client) return i;
         }
       }
@@ -271,7 +271,7 @@ public Action UpdateMedicHealing(Handle timer){
       char s[32];
       GetEdictClassname(medigun, s, sizeof(s));
       if (!strcmp(s, "tf_weapon_medigun", false)) {
-        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && WaveSystem().IsActive){
+        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && WaveSystem().IsActive()){
           int hOffset = (CurHealVal[i] - EmnityManager[i].InitHealingValue);
           PrintToServer("%N is healing %N with %i HP since last check", i, GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget"), hOffset);
           EmnityManager[i].iHealing += hOffset;
@@ -293,9 +293,6 @@ public void UpdateAllHealers() {
     }
   }
 }
-
-
-
 
 //Annihilation supply shop entries
 enum struct ASShop {
@@ -635,8 +632,8 @@ void SetupCoreData(){
   core.waveFlags = 0;
   core.HWNMin = 210.0;
   core.HWNMax = 380.0;
-  WaveSystem().IsActive = false;
-  WaveSystem().wave = 0;
+  WaveSystem().SetActive(false);
+  WaveSystem().SetWave(0);
   GlobalAudio.init();
   AssLogger(1, "Setting up bosses...");
   HWBoss[0].index = 0;
@@ -1076,7 +1073,7 @@ public Action SyncMusic(Handle timer, int client) {
   int index = AudioManager[client].indexBGM;
   strcopy(AudioManager[client].cachedPath, sizeof(AudioManager[client].cachedPath), BGMArray[index].realPath);
   strcopy(AudioManager[client].songName, sizeof(AudioManager[client].songName), BGMArray[index].songName);
-  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, WaveSystem().wave, AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
+  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, WaveSystem().GetWave(), AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }
 
@@ -1243,7 +1240,7 @@ void Emerge(int stage){
 
 //Exit emergency mode!
 public void ExitEmergencyMode() {
-  CPrintToChatAll(!WaveSystem().IsActive ? "{darkgreen}[CORE] Exiting emergency mode with CODE -1/WAVE_END (the wave has ended). %i actions executed." : "{darkgreen}[CORE] Exiting emergency mode with CODE 0/SUCCESS. %i actions executed.", BEM+1); //BEM+1 because BEM actually executes on 0.
+  CPrintToChatAll(!WaveSystem().IsActive() ? "{darkgreen}[CORE] Exiting emergency mode with CODE -1/WAVE_END (the wave has ended). %i actions executed." : "{darkgreen}[CORE] Exiting emergency mode with CODE 0/SUCCESS. %i actions executed.", BEM+1); //BEM+1 because BEM actually executes on 0.
   core.brawler_emergency = false;
   core.sacPoints = 0;
   ServerCommand("sm_god @red 0");
@@ -1297,7 +1294,7 @@ public Action TickClientHealth(Handle timer) {
   return Plugin_Stop;
 }
 public Action TimedAOEs(Handle timer){
-  if (WaveSystem().IsActive){
+  if (WaveSystem().IsActive()){
     for (int i = 0; i < GetRandomInt(1, 10); i++){
       CreateTimer(i/10.0, TimedOperator, 201);
     }
@@ -1358,7 +1355,7 @@ public Action DispatchCircleAOE(float pos[3]) {
 }
 //Track bombState[0].state and update entities every 0.1 seconds
 public Action BombStatusUpdater(Handle timer) {
-  if (WaveSystem().IsActive) {
+  if (WaveSystem().IsActive()) {
     CreateTimer(0.1, BombStatusUpdater);
     if (bombState[0].state < bombState[0].stateMax) {
       switch (bombState[0].state) {
@@ -1381,7 +1378,7 @@ public Action BombStatusUpdater(Handle timer) {
 
 //RobotLaunchTimer (Randomly fling robots)
 public Action RobotLaunchTimer(Handle timer) {
-  if (!WaveSystem().IsActive) return Plugin_Stop;
+  if (!WaveSystem().IsActive()) return Plugin_Stop;
   FastFire2("FB.RobotLauncher", "Enable", "", 0.0, false);
   FastFire2("FB.RobotLauncher", "Disable", "", 7.5, false);
   CreateTimer(GetRandomFloat(5.0, 30.0), RobotLaunchTimer);
@@ -1389,7 +1386,7 @@ public Action RobotLaunchTimer(Handle timer) {
 }
 //Track SacPoints and update entities every 0.1 seconds
 public Action SacrificePointsUpdater(Handle timer) {
-  if (!WaveSystem().IsActive) return Plugin_Stop;
+  if (!WaveSystem().IsActive()) return Plugin_Stop;
   CreateTimer(0.1, SacrificePointsUpdater);
   if (core.sacPoints > core.sacPointsMax) core.sacPoints = core.sacPointsMax;
   return Plugin_Stop;
@@ -1397,7 +1394,7 @@ public Action SacrificePointsUpdater(Handle timer) {
 
 //BombStatus (Add points to Bomb Status occasionally)
 public Action BombStatusAddTimer(Handle timer) {
-  if (WaveSystem().IsActive && (bombState[0].state < bombState[0].stateMax)) {
+  if (WaveSystem().IsActive() && (bombState[0].state < bombState[0].stateMax)) {
     bombState[0].isReady = false;
     bombState[0].state++;
     CreateTimer(GetRandomFloat(10.0, 45.0), BombStatusAddTimer);
@@ -1406,7 +1403,7 @@ public Action BombStatusAddTimer(Handle timer) {
 }
 //Adverts for tips/tricks
 public Action PerformAdverts(Handle timer) {
-  if (!WaveSystem().IsActive) {
+  if (!WaveSystem().IsActive()) {
     CreateTimer(180.0, PerformAdverts);
     CPrintToChatAll(AdvMessage[GetRandomInt(0, 7)]);
   }
@@ -1415,7 +1412,7 @@ public Action PerformAdverts(Handle timer) {
 
 //Adverts for wave information
 public Action PerformWaveAdverts(Handle timer) {
-  if (WaveSystem().IsActive) {
+  if (WaveSystem().IsActive()) {
     char buffer[16];
     int emnity;
     char tbuffer[16];
@@ -1440,7 +1437,7 @@ public Action PerformWaveAdverts(Handle timer) {
 
 //Feature admin timer
 public Action SelectAdminTimer(Handle timer) {
-  if (!WaveSystem().IsActive) {
+  if (!WaveSystem().IsActive()) {
     sudo(1002);
     CreateTimer(GetRandomFloat(40.0, 120.0), SelectAdminTimer);
   }
@@ -1544,7 +1541,7 @@ public Action SharkTimer(Handle timer) {
 
 //SpecTimer
 public Action SpecTimer(Handle timer) {
-  if (WaveSystem().IsActive) {
+  if (WaveSystem().IsActive()) {
     FastFire2("Spec*","Disable","", 0.0, false);
     FastFire2(SpecEnt[GetRandomInt(0, 5)], "Enable", "", 0.1, false);
     CreateTimer(GetRandomFloat(10.0, 30.0), SpecTimer);
@@ -1593,7 +1590,7 @@ public Action CRUSADERINCOMING(Handle timer) {
 
 //Halloween Bosses
 public Action HWBosses(Handle timer) {
-  if (WaveSystem().IsActive && core.canHWBoss) {
+  if (WaveSystem().IsActive() && core.canHWBoss) {
     HWBoss[GetRandomInt(0, 11)].attack();
     core.canHWBoss = false;
     CreateTimer(60.0, HWBossesRefire);
@@ -1603,13 +1600,13 @@ public Action HWBosses(Handle timer) {
 
 //Repeat HWBosses Timer
 public Action HWBossesRefire(Handle timer) {
-  if (WaveSystem().IsActive) CreateTimer(GetRandomFloat(core.HWNMin, core.HWNMax), HWBosses);
+  if (WaveSystem().IsActive()) CreateTimer(GetRandomFloat(core.HWNMin, core.HWNMax), HWBosses);
   return Plugin_Stop;
 }
 
 //SacPoints (Add points to Sacrifice Points occasionally)
 public Action SacrificePointsTimer(Handle timer) {
-  if (WaveSystem().IsActive && (core.sacPoints < core.sacPointsMax)) {
+  if (WaveSystem().IsActive() && (core.sacPoints < core.sacPointsMax)) {
     core.sacPoints++;
     CreateTimer(GetRandomFloat(5.0, 30.0), SacrificePointsTimer);
   }
@@ -1661,7 +1658,7 @@ void SendHudTextAll(int channel, const char[] text, float posX, float posY, floa
 
 //Gets config file based on the game mode, we use the struct because returning differing array sizes is impossible otherwise.
 char[] OVERRIDE_AND_GET_COREDATA() {
-  switch (WaveSystem().type) {
+  switch (WaveSystem().GetType()) {
     case 0: {
       return core.configDefault;
     }
@@ -1672,7 +1669,7 @@ char[] OVERRIDE_AND_GET_COREDATA() {
       return core.configWaveNull;
     }
     default: {
-      LogError("Gamemode %i out of bounds. Reverting to defaults.", WaveSystem().type);
+      LogError("Gamemode %i out of bounds. Reverting to defaults.", WaveSystem().GetType());
       return core.configDefault;
     }
   }

@@ -448,7 +448,7 @@ enum struct WEATHERMANAGER {
   int intensity;
   int mIntensity;
   bool CanFormTornado() {
-    return WaveSystem().IsActive && this.canTornado && !this.hasTornado;
+    return WaveSystem().IsActive() && this.canTornado && !this.hasTornado;
   }
   void Activate(){
     this.Reset();
@@ -491,7 +491,7 @@ enum struct WEATHERMANAGER {
     this.fogTarget = this.defFogDensity;
     g_PowerOutage = false;
     this.hasTornado = false;
-    if(WaveSystem().IsActive){
+    if(WaveSystem().IsActive()){
       this.mIntensity = 5;
       this.intensity = 7; 
     } else {
@@ -521,7 +521,7 @@ enum struct WEATHERMANAGER {
     FastFire2("Weather.Siren", "StopSound", "", 5.0, false);
   }
   void IssueTornadoWarning(){
-    if (WaveSystem().IsActive && this.canTornado && !this.sirenExploded) {
+    if (WaveSystem().IsActive() && this.canTornado && !this.sirenExploded) {
       this.TornadoWarning = true;
       this.sirenPitchTarget = 100.0;
       this.sirenPitchRate = 0.1;

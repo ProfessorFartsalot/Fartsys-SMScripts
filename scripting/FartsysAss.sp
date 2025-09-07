@@ -65,6 +65,6 @@ public void OnGameFrame() {
   if (GlobalAudio.shouldTick) GlobalAudio.Tick();
   if (BossHandler.shouldTick) BossHandler.Tick();
   if (BossHandler.tickBusterNuclear) BossHandler.TickBusterNuclear();
-  if (WaveSystem().IsWaveNull() && WaveSystem().IsActive) WaveSystem().run_bodycheck();
+  if (WaveSystem().IsWaveNull() && WaveSystem().IsActive()) WaveSystem().run_bodycheck();
   WeatherManager.TickFog();
 }

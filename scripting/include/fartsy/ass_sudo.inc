@@ -96,7 +96,7 @@ void sudo(int task) {
   //Signal to fastforward boss spawn.
   case 7: {
     core.waveFlags = 2;
-    if (WaveSystem().wave == 8 && !core.tacobell) {
+    if (WaveSystem().GetWave() == 8 && !WaveSystem().IsTacoBell()) {
       sudo(1001);
       CreateTimer(0.0, TimedOperator, 8);
     }
@@ -164,7 +164,7 @@ void sudo(int task) {
   //Bomb Deployed
   case 15: {
     FastFire2("FB.PayloadWarning", "Disable", "", 0.0, false);
-    if (WaveSystem().IsActive) {
+    if (WaveSystem().IsActive()) {
       if (bombState[0].state == 69) {
         bombState[7].explode(false);
         bombState[0].stateMax = 64;
@@ -189,7 +189,7 @@ void sudo(int task) {
     return;
   }
   case 18: {
-    if(!WaveSystem().IsActive) {
+    if(!WaveSystem().IsActive()) {
       CPrintToChatAll("{fartsyred} PLEASE DO NOT ATTEMPT TO USE OPERATOR 18 WITHOUT A WAVE.");
       return;
     }
@@ -708,9 +708,9 @@ void sudo(int task) {
   }
   //Activate Tornado Timer
   case 1004: {
-    if (!WaveSystem().IsActive || !WeatherManager.canTornado || WeatherManager.hasTornado) return;
+    if (!WaveSystem().IsActive() || !WeatherManager.canTornado || WeatherManager.hasTornado) return;
     WeatherManager.TornadoTimerActive = true;
-    WeatherManager.StartTornadoTimer(WaveSystem().wave == 4 ? GetRandomFloat(30.0, 90.0) : GetRandomFloat(90.0, 210.0));
+    WeatherManager.StartTornadoTimer(WaveSystem().GetWave() == 4 ? GetRandomFloat(30.0, 90.0) : GetRandomFloat(90.0, 210.0));
   }
   //Despawn the tornado
   case 1005: {
@@ -802,8 +802,8 @@ void sudo(int task) {
   }
   //Do not EVER EVER execute this unless it's an emergency...
   case 6969: {
-    CPrintToChatAll(!WaveSystem().IsActive ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : core.brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
-    if (!WaveSystem().IsActive || core.brawler_emergency) return;
+    CPrintToChatAll(!WaveSystem().IsActive() ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : core.brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
+    if (!WaveSystem().IsActive() || core.brawler_emergency) return;
     Emerge(0);
   }
   //DEBUG
@@ -935,7 +935,7 @@ public Action CommandOverride(int client, const char[] command, int argc)
 public Action TimedOperator(Handle timer, int job) {
     switch (job) {
     case 0: {
-      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, AudioManager[i].VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().wave, AudioManager[i].songName, GlobalAudio.VIPIndex);
+      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, AudioManager[i].VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().GetWave(), AudioManager[i].songName, GlobalAudio.VIPIndex);
     }
     //Boss script
     case 2: {
@@ -1037,7 +1037,7 @@ public Action TimedOperator(Handle timer, int job) {
       return Plugin_Stop;
     }
     case 70: {
-      if (WaveSystem().IsActive) {
+      if (WaveSystem().IsActive()) {
         FastFire2("FB.KP*", "Unlock", "", 0.0, false);
         CustomSoundEmitter(SFXArray[0].realPath, 65, false, 0, 1.0, 100);
       }
@@ -1053,7 +1053,7 @@ public Action TimedOperator(Handle timer, int job) {
     }
     case 79: {
       core.crusader = false;
-      if (WaveSystem().IsActive && (WaveSystem().wave == 3 || WaveSystem().wave == 5)) {
+      if (WaveSystem().IsActive() && (WaveSystem().GetWave() == 3 || WaveSystem().GetWave() == 5)) {
         sudo(99);
       }
       return Plugin_Stop;
@@ -1063,7 +1063,7 @@ public Action TimedOperator(Handle timer, int job) {
       return Plugin_Stop;
     }
     case 99: {
-      if (WaveSystem().IsActive) sudo(99);
+      if (WaveSystem().IsActive()) sudo(99);
       return Plugin_Stop;
     }
     case 100: {
@@ -1090,7 +1090,7 @@ public Action TimedOperator(Handle timer, int job) {
     return Plugin_Stop;
     }
     case 6969: {
-      if (!WaveSystem().IsActive) {
+      if (!WaveSystem().IsActive()) {
         ExitEmergencyMode();
         return Plugin_Stop;
       }

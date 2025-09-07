@@ -3,41 +3,59 @@ const int WaveTypes_NORMAL = 0;
 const int WaveTypes_TACOBELL = 1;
 const int WaveTypes_WAVENULL = 2;
 
-enum struct WAVESYSTEM {
+enum struct WAVESYSTEMDATA {
   bool IsActive;
   int type;
   int wave;
-  bool IsDefault() {
-    return this.type == WaveTypes_NORMAL;
+}
+WAVESYSTEMDATA WSData;
+methodmap WAVESYSTEM { 
+  public int GetType() {
+    return WSData.type;
   }
-  bool IsTacoBell() {
-    return this.type == WaveTypes_TACOBELL;
+  public int GetWave() {
+    return WSData.wave;
   }
-  bool IsWaveNull() {
-    return this.type == WaveTypes_WAVENULL;
+  public void SetWave(int w) {
+    WSData.wave = w;
   }
-  void init() {
+  public bool IsActive() {
+    return WSData.IsActive;
+  }
+  public void SetActive(bool a) {
+    WSData.IsActive = a;
+  }
+  public bool IsDefault() {
+    return WSData.type == WaveTypes_NORMAL;
+  }
+  public bool IsTacoBell() {
+    return WSData.type == WaveTypes_TACOBELL;
+  }
+  public bool IsWaveNull() {
+    return WSData.type == WaveTypes_WAVENULL;
+  }
+  public void init() {
     this.update();
     GlobalAudio.Reset();
     core.tacobell = false;
     ServerCommand("fb_startmoney 50000");
     CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}%s {white} (Core v%s, System v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", "mvm_rottenburg_fartsys_ass-r22", GET_PLUGIN_VERSION(), WaveSystem_Version);
     FastFire2("rain", "Alpha", "0", 0.0, false);
-    PrintToChatAll("WaveSystem type %i", WaveSystem().type);
+    PrintToChatAll("WaveSystem type %i", this.GetType());
     if (this.IsWaveNull()) {
       PrintToChatAll("UH OH");
     }
   }
 
-  void run() {
+  public void run() {
     this.update();
     UpdateAllHealers();
-    this.IsActive = true;
-    bombState[0].state = DefaultsArray[this.wave].defBombStatus;
-    bombState[0].stateMax = DefaultsArray[this.wave].defBombStatusMax;
-    core.canHWBoss = DefaultsArray[this.wave].defCanHWBoss;
-    WeatherManager.canTornado = DefaultsArray[this.wave].defCanTornado;
-    core.sacPointsMax = DefaultsArray[this.wave].defSacPointsMax;
+    WSData.IsActive = true;
+    bombState[0].state = DefaultsArray[WSData.wave].defBombStatus;
+    bombState[0].stateMax = DefaultsArray[WSData.wave].defBombStatusMax;
+    core.canHWBoss = DefaultsArray[WSData.wave].defCanHWBoss;
+    WeatherManager.canTornado = DefaultsArray[WSData.wave].defCanTornado;
+    core.sacPointsMax = DefaultsArray[WSData.wave].defSacPointsMax;
     core.FailedCount = 0; // Reset fail count to zero. (See EventWaveFailed - where we play the BGM.)
     WeatherManager.Activate();
     CreateTimer(0.25, TimedOperator, 0); // Print wave information to global chat
@@ -50,7 +68,7 @@ enum struct WAVESYSTEM {
     for (int i = 0; i < sizeof(WaveSetup) - 4; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
     sudo(1002);
     sudo(1007);
-    switch (this.type) {
+    switch (WSData.type) {
       case WaveTypes_NORMAL: {
         this.run_normal();
       }
@@ -67,10 +85,10 @@ enum struct WAVESYSTEM {
     }
   }
   // Normal mode
-  void run_normal() {
-    PrintToServer("Wave manager is calling run_normal because this.type is %i", this.type);
+  public void run_normal() {
+    PrintToServer("Wave manager is calling run_normal because this.type is %i", WSData.type);
     //GlobalAudio.setBGM(core.tacobell ? tacoBellBGMIndex[this.wave] : DefaultsArray[this.wave].defBGMIndex, true);
-    switch (this.wave) {
+    switch (WSData.wave) {
       case 2: {
         CreateTimer(GetRandomFloat(10.0, 45.0), TimedAOEs);
       }
@@ -119,13 +137,13 @@ enum struct WAVESYSTEM {
     }
   }
   // Taco Bell Edition
-  void run_tacobell() {
-    PrintToServer("Wave manager is calling run_tacobell because this.mode is %i", this.type);
+  public void run_tacobell() {
+    PrintToServer("Wave manager is calling run_tacobell because this.mode is %i", WSData.type);
   }
   // Wave Null
-  void run_wavenull() {
-    PrintToServer("Wave manager is calling run_wavenull because this.mode is %i", this.type);
-    switch (this.wave) {
+  public void run_wavenull() {
+    PrintToServer("Wave manager is calling run_wavenull because this.mode is %i", WSData.type);
+    switch (WSData.wave) {
       case 0: {
         CPrintToChatAll("{fartsyred} [WARNING]: YOU HAVE CHOSEN TO LAUNCH WAVE NULL.");
         CPrintToChatAll("{fartsyred} [WARNING]: SHOULD YOU FAIL THIS WAVE, YOU *WILL* BE RESTARTING FROM THE VERY BEGINNING WITH NO UPGRADES.");
@@ -141,10 +159,10 @@ enum struct WAVESYSTEM {
         WeatherManager.fogColorBTarget = 35.0;
       }
     }
-    this.wave++;
+    WSData.wave++;
   }
   // WIPE MECHANIC - If all players  die, the wave fails.
-  void run_bodycheck() {
+  public void run_bodycheck() {
     int alive = 0;
     for (int i = 1; i <= MaxClients; i++) if (IsValidClient(i)) if(IsPlayerAlive(i) && GetClientTeam(i) == 2) alive++;
     if (alive == 0) {
@@ -153,19 +171,19 @@ enum struct WAVESYSTEM {
     }
   }
   //Update internal gamemode identifier, reload configs if needed.
-  void update() {
+  public void update() {
     char logdata[192], popfile[128];
     int ent = FindEntityByClassname(-1, "tf_objective_resource");
     if (ent == -1) return;
     GetEntPropString(ent, Prop_Send, "m_iszMvMPopfileName", popfile, sizeof(popfile));
     int target = (StrContains(popfile, "tacobell") != -1 ? 1 : (StrContains(popfile, "wavenull") != -1) ? 2 : 0);
-    if (this.type != target) {
-        Format(logdata, sizeof(logdata), "Current type %i does not match detected type %i! Someone must have changed the gamemode! Setting up core data immediately!!!", this.type, target);
+    if (WSData.type != target) {
+        Format(logdata, sizeof(logdata), "Current type %i does not match detected type %i! Someone must have changed the gamemode! Setting up core data immediately!!!", this.GetType(), target);
         AssLogger(LOGLVL_DEBUG, logdata);
-        this.type = target;
+        WSData.type = target;
         SetupCoreData();
     }
-    this.wave = this.IsWaveNull() ? this.wave : GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount"));
+    WSData.wave = this.IsWaveNull() ? WSData.wave : GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount"))
   }
 }
 WAVESYSTEM WS;
