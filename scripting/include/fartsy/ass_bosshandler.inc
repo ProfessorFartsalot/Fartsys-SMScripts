@@ -43,7 +43,7 @@ enum struct BOSSHANDLER {
     void Tick(){
         //PrintToServer("Boss %i, hp %i/%i", this.bossID, this.iBossEntHealth, this.iBossEntMaxHealth);
         if (this.shouldTickBGM) (this.TickBGM());
-        if(this.isAlive && !core.isWave){
+        if(this.isAlive && !WaveSystem().IsActive()){
             PrintToChatAll("PLACEHOLDER -- FORCE PLAYERS TO BE READY IF NOT IN WAVE.");
         }
         if(this.tickBuster) this.TickBuster();

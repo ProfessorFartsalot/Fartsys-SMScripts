@@ -1,3 +1,14 @@
+public void HookAllEvents() {
+  AssLogger(1, "Hooking game events...");
+  HookEvent("player_death", EventDeath);
+  HookEvent("player_spawn", EventSpawn);
+  HookEvent("server_cvar", Event_Cvar, EventHookMode_Pre);
+  HookEvent("mvm_begin_wave", OnWaveBegin);
+  HookEvent("mvm_wave_complete", EventWaveComplete);
+  HookEvent("mvm_wave_failed", EventWaveFailed);
+  HookEvent("mvm_bomb_alarm_triggered", EventWarning);
+  HookEventEx("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
+}
 //Sync client stats when they leave
 public void OnClientDisconnect(int client) {
   //Database Ass_Database = Get_Ass_Database();
@@ -17,20 +28,19 @@ public void OnClientDisconnect(int client) {
   if (GetClientCount(false) == 0) { CreateTimer(600.0, TimedOperator, 99999);}
 }
 //Check who spawned and log their class
-public Action EventSpawn(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
+public void EventSpawn(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   int client = GetClientOfUserId(Spawn_Event.GetInt("userid"));
   if (IsValidClient(client)) {
     int class = Spawn_Event.GetInt("class");
     if (class) AudioManager[client].OnClientRespawned();
     int steamID = GetSteamAccountID(client);
-    if (!Ass_Database || !steamID || !class) return Plugin_Handled;
+    if (!Ass_Database || !steamID || !class) return;
     char strClass[32];
     char query[256];
     strClass = ClassDefinitions[class - 1];
     Format(query, sizeof(query), "UPDATE ass_activity SET class = '%s' WHERE steamid = %i;", strClass, steamID);
     Ass_Database.Query(Database_FastQuery, query);
   }
-  return Plugin_Handled;
 }
 //Log Damage!
 public void Event_PlayerHurt(Handle event, const char[] name, bool dontBroadcast) {
@@ -54,7 +64,7 @@ public void Event_PlayerHurt(Handle event, const char[] name, bool dontBroadcast
   }
 }
 //Check who died by what and announce it to chat.
-public Action EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
+public void EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   int client = GetClientOfUserId(Spawn_Event.GetInt("userid"));
   int attacker = GetClientOfUserId(Spawn_Event.GetInt("attacker"));
   int steamid = GetSteamAccountID(client);
@@ -203,25 +213,28 @@ public Action EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_
     }
     //Log if a player killed someone or was killed by a robot
     if (attacker != client) {
-      if (!Ass_Database) return Plugin_Handled;
+      if (!Ass_Database) return;
       char query[256];
       int steamID = (IsValidClient(attacker) ? GetSteamAccountID(attacker) : GetSteamAccountID(client));
       Format(query, sizeof(query), IsValidClient(attacker) && !StrEqual(weapon, "world") ? "UPDATE ass_activity SET kills = kills +1, killssession = killssession + 1, lastkilledname = '%s', lastweaponused = '%s' WHERE steamid = %i;" : !StrEqual(weapon, "world") && !IsValidClient(attacker) ? "UPDATE ass_activity SET deaths = deaths + 1, deathssession = deathssession + 1, killedbyname = '%s', killedbyweapon = '%s' WHERE steamid = %i;" : "RETURN", name, weapon, steamID);
-      if (StrEqual(query, "RETURN")) return Plugin_Handled;
+      if (StrEqual(query, "RETURN")) return;
       Ass_Database.Query(Database_FastQuery, query);
     }
   }
-  return Plugin_Handled;
+}
+// When a wave starts. Defeats the need for operator 2 in most cases.
+public void OnWaveBegin(Event bgEvent, const char[] bgName, bool bgBroadcast) {
+  WaveSystem().run();
+  return;
 }
 //When we win
 public Action EventWaveComplete(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   sudo(300);
   CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}You've defeated the wave!");
-  return Plugin_Handled;
+  return Plugin_Continue;
 }
 //Announce when we are in danger.
-public Action EventWarning(Event Spawn_Event,
-  const char[] Spawn_Name, bool Spawn_Broadcast) {
+public Action EventWarning(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   if (core.doFailsafe) {
     core.failsafeCount++;
     CPrintToChatAll("%s Counter: %i", failsafe[GetRandomInt(0, sizeof(failsafe) - 1)], core.failsafeCount);
@@ -235,7 +248,7 @@ public Action EventWarning(Event Spawn_Event,
 public Action EventWaveFailed(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave {red}failed {white}successfully!");
   sudo(300);
-  return Plugin_Handled;
+  return Plugin_Continue;
 }
 //Sacrifice target and grant bonus points
 public Action SacrificeClient(int client, int attacker, bool wasBombReset) {

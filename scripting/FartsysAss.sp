@@ -22,6 +22,7 @@
 #include <fartsy/ass_wavesystem>
 #pragma newdecls required
 #pragma semicolon 1
+public char PLUGIN_VERSION[8] = "8.5.1";
 char[] GET_PLUGIN_VERSION() {
   return PLUGIN_VERSION;
 }
@@ -39,12 +40,13 @@ public void OnPluginStart() {
 }
 
 //Begin executing IO when ready
-public void OnFastFire2Ready(){
+public void OnFastFire2Ready() {
   AssLogger(LOGLVL_INFO, "####### FASTFIRE2 IS READY! INITIATE STARTUP SEQUENCE... PREPARE FOR THE END TIMES #######");
   RegisterAndPrecacheAllFiles();
   RegisterAllCommands();
+  HookAllEvents();
   WaveSystem().update();
-  if (WaveSystem().mode == 0) SetupCoreData();
+  if (WaveSystem().IsDefault()) SetupCoreData();
   UpdateAllHealers();
   CreateTimer(1.0, UpdateMedicHealing);
   CPrintToChatAll("{fartsyred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
@@ -63,6 +65,6 @@ public void OnGameFrame() {
   if (GlobalAudio.shouldTick) GlobalAudio.Tick();
   if (BossHandler.shouldTick) BossHandler.Tick();
   if (BossHandler.tickBusterNuclear) BossHandler.TickBusterNuclear();
-  if (WaveSystem().mode == 2 && core.isWave) WaveSystem().run_bodycheck();
+  if (WaveSystem().IsWaveNull() && WaveSystem().IsActive()) WaveSystem().run_bodycheck();
   WeatherManager.TickFog();
 }

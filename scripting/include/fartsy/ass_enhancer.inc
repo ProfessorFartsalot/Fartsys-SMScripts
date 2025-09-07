@@ -9,7 +9,6 @@ enum struct BGM {
   int SNDLVL;
 }
 BGM BGMArray[48];
-
 //All sound effects
 enum struct SFXARRAY {
   char realPath[64];
@@ -95,6 +94,7 @@ enum struct AUDIOMANAGER {
   }
   void EnterEventMode(int bgm) {
     PrintToChat(this.Client, "Saving %i for you", this.indexBGM);
+    this.VIPBGM = 0;
     this.savedIndexBGM = this.indexBGM;
     this.savedTimeSeconds = this.timeSeconds;
     this.savedLoopSeconds = this.loopSeconds;
@@ -150,7 +150,7 @@ enum struct AUDIOMANAGER {
         this.savedLoopSeconds = BGMArray[this.savedIndexBGM].loopSeconds;
       }
     }
-    if (this.indexBGM == 0) this.indexBGM = g_indexBGM;
+    this.indexBGM = (!this.EventMode && this.VIPBGM > 0) ? this.VIPBGM : (this.indexBGM == 0 ? g_indexBGM : this.indexBGM);
     if (this.engineSecondsAdjusted() > this.timeSeconds + this.loopSeconds) {
       PrintToServer("Playing %i for %N", this.indexBGM, this.Client);
       this.timeSeconds = GetEngineTime();
@@ -167,6 +167,11 @@ enum struct AUDIOMANAGER {
       this.loopSeconds = BGMArray[this.indexBGM].loopSeconds;
       CreateTimer(1.0, SyncMusic, this.Client);
     }
+  }
+  /** When updated by GlobalAudio */
+  void UpdateBGM() {
+    this.ChangeBGM(this.VIPBGM > 0 && !this.isEventMode() ? this.VIPBGM : this.indexBGM == 0 ? g_indexBGM : this.indexBGM, true);
+    this.shouldTick = true;
   }
   /**When a client joins the server, set this audio manager to theirs */
   void OnClientConnected(int client) {
@@ -190,7 +195,6 @@ AUDIOMANAGER AudioManager[MAXPLAYERS+1];
 
 enum struct AUDIOCONTROLLER {
   bool shouldTick;
-  int VIPBGM;
   int VIPIndex;
   void init() {
     AssLogger(LOGLVL_INFO, "Initializing Global Audio...");
@@ -209,20 +213,25 @@ enum struct AUDIOCONTROLLER {
       }
     }
     g_indexBGM = GetRandomInt(1, 4);
-    this.VIPBGM = -1;
     this.VIPIndex = -1;
     this.UpdateBGM();
     CreateTimer(1.0, EnableAudio);
   }
   void Reset() {
-    g_indexBGM = GetGameMode() < 2 ? GetRandomInt(1, 4) : 28;
+    g_indexBGM = !WaveSystem().IsWaveNull() ? GetRandomInt(1, 4) : 28;
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].Reset();
   }
   void setBGM(int bgm, bool instant){
     g_indexBGM = bgm == 0 ? GetRandomInt(1,4) : bgm;
-    for (int i = 0; i < MaxClients; ++i) if(IsValidClient(i)) {
+    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i)) {
       AudioManager[i].ChangeBGM(bgm, instant);
       PrintToServer("Setting %N's BGM to %i", i, bgm);
+    }
+  }
+  void setVIPBGM(int bgm) {
+    bgm = bgm <= 0 ? GetDefaultBGM() : bgm;
+    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i) && !AudioManager[i].isEventMode()) {
+      AudioManager[i].VIPBGM = bgm;
     }
   }
   void Stop() {
@@ -239,8 +248,7 @@ enum struct AUDIOCONTROLLER {
           PrintToServer("Client %N valid? %s Event Mode? %s", i, IsValidClient(i) ? "true" : "false", AudioManager[i].isEventMode() ? "true" : "false");
           continue;
         }
-        AudioManager[i].ChangeBGM(this.VIPBGM > 0 ? this.VIPBGM : AudioManager[i].indexBGM == 0 ? g_indexBGM : AudioManager[i].indexBGM, true);
-        AudioManager[i].shouldTick = true;
+        AudioManager[i].UpdateBGM();
       }
     }
   }
@@ -289,6 +297,18 @@ public void ShowFartsyMusicMenu(int client) {
   for (int i = 0; i < sizeof(BGMArray); i++) menu.AddItem(buffer, BGMArray[i].songName);
   menu.Display(client, MENU_TIME_FOREVER);
   menu.ExitButton = true;
+}
+
+// VIP Music Menu Handler
+public int MenuHandlerFartsyMusic(Menu menu, MenuAction action, int client, int bgm) {
+  if (action == MenuAction_Select) {
+    AssLogger(LOGLVL_WARN, "WE SHOULDNT BE USING TACO BELL BGM INDEX ANYMORE DUE TO NEW CONFIGS!!!");
+    CPrintToChat(client, (bgm == 0 ? "{darkgreen}[CORE] Confirmed. Next song set to {aqua}Default{darkgreen}." : "{limegreen}[CORE] Confirmed. Next song set to {aqua}%s{limegreen}."), BGMArray[bgm].songName);
+    GlobalAudio.setVIPBGM(bgm == 0 ? -1 : bgm);
+    for (int i = 0; i < MaxClients; ++i) AudioManager[i].stopBGM = (!StrEqual(AudioManager[i].cachedPath, BGMArray[bgm].realPath) ? true : false);
+    GlobalAudio.VIPIndex = client;
+  } else if (action == MenuAction_End) CloseHandle(menu);
+  return 0;
 }
 
 //Set Fartsy Sound menu
@@ -427,11 +447,13 @@ enum struct WEATHERMANAGER {
   float fogColorBTarget;
   int intensity;
   int mIntensity;
+  bool CanFormTornado() {
+    return WaveSystem().IsActive() && this.canTornado && !this.hasTornado;
+  }
   void Activate(){
     this.Reset();
-    sudo(1001); //Stop any BGM
     this.tickWeather = true;
-    if (GetGameMode() != 2) this.PerformRandomWeather(); //Start weather system ONLY IF NOT IN GAMEMODE 2.
+    if (!WaveSystem().IsWaveNull()) this.PerformRandomWeather(); //Start weather system ONLY IF NOT IN GAMEMODE 2.
   }
   void doLightning(){
     sudo(1003);
@@ -469,7 +491,7 @@ enum struct WEATHERMANAGER {
     this.fogTarget = this.defFogDensity;
     g_PowerOutage = false;
     this.hasTornado = false;
-    if(GetCoreData().isWave){
+    if(WaveSystem().IsActive()){
       this.mIntensity = 5;
       this.intensity = 7; 
     } else {
@@ -498,27 +520,15 @@ enum struct WEATHERMANAGER {
     FastFire2("Weather.Siren.ExplodeParticle", "Stop", "", 0.0, false);
     FastFire2("Weather.Siren", "StopSound", "", 5.0, false);
   }
-  void FormTornado(){
-    this.hasTornado = true;
-    this.mIntensity = 15;
-    this.intensity = 15;
-    CreateTimer(1.5, TornadoShaker);
-    FastFire2("TornadoKill", "Enable", "", 0.0, false);
-    FastFire2("tornadobutton", "Lock", "", 0.0, false);
-    FastFire2("tornadof1", "Start", "", 20.0, false);
-    FastFire2("shaketriggerf1", "Enable", "", 20.0, false);
-    FastFire2("tornadowindf1", "PlaySound", "", 20.0, false);
-    FastFire2("tornadof1wind", "Enable", "", 21.50, false);
-    float f = GetRandomFloat(60.0, 120.0);
-    CreateTimer(f, TimedOperator, 42);
-  }
   void IssueTornadoWarning(){
-    this.TornadoWarning = true;
-    this.sirenPitchTarget = 100.0;
-    this.sirenPitchRate = 0.1;
-    FastFire2("Weather.EASScreen", "Enable", "", 0.0, false);
-    FastFire2("Weather.EAS", "PlaySound", "", 0.0, false);
-    CreateTimer(GetRandomFloat(1.0, 3.0), ModulateSiren);
+    if (WaveSystem().IsActive() && this.canTornado && !this.sirenExploded) {
+      this.TornadoWarning = true;
+      this.sirenPitchTarget = 100.0;
+      this.sirenPitchRate = 0.1;
+      FastFire2("Weather.EASScreen", "Enable", "", 0.0, false);
+      FastFire2("Weather.EAS", "PlaySound", "", 0.0, false);
+      CreateTimer(GetRandomFloat(1.0, 3.0), ModulateSiren);
+    }
   }
   void PerformRandomWeather(){
     if (!this.tickWeather) return;
@@ -792,6 +802,22 @@ enum struct WEATHERMANAGER {
         FastFire2("Weather.Siren", "Pitch", targetPitch, 0.0, false);
         PrintToServer("SirenPitch = %s", targetPitch);
       }
+    }
+  }
+  void TryFormTornado(){
+    if (this.CanFormTornado()) {
+      this.hasTornado = true;
+      this.mIntensity = 15;
+      this.intensity = 15;
+      CreateTimer(1.5, TornadoShaker);
+      FastFire2("TornadoKill", "Enable", "", 0.0, false);
+      FastFire2("tornadobutton", "Lock", "", 0.0, false);
+      FastFire2("tornadof1", "Start", "", 20.0, false);
+      FastFire2("shaketriggerf1", "Enable", "", 20.0, false);
+      FastFire2("tornadowindf1", "PlaySound", "", 20.0, false);
+      FastFire2("tornadof1wind", "Enable", "", 21.50, false);
+      float f = GetRandomFloat(60.0, 120.0);
+      CreateTimer(f, TimedOperator, 42);
     }
   }
 }
