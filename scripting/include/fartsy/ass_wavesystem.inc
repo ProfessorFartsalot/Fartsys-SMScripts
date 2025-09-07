@@ -10,6 +10,9 @@ enum struct WAVESYSTEM {
   bool IsDefault() {
     return this.type == WaveTypes_NORMAL;
   }
+  bool IsTacoBell() {
+    return this.type == WaveTypes_TACOBELL;
+  }
   bool IsWaveNull() {
     return this.type == WaveTypes_WAVENULL;
   }

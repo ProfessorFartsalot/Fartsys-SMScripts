@@ -1,3 +1,4 @@
+/** This is the plugin netcode. This handles literally everything. */
 void sudo(int task) {
   AssLogger(LOGLVL_DEBUG, "Calling sudo with %i", task);
   switch (task) {
@@ -934,11 +935,11 @@ public Action CommandOverride(int client, const char[] command, int argc)
 public Action TimedOperator(Handle timer, int job) {
     switch (job) {
     case 0: {
-      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, GlobalAudio.VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().wave, AudioManager[i].songName, GlobalAudio.VIPIndex);
+      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, AudioManager[i].VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().wave, AudioManager[i].songName, GlobalAudio.VIPIndex);
     }
     //Boss script
     case 2: {
-      ServerCommand("fb_operator 1001"); //Stop all bgm.
+      sudo(1001); // Stop all bgm.
       CreateTimer(0.0, TimedOperator, 3);
     }
     //Boss script pt 2

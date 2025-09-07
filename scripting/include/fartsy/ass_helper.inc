@@ -1,5 +1,4 @@
 //ASS_HELPER - Contains the config loaders and all the plugin core data entries as well as some stocks required for base functionality.
-public char PLUGIN_VERSION[8] = "8.5.0";
 //Log debug info
 enum {
   LOGLVL_DEBUG = 0,
@@ -39,6 +38,7 @@ enum struct DEFAULTS {
   int defSacPointsMax;
 }
 DEFAULTS DefaultsArray[9];
+
 //Core values
 enum struct COREDATA {
   bool bgmPlaying;
@@ -98,6 +98,10 @@ enum struct COREDATA {
   }
 }
 COREDATA core;
+
+int GetDefaultBGM() {
+  return WaveSystem().IsActive ? (core.sephiroth ? 16 : DefaultsArray[WaveSystem().wave].defBGMIndex) : GetRandomInt(1, 4);
+}
 
 Database Ass_Database;
 Database Get_Ass_Database() {
@@ -858,18 +862,6 @@ char FB_SENT[][64] = {
   ""
 };
 
-//Taco bell's default BGM indexes
-int tacoBellBGMIndex[] = {
-  1,
-  17,
-  6,
-  7,
-  8,
-  12,
-  13,
-  14,
-  15
-};
 //RT camera system
 char SelectedCamera[][32] = {
   "CAM.Front",
@@ -1342,18 +1334,6 @@ stock float FloatMin(float a, float b) {
 
 stock float FloatMax(float a, float b) { 
   return a >= b ? a : b;
-}
-// VIP Music Menu Handler
-public int MenuHandlerFartsyMusic(Menu menu, MenuAction action, int client, int bgm) {
-  if (action == MenuAction_Select) {
-    int cWave = GetCurWave();
-    CPrintToChat(client, (bgm == 0 ? "{darkgreen}[CORE] Confirmed. Next song set to {aqua}Default{darkgreen}." : "{limegreen}[CORE] Confirmed. Next song set to {aqua}%s{limegreen}."), BGMArray[bgm].songName);
-    GlobalAudio.VIPBGM = (bgm == 0 ? -1 : bgm);
-    GlobalAudio.setBGM(bgm == 0 ? (core.tacobell ? tacoBellBGMIndex[cWave] : core.sephiroth ? 16 : WaveSystem().IsActive ? DefaultsArray[cWave].defBGMIndex : GetRandomInt(1, 4)) : bgm, false);
-    for (int i = 0; i < MaxClients; ++i) AudioManager[i].stopBGM = (!StrEqual(AudioManager[i].cachedPath, BGMArray[bgm].realPath) ? true : false);
-    GlobalAudio.VIPIndex = client;
-  } else if (action == MenuAction_End) CloseHandle(menu);
-  return 0;
 }
 
 //Jump waves.
