@@ -1,7 +1,18 @@
-char WaveSystem_Version[8] = "1.0.0";
+char WaveSystem_Version[8] = "1.1.0";
+const int WaveTypes_NORMAL = 0;
+const int WaveTypes_TACOBELL = 1;
+const int WaveTypes_WAVENULL = 2;
+
 enum struct WAVESYSTEM {
-  int mode;
+  bool IsActive;
+  int type;
   int wave;
+  bool IsDefault() {
+    return this.type == WaveTypes_NORMAL;
+  }
+  bool IsWaveNull() {
+    return this.type == WaveTypes_WAVENULL;
+  }
   void init() {
     this.update();
     GlobalAudio.Reset();
@@ -9,8 +20,8 @@ enum struct WAVESYSTEM {
     ServerCommand("fb_startmoney 50000");
     CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}%s {white} (Core v%s, System v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", "mvm_rottenburg_fartsys_ass-r22", GET_PLUGIN_VERSION(), WaveSystem_Version);
     FastFire2("rain", "Alpha", "0", 0.0, false);
-    PrintToChatAll("%i", WaveSystem().mode);
-    if (this.mode == 2) {
+    PrintToChatAll("WaveSystem type %i", WaveSystem().type);
+    if (this.IsWaveNull()) {
       PrintToChatAll("UH OH");
     }
   }
@@ -18,7 +29,7 @@ enum struct WAVESYSTEM {
   void run() {
     this.update();
     UpdateAllHealers();
-    core.isWave = true;
+    this.IsActive = true;
     bombState[0].state = DefaultsArray[this.wave].defBombStatus;
     bombState[0].stateMax = DefaultsArray[this.wave].defBombStatusMax;
     core.canHWBoss = DefaultsArray[this.wave].defCanHWBoss;
@@ -36,14 +47,14 @@ enum struct WAVESYSTEM {
     for (int i = 0; i < sizeof(WaveSetup) - 4; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
     sudo(1002);
     sudo(1007);
-    switch (this.mode) {
-      case 0, 1: {
+    switch (this.type) {
+      case WaveTypes_NORMAL: {
         this.run_normal();
       }
-      /*case 1: {
+      /*case WaveTypes_TACOBELL: {
         this.run_tacobell();
       }*/
-      case 2: {
+      case WaveTypes_WAVENULL: {
         this.run_wavenull();
       }
     }
@@ -54,7 +65,8 @@ enum struct WAVESYSTEM {
   }
   // Normal mode
   void run_normal() {
-    GlobalAudio.setBGM(core.tacobell ? tacoBellBGMIndex[this.wave] : DefaultsArray[this.wave].defBGMIndex, true);
+    PrintToServer("Wave manager is calling run_normal because this.type is %i", this.type);
+    //GlobalAudio.setBGM(core.tacobell ? tacoBellBGMIndex[this.wave] : DefaultsArray[this.wave].defBGMIndex, true);
     switch (this.wave) {
       case 2: {
         CreateTimer(GetRandomFloat(10.0, 45.0), TimedAOEs);
@@ -104,9 +116,12 @@ enum struct WAVESYSTEM {
     }
   }
   // Taco Bell Edition
-  void run_tacobell() {}
+  void run_tacobell() {
+    PrintToServer("Wave manager is calling run_tacobell because this.mode is %i", this.type);
+  }
   // Wave Null
   void run_wavenull() {
+    PrintToServer("Wave manager is calling run_wavenull because this.mode is %i", this.type);
     switch (this.wave) {
       case 0: {
         CPrintToChatAll("{fartsyred} [WARNING]: YOU HAVE CHOSEN TO LAUNCH WAVE NULL.");
@@ -141,15 +156,14 @@ enum struct WAVESYSTEM {
     if (ent == -1) return;
     GetEntPropString(ent, Prop_Send, "m_iszMvMPopfileName", popfile, sizeof(popfile));
     int target = (StrContains(popfile, "tacobell") != -1 ? 1 : (StrContains(popfile, "wavenull") != -1) ? 2 : 0);
-    if (this.mode != target) {
-        Format(logdata, sizeof(logdata), "Current gamemode %i does not match detected gamemode %i! Someone must have changed the gamemode! Setting up core data immediately!!!", this.mode, target);
+    if (this.type != target) {
+        Format(logdata, sizeof(logdata), "Current type %i does not match detected type %i! Someone must have changed the gamemode! Setting up core data immediately!!!", this.type, target);
         AssLogger(LOGLVL_DEBUG, logdata);
-        this.mode = target;
+        this.type = target;
         SetupCoreData();
     }
-    this.wave = this.mode != 2 ? GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount")) : this.wave;
+    this.wave = this.IsWaveNull() ? this.wave : GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount"));
   }
 }
 WAVESYSTEM WS;
-
 WAVESYSTEM WaveSystem() { return WS; }

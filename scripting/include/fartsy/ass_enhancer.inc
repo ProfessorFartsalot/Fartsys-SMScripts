@@ -215,7 +215,7 @@ enum struct AUDIOCONTROLLER {
     CreateTimer(1.0, EnableAudio);
   }
   void Reset() {
-    g_indexBGM = GetGameMode() < 2 ? GetRandomInt(1, 4) : 28;
+    g_indexBGM = WaveSystem().IsWaveNull() ? GetRandomInt(1, 4) : 28;
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].Reset();
   }
   void setBGM(int bgm, bool instant){
@@ -427,11 +427,13 @@ enum struct WEATHERMANAGER {
   float fogColorBTarget;
   int intensity;
   int mIntensity;
+  bool CanFormTornado() {
+    return WaveSystem().IsActive && this.canTornado && !this.hasTornado;
+  }
   void Activate(){
     this.Reset();
-    sudo(1001); //Stop any BGM
     this.tickWeather = true;
-    if (GetGameMode() != 2) this.PerformRandomWeather(); //Start weather system ONLY IF NOT IN GAMEMODE 2.
+    if (!WaveSystem().IsWaveNull()) this.PerformRandomWeather(); //Start weather system ONLY IF NOT IN GAMEMODE 2.
   }
   void doLightning(){
     sudo(1003);
@@ -469,7 +471,7 @@ enum struct WEATHERMANAGER {
     this.fogTarget = this.defFogDensity;
     g_PowerOutage = false;
     this.hasTornado = false;
-    if(GetCoreData().isWave){
+    if(WaveSystem().IsActive){
       this.mIntensity = 5;
       this.intensity = 7; 
     } else {
@@ -498,27 +500,15 @@ enum struct WEATHERMANAGER {
     FastFire2("Weather.Siren.ExplodeParticle", "Stop", "", 0.0, false);
     FastFire2("Weather.Siren", "StopSound", "", 5.0, false);
   }
-  void FormTornado(){
-    this.hasTornado = true;
-    this.mIntensity = 15;
-    this.intensity = 15;
-    CreateTimer(1.5, TornadoShaker);
-    FastFire2("TornadoKill", "Enable", "", 0.0, false);
-    FastFire2("tornadobutton", "Lock", "", 0.0, false);
-    FastFire2("tornadof1", "Start", "", 20.0, false);
-    FastFire2("shaketriggerf1", "Enable", "", 20.0, false);
-    FastFire2("tornadowindf1", "PlaySound", "", 20.0, false);
-    FastFire2("tornadof1wind", "Enable", "", 21.50, false);
-    float f = GetRandomFloat(60.0, 120.0);
-    CreateTimer(f, TimedOperator, 42);
-  }
   void IssueTornadoWarning(){
-    this.TornadoWarning = true;
-    this.sirenPitchTarget = 100.0;
-    this.sirenPitchRate = 0.1;
-    FastFire2("Weather.EASScreen", "Enable", "", 0.0, false);
-    FastFire2("Weather.EAS", "PlaySound", "", 0.0, false);
-    CreateTimer(GetRandomFloat(1.0, 3.0), ModulateSiren);
+    if (WaveSystem().IsActive && this.canTornado && !this.sirenExploded) {
+      this.TornadoWarning = true;
+      this.sirenPitchTarget = 100.0;
+      this.sirenPitchRate = 0.1;
+      FastFire2("Weather.EASScreen", "Enable", "", 0.0, false);
+      FastFire2("Weather.EAS", "PlaySound", "", 0.0, false);
+      CreateTimer(GetRandomFloat(1.0, 3.0), ModulateSiren);
+    }
   }
   void PerformRandomWeather(){
     if (!this.tickWeather) return;
@@ -792,6 +782,22 @@ enum struct WEATHERMANAGER {
         FastFire2("Weather.Siren", "Pitch", targetPitch, 0.0, false);
         PrintToServer("SirenPitch = %s", targetPitch);
       }
+    }
+  }
+  void TryFormTornado(){
+    if (this.CanFormTornado()) {
+      this.hasTornado = true;
+      this.mIntensity = 15;
+      this.intensity = 15;
+      CreateTimer(1.5, TornadoShaker);
+      FastFire2("TornadoKill", "Enable", "", 0.0, false);
+      FastFire2("tornadobutton", "Lock", "", 0.0, false);
+      FastFire2("tornadof1", "Start", "", 20.0, false);
+      FastFire2("shaketriggerf1", "Enable", "", 20.0, false);
+      FastFire2("tornadowindf1", "PlaySound", "", 20.0, false);
+      FastFire2("tornadof1wind", "Enable", "", 21.50, false);
+      float f = GetRandomFloat(60.0, 120.0);
+      CreateTimer(f, TimedOperator, 42);
     }
   }
 }

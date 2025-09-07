@@ -54,7 +54,6 @@ enum struct COREDATA {
   bool canTornado;
   bool crusader;
   bool doFailsafe;
-  bool isWave;
   bool monitorOn;
   bool monitorColor;
   bool sacrificedByClient;
@@ -93,19 +92,12 @@ enum struct COREDATA {
     this.canHindenburg = false;
     this.canHWBoss = false;
     this.canSephNuke = false;
-    this.isWave = false;
+    WaveSystem().IsActive = false;
     this.sephiroth = false;
     this.waveFlags = 0;
   }
 }
 COREDATA core;
-COREDATA GetCoreData() {
-  return core;
-}
-
-int GetGameMode() {
-  return WaveSystem().mode;
-}
 
 Database Ass_Database;
 Database Get_Ass_Database() {
@@ -252,7 +244,7 @@ public int GetHealerOfClient(int client){
       char s[32];
       GetEdictClassname(medigun, s, sizeof(s));
       if (!strcmp(s, "tf_weapon_medigun", false)) {
-        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && core.isWave){
+        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && WaveSystem().IsActive) {
           if(GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") == client) return i;
         }
       }
@@ -275,7 +267,7 @@ public Action UpdateMedicHealing(Handle timer){
       char s[32];
       GetEdictClassname(medigun, s, sizeof(s));
       if (!strcmp(s, "tf_weapon_medigun", false)) {
-        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && core.isWave){
+        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && WaveSystem().IsActive){
           int hOffset = (CurHealVal[i] - EmnityManager[i].InitHealingValue);
           PrintToServer("%N is healing %N with %i HP since last check", i, GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget"), hOffset);
           EmnityManager[i].iHealing += hOffset;
@@ -619,7 +611,6 @@ void SetupCoreData(){
   core.canSephNuke = false;
   core.crusader = false;
   core.doFailsafe = false;
-  core.isWave = false;
   core.monitorOn = false;
   core.monitorColor = true;
   core.sacrificedByClient = false;
@@ -640,6 +631,7 @@ void SetupCoreData(){
   core.waveFlags = 0;
   core.HWNMin = 210.0;
   core.HWNMax = 380.0;
+  WaveSystem().IsActive = false;
   WaveSystem().wave = 0;
   GlobalAudio.init();
   AssLogger(1, "Setting up bosses...");
@@ -784,14 +776,6 @@ void SetupCoreData(){
     }
   }
   CloseHandle(confCoreData);
-  AssLogger(1, "Hooking game events...");
-  HookEvent("player_death", EventDeath);
-  HookEvent("player_spawn", EventSpawn);
-  HookEvent("server_cvar", Event_Cvar, EventHookMode_Pre);
-  HookEvent("mvm_wave_complete", EventWaveComplete);
-  HookEvent("mvm_wave_failed", EventWaveFailed);
-  HookEvent("mvm_bomb_alarm_triggered", EventWarning);
-  HookEventEx("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
   AssLogger(1, "Core data setup complete!");
 }
 
@@ -1267,7 +1251,7 @@ void Emerge(int stage){
 
 //Exit emergency mode!
 public void ExitEmergencyMode() {
-  CPrintToChatAll(!core.isWave ? "{darkgreen}[CORE] Exiting emergency mode with CODE -1/WAVE_END (the wave has ended). %i actions executed." : "{darkgreen}[CORE] Exiting emergency mode with CODE 0/SUCCESS. %i actions executed.", BEM+1); //BEM+1 because BEM actually executes on 0.
+  CPrintToChatAll(!WaveSystem().IsActive ? "{darkgreen}[CORE] Exiting emergency mode with CODE -1/WAVE_END (the wave has ended). %i actions executed." : "{darkgreen}[CORE] Exiting emergency mode with CODE 0/SUCCESS. %i actions executed.", BEM+1); //BEM+1 because BEM actually executes on 0.
   core.brawler_emergency = false;
   core.sacPoints = 0;
   ServerCommand("sm_god @red 0");
@@ -1321,7 +1305,7 @@ public Action TickClientHealth(Handle timer) {
   return Plugin_Stop;
 }
 public Action TimedAOEs(Handle timer){
-  if (core.isWave){
+  if (WaveSystem().IsActive){
     for (int i = 0; i < GetRandomInt(1, 10); i++){
       CreateTimer(i/10.0, TimedOperator, 201);
     }
@@ -1365,7 +1349,7 @@ public int MenuHandlerFartsyMusic(Menu menu, MenuAction action, int client, int 
     int cWave = GetCurWave();
     CPrintToChat(client, (bgm == 0 ? "{darkgreen}[CORE] Confirmed. Next song set to {aqua}Default{darkgreen}." : "{limegreen}[CORE] Confirmed. Next song set to {aqua}%s{limegreen}."), BGMArray[bgm].songName);
     GlobalAudio.VIPBGM = (bgm == 0 ? -1 : bgm);
-    GlobalAudio.setBGM(bgm == 0 ? (core.tacobell ? tacoBellBGMIndex[cWave] : core.sephiroth ? 16 : core.isWave ? DefaultsArray[cWave].defBGMIndex : GetRandomInt(1, 4)) : bgm, false);
+    GlobalAudio.setBGM(bgm == 0 ? (core.tacobell ? tacoBellBGMIndex[cWave] : core.sephiroth ? 16 : WaveSystem().IsActive ? DefaultsArray[cWave].defBGMIndex : GetRandomInt(1, 4)) : bgm, false);
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].stopBGM = (!StrEqual(AudioManager[i].cachedPath, BGMArray[bgm].realPath) ? true : false);
     GlobalAudio.VIPIndex = client;
   } else if (action == MenuAction_End) CloseHandle(menu);
@@ -1394,7 +1378,7 @@ public Action DispatchCircleAOE(float pos[3]) {
 }
 //Track bombState[0].state and update entities every 0.1 seconds
 public Action BombStatusUpdater(Handle timer) {
-  if (core.isWave) {
+  if (WaveSystem().IsActive) {
     CreateTimer(0.1, BombStatusUpdater);
     if (bombState[0].state < bombState[0].stateMax) {
       switch (bombState[0].state) {
@@ -1417,7 +1401,7 @@ public Action BombStatusUpdater(Handle timer) {
 
 //RobotLaunchTimer (Randomly fling robots)
 public Action RobotLaunchTimer(Handle timer) {
-  if (!core.isWave) return Plugin_Stop;
+  if (!WaveSystem().IsActive) return Plugin_Stop;
   FastFire2("FB.RobotLauncher", "Enable", "", 0.0, false);
   FastFire2("FB.RobotLauncher", "Disable", "", 7.5, false);
   CreateTimer(GetRandomFloat(5.0, 30.0), RobotLaunchTimer);
@@ -1425,7 +1409,7 @@ public Action RobotLaunchTimer(Handle timer) {
 }
 //Track SacPoints and update entities every 0.1 seconds
 public Action SacrificePointsUpdater(Handle timer) {
-  if (!core.isWave) return Plugin_Stop;
+  if (!WaveSystem().IsActive) return Plugin_Stop;
   CreateTimer(0.1, SacrificePointsUpdater);
   if (core.sacPoints > core.sacPointsMax) core.sacPoints = core.sacPointsMax;
   return Plugin_Stop;
@@ -1433,7 +1417,7 @@ public Action SacrificePointsUpdater(Handle timer) {
 
 //BombStatus (Add points to Bomb Status occasionally)
 public Action BombStatusAddTimer(Handle timer) {
-  if (core.isWave && (bombState[0].state < bombState[0].stateMax)) {
+  if (WaveSystem().IsActive && (bombState[0].state < bombState[0].stateMax)) {
     bombState[0].isReady = false;
     bombState[0].state++;
     CreateTimer(GetRandomFloat(10.0, 45.0), BombStatusAddTimer);
@@ -1442,7 +1426,7 @@ public Action BombStatusAddTimer(Handle timer) {
 }
 //Adverts for tips/tricks
 public Action PerformAdverts(Handle timer) {
-  if (!core.isWave) {
+  if (!WaveSystem().IsActive) {
     CreateTimer(180.0, PerformAdverts);
     CPrintToChatAll(AdvMessage[GetRandomInt(0, 7)]);
   }
@@ -1451,7 +1435,7 @@ public Action PerformAdverts(Handle timer) {
 
 //Adverts for wave information
 public Action PerformWaveAdverts(Handle timer) {
-  if (core.isWave) {
+  if (WaveSystem().IsActive) {
     char buffer[16];
     int emnity;
     char tbuffer[16];
@@ -1476,8 +1460,7 @@ public Action PerformWaveAdverts(Handle timer) {
 
 //Feature admin timer
 public Action SelectAdminTimer(Handle timer) {
-  if (core.isWave) return Plugin_Stop;
-  else {
+  if (!WaveSystem().IsActive) {
     sudo(1002);
     CreateTimer(GetRandomFloat(40.0, 120.0), SelectAdminTimer);
   }
@@ -1486,8 +1469,7 @@ public Action SelectAdminTimer(Handle timer) {
 
 //Brute Justice Timer
 public Action OnslaughterATK(Handle timer) {
-  if (core.waveFlags != 1) return Plugin_Stop;
-  else {
+  if (core.waveFlags == 1) {
     CreateTimer(GetRandomFloat(5.0, 7.0), OnslaughterATK);
     FastFire2("BruteJusticeDefaultATK", "FireMultiple", "3", 5.0, false);
     switch (GetRandomInt(1, 10)) {
@@ -1549,9 +1531,7 @@ public Action OnslaughterATK(Handle timer) {
 
 //Sephiroth Timer
 public Action SephATK(Handle timer) {
-  if (core.waveFlags != 2) {
-    return Plugin_Stop;
-  } else {
+  if (core.waveFlags == 2) {
     float f = GetRandomFloat(5.0, 10.0);
     CreateTimer(f, SephATK);
     FastFire2("SephArrows", "FireMultiple", "3", 5.0, false);
@@ -1564,10 +1544,11 @@ public Action SephATK(Handle timer) {
 public Action BossHPTimer(Handle timer) {
   int BossEntProxy = (core.waveFlags == 1 ? FindEntityByTargetname("OnslaughterTank", "tank_boss") : core.waveFlags == 2 ? FindEntityByTargetname("SephirothTank", "tank_boss") : -1);
   int BossEnt = (core.waveFlags == 1 ? FindEntityByTargetname("FB.OnslaughterBase", "base_boss") : core.waveFlags == 2 ? FindEntityByTargetname("FB.SephirothDMGRelay", "func_physbox") : -1);
-  if (BossEnt == -1 || BossEntProxy == -1) return Plugin_Stop;
-  SetEntProp(BossEntProxy, Prop_Data, "m_iHealth", GetEntProp(BossEnt, Prop_Data, "m_iHealth"));
-  CPrintToChatAll((core.waveFlags == 1 ? "{blue}Onslaughter's HP: %i (%i)" : core.waveFlags == 2 ? "{blue}Sephiroth's HP: %i (%i)" : "{blue}Error: Boss not found... core.waveFlags was neither 1 nor 2"), GetEntProp(BossEnt, Prop_Data, "m_iHealth"), GetEntProp(BossEntProxy, Prop_Data, "m_iHealth"));
-  CreateTimer(5.0, BossHPTimer);
+  if (BossEnt != -1 || BossEntProxy != -1) {
+    SetEntProp(BossEntProxy, Prop_Data, "m_iHealth", GetEntProp(BossEnt, Prop_Data, "m_iHealth"));
+    CPrintToChatAll((core.waveFlags == 1 ? "{blue}Onslaughter's HP: %i (%i)" : core.waveFlags == 2 ? "{blue}Sephiroth's HP: %i (%i)" : "{blue}Error: Boss not found... core.waveFlags was neither 1 nor 2"), GetEntProp(BossEnt, Prop_Data, "m_iHealth"), GetEntProp(BossEntProxy, Prop_Data, "m_iHealth"));
+    CreateTimer(5.0, BossHPTimer);
+  }
   return Plugin_Stop;
 }
 
@@ -1583,7 +1564,7 @@ public Action SharkTimer(Handle timer) {
 
 //SpecTimer
 public Action SpecTimer(Handle timer) {
-  if (core.isWave) {
+  if (WaveSystem().IsActive) {
     FastFire2("Spec*","Disable","", 0.0, false);
     FastFire2(SpecEnt[GetRandomInt(0, 5)], "Enable", "", 0.1, false);
     CreateTimer(GetRandomFloat(10.0, 30.0), SpecTimer);
@@ -1602,10 +1583,11 @@ public Action SENTMeteorTimer(Handle timer) {
 
 //Used for nukes, obviously
 public Action NukeTimer(Handle timer, int type) {
-  if (!core.canCrusaderNuke && !core.canSephNuke) return Plugin_Stop;
-  CustomSoundEmitter(SFXArray[8].realPath, 65, false, 0, 1.0, 100);
-  FastFire2(type == 1 ? "FB.CrusaderNuke" : "SephNuke", "ForceSpawn", "", 0.0, false);
-  CreateTimer(GetRandomFloat(1.5, 3.0), NukeTimer, type);
+  if (core.canCrusaderNuke || core.canSephNuke) {
+    CustomSoundEmitter(SFXArray[8].realPath, 65, false, 0, 1.0, 100);
+    FastFire2(type == 1 ? "FB.CrusaderNuke" : "SephNuke", "ForceSpawn", "", 0.0, false);
+    CreateTimer(GetRandomFloat(1.5, 3.0), NukeTimer, type);
+  }
   return Plugin_Stop;
 }
 
@@ -1620,19 +1602,18 @@ public Action SENTStarTimer(Handle timer) {
 
 //Crusader Incoming Timer for Crusader
 public Action CRUSADERINCOMING(Handle timer) {
-  if (!core.crusader || core.INCOMINGDISPLAYED > 17) {
-    core.INCOMINGDISPLAYED = 0;
-    return Plugin_Stop;
+  if (core.crusader && core.INCOMINGDISPLAYED < 17) {
+    core.INCOMINGDISPLAYED++;
+    FastFire2("FB.INCOMING", "Display", "", 0.0, false);
+    CreateTimer(1.75, CRUSADERINCOMING);
   }
-  core.INCOMINGDISPLAYED++;
-  FastFire2("FB.INCOMING", "Display", "", 0.0, false);
-  CreateTimer(1.75, CRUSADERINCOMING);
+  if (core.INCOMINGDISPLAYED == 17) core.INCOMINGDISPLAYED = 0;
   return Plugin_Stop;
 }
 
 //Halloween Bosses
 public Action HWBosses(Handle timer) {
-  if (core.isWave && core.canHWBoss) {
+  if (WaveSystem().IsActive && core.canHWBoss) {
     HWBoss[GetRandomInt(0, 11)].attack();
     core.canHWBoss = false;
     CreateTimer(60.0, HWBossesRefire);
@@ -1642,13 +1623,13 @@ public Action HWBosses(Handle timer) {
 
 //Repeat HWBosses Timer
 public Action HWBossesRefire(Handle timer) {
-  if (core.isWave) CreateTimer(GetRandomFloat(core.HWNMin, core.HWNMax), HWBosses);
+  if (WaveSystem().IsActive) CreateTimer(GetRandomFloat(core.HWNMin, core.HWNMax), HWBosses);
   return Plugin_Stop;
 }
 
 //SacPoints (Add points to Sacrifice Points occasionally)
 public Action SacrificePointsTimer(Handle timer) {
-  if (core.isWave && (core.sacPoints < core.sacPointsMax)) {
+  if (WaveSystem().IsActive && (core.sacPoints < core.sacPointsMax)) {
     core.sacPoints++;
     CreateTimer(GetRandomFloat(5.0, 30.0), SacrificePointsTimer);
   }
@@ -1690,19 +1671,17 @@ public void OnClientPostAdminCheck(int client) {
 * @param fadeOut Time it takes for the text to fade out
 */
 void SendHudTextAll(int channel, const char[] text, float posX, float posY, float holdTime, int color1[4], int color2[4], int effect, float fxTime, float fadeIn, float fadeOut){
-  for (int i = 1; i <= MaxClients; i++)
-    {
-        if (IsClientInGame(i))
-        {
-            SetHudTextParamsEx(posX, posY, holdTime, color1, color2, effect, fxTime, fadeIn, fadeOut);
-            ShowHudText(i, channel, text);
-        }
+  for (int i = 1; i <= MaxClients; i++) {
+    if (IsClientInGame(i)) {
+      SetHudTextParamsEx(posX, posY, holdTime, color1, color2, effect, fxTime, fadeIn, fadeOut);
+      ShowHudText(i, channel, text);
     }
+  }
 }
 
 //Gets config file based on the game mode, we use the struct because returning differing array sizes is impossible otherwise.
 char[] OVERRIDE_AND_GET_COREDATA() {
-  switch (WaveSystem().mode) {
+  switch (WaveSystem().type) {
     case 0: {
       return core.configDefault;
     }
@@ -1713,7 +1692,7 @@ char[] OVERRIDE_AND_GET_COREDATA() {
       return core.configWaveNull;
     }
     default: {
-      LogError("Gamemode %i out of bounds. Reverting to defaults.", WaveSystem().mode);
+      LogError("Gamemode %i out of bounds. Reverting to defaults.", WaveSystem().type);
       return core.configDefault;
     }
   }

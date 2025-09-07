@@ -17,7 +17,7 @@ void sudo(int task) {
     }
   //Force Tornado
   case 3: {
-    if (core.isWave && WeatherManager.canTornado && !WeatherManager.hasTornado) {
+    if (WeatherManager.CanFormTornado()) {
       CreateTimer(0.1, TimedOperator, 41);
       PrintCenterTextAll("OH NOES... PREPARE YOUR ANUS!");
     } else PrintToServer("Error spawning manual tornado... Perhaps we are not in a wave, tornadoes are banished, or a tornado has already spawned???");
@@ -163,16 +163,17 @@ void sudo(int task) {
   //Bomb Deployed
   case 15: {
     FastFire2("FB.PayloadWarning", "Disable", "", 0.0, false);
-    if (!core.isWave) return;
-    if (bombState[0].state == 69) {
-      bombState[7].explode(false);
-      bombState[0].stateMax = 64;
-      CreateTimer(5.0, TimedOperator, 99);
+    if (WaveSystem().IsActive) {
+      if (bombState[0].state == 69) {
+        bombState[7].explode(false);
+        bombState[0].stateMax = 64;
+        CreateTimer(5.0, TimedOperator, 99);
+      }
+      bombState[bombState[0].getCurBomb()].explode(true);
+      bombState[0].stateMax += 10;
+      if (bombState[0].state >= bombState[0].stateMax) return;
+      else bombState[0].state += 2;
     }
-    bombState[bombState[0].getCurBomb()].explode(true);
-    bombState[0].stateMax += 10;
-    if (bombState[0].state >= bombState[0].stateMax) return;
-    else bombState[0].state += 2;
     return;
   }
   //Tank deployed its bomb or boss reached hatch
@@ -187,7 +188,7 @@ void sudo(int task) {
     return;
   }
   case 18: {
-    if(!core.isWave) {
+    if(!WaveSystem().IsActive) {
       CPrintToChatAll("{fartsyred} PLEASE DO NOT ATTEMPT TO USE OPERATOR 18 WITHOUT A WAVE.");
       return;
     }
@@ -287,10 +288,9 @@ void sudo(int task) {
   }
   //Banish Tornadoes
   case 34: {
-    if (WeatherManager.canTornado && !WeatherManager.hasTornado) core.sacPoints -= 50;
-    CPrintToChatAll(WeatherManager.canTornado && !WeatherManager.hasTornado ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}A PINK KIRBY HAS BANISHED TORNADOES FOR THIS WAVE! ({red}-50 pts{white})" : !WeatherManager.canTornado ? "{red}TTV/professorfartsalot {white}: Please do not, the tornado button. Thanks. ({red} -0 pts{white})" : "{red}TTV/professorfartsalot {white}:  You fool. It is much too late for you. ({red} -0 pts{white})");
-    WeatherManager.canTornado = !WeatherManager.hasTornado ? false : true;
-    WeatherManager.Dissipate();
+    if (WeatherManager.CanFormTornado()) core.sacPoints -= 50;
+    CPrintToChatAll(WeatherManager.CanFormTornado() ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}A PINK KIRBY HAS BANISHED TORNADOES FOR THIS WAVE! ({red}-50 pts{white})" : !WeatherManager.canTornado ? "{red}TTV/professorfartsalot {white}: Please do not, the tornado button. Thanks. ({red} -0 pts{white})" : WeatherManager.hasTornado ? "{red}TTV/professorfartsalot {white}:  You fool. It is much too late for you. ({red} -0 pts{white})" : "{red}TTV/professorfartsalot {white}:  To be honest, I never thought I'd get this far... ({red} -0 pts{white})");
+    WeatherManager.canTornado = WeatherManager.hasTornado ? true : false;
   }
   //Ass Gas spend
   case 35: {
@@ -707,7 +707,7 @@ void sudo(int task) {
   }
   //Activate Tornado Timer
   case 1004: {
-    if (!core.isWave || !WeatherManager.canTornado || WeatherManager.hasTornado) return;
+    if (!WaveSystem().IsActive || !WeatherManager.canTornado || WeatherManager.hasTornado) return;
     WeatherManager.TornadoTimerActive = true;
     WeatherManager.StartTornadoTimer(WaveSystem().wave == 4 ? GetRandomFloat(30.0, 90.0) : GetRandomFloat(90.0, 210.0));
   }
@@ -801,8 +801,8 @@ void sudo(int task) {
   }
   //Do not EVER EVER execute this unless it's an emergency...
   case 6969: {
-    CPrintToChatAll(!core.isWave ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : core.brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
-    if (!core.isWave || core.brawler_emergency) return;
+    CPrintToChatAll(!WaveSystem().IsActive ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : core.brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
+    if (!WaveSystem().IsActive || core.brawler_emergency) return;
     Emerge(0);
   }
   //DEBUG
@@ -934,7 +934,7 @@ public Action CommandOverride(int client, const char[] command, int argc)
 public Action TimedOperator(Handle timer, int job) {
     switch (job) {
     case 0: {
-      for (int i = 0; i < MaxClients; ++i) CPrintToChat(i, GlobalAudio.VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().wave, AudioManager[i].songName, GlobalAudio.VIPIndex);
+      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, GlobalAudio.VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().wave, AudioManager[i].songName, GlobalAudio.VIPIndex);
     }
     //Boss script
     case 2: {
@@ -1018,13 +1018,12 @@ public Action TimedOperator(Handle timer, int job) {
     }
     //Severe storm coming!!!
     case 40: {
-      if (core.isWave && WeatherManager.canTornado && !WeatherManager.sirenExploded) WeatherManager.IssueTornadoWarning();
+      WeatherManager.IssueTornadoWarning();
       return Plugin_Stop;
     }
     // start tornado
     case 41: {
-      if (!core.isWave || !WeatherManager.canTornado || WeatherManager.hasTornado) return Plugin_Stop;
-      WeatherManager.FormTornado();
+      WeatherManager.TryFormTornado();
       return Plugin_Stop;
     }
     case 42: {
@@ -1037,7 +1036,7 @@ public Action TimedOperator(Handle timer, int job) {
       return Plugin_Stop;
     }
     case 70: {
-      if (core.isWave) {
+      if (WaveSystem().IsActive) {
         FastFire2("FB.KP*", "Unlock", "", 0.0, false);
         CustomSoundEmitter(SFXArray[0].realPath, 65, false, 0, 1.0, 100);
       }
@@ -1053,7 +1052,7 @@ public Action TimedOperator(Handle timer, int job) {
     }
     case 79: {
       core.crusader = false;
-      if (core.isWave && (WaveSystem().wave == 3 || WaveSystem().wave == 5)) {
+      if (WaveSystem().IsActive && (WaveSystem().wave == 3 || WaveSystem().wave == 5)) {
         sudo(99);
       }
       return Plugin_Stop;
@@ -1063,7 +1062,7 @@ public Action TimedOperator(Handle timer, int job) {
       return Plugin_Stop;
     }
     case 99: {
-      if (core.isWave) sudo(99);
+      if (WaveSystem().IsActive) sudo(99);
       return Plugin_Stop;
     }
     case 100: {
@@ -1090,7 +1089,7 @@ public Action TimedOperator(Handle timer, int job) {
     return Plugin_Stop;
     }
     case 6969: {
-      if (!core.isWave){
+      if (!WaveSystem().IsActive) {
         ExitEmergencyMode();
         return Plugin_Stop;
       }

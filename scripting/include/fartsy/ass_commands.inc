@@ -85,8 +85,8 @@ public Action Command_SacrificePointShop(int client, int args) {
 }
 //Fartsy's A.S.S
 public void ShowFartsysAss(int client) {
-  CPrintToChat(client, (!core.isWave ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}The sacrificial points counter is currently at %i of %i maximum for this wave." : core.sacPoints <= 9 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {red}You do not have enough sacrifice points to use this shop. You have %i / 10 required." : ""), core.sacPoints, core.sacPointsMax);
-  if (!core.isWave || core.sacPoints < 10) return;
+  CPrintToChat(client, (!WaveSystem().IsActive ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}The sacrificial points counter is currently at %i of %i maximum for this wave." : core.sacPoints <= 9 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {red}You do not have enough sacrifice points to use this shop. You have %i / 10 required." : ""), core.sacPoints, core.sacPointsMax);
+  if (!WaveSystem().IsActive  || core.sacPoints < 10) return;
   Menu menu = new Menu(MenuHandlerFartsysAss, MENU_ACTIONS_DEFAULT);
   char buffer[100];
   menu.SetTitle("Fartsy's Annihilation Supply Shop");
