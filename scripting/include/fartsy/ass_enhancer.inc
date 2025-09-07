@@ -218,7 +218,7 @@ enum struct AUDIOCONTROLLER {
     CreateTimer(1.0, EnableAudio);
   }
   void Reset() {
-    g_indexBGM = WaveSystem().IsWaveNull() ? GetRandomInt(1, 4) : 28;
+    g_indexBGM = !WaveSystem().IsWaveNull() ? GetRandomInt(1, 4) : 28;
     for (int i = 0; i < MaxClients; ++i) AudioManager[i].Reset();
   }
   void setBGM(int bgm, bool instant){
