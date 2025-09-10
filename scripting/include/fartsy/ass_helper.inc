@@ -865,7 +865,7 @@ char SelectedCamera[][32] = {
   "CAM.Mid",
   "CAM.MidTwo",
   "CAM.Rear",
-  "CAM.Kissone"
+  "CAM.Spawn"
 };
 //Easter eggs
 char SpecEnt[][24] = {
@@ -1110,7 +1110,6 @@ void Emerge(int stage){
     }
     case 1:{
       ServerCommand("sm_freeze @blue; sm_smash @blue; sm_evilrocket @blue");
-      sudo(2);
       CreateTimer(4.0, TimedOperator, 6969);
       return;
     }

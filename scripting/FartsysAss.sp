@@ -22,7 +22,7 @@
 #include <fartsy/ass_wavesystem>
 #pragma newdecls required
 #pragma semicolon 1
-public char PLUGIN_VERSION[8] = "8.5.1";
+public char PLUGIN_VERSION[8] = "8.6.0";
 char[] GET_PLUGIN_VERSION() {
   return PLUGIN_VERSION;
 }

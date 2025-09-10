@@ -87,7 +87,8 @@ methodmap WAVESYSTEM {
   // Normal mode
   public void run_normal() {
     PrintToServer("Wave manager is calling run_normal because this.type is %i", WSData.type);
-    //GlobalAudio.setBGM(core.tacobell ? tacoBellBGMIndex[this.wave] : DefaultsArray[this.wave].defBGMIndex, true);
+    if (WSData.wave == 0) WSData.wave = 1;
+    GlobalAudio.setBGM(DefaultsArray[WSData.wave].defBGMIndex, true);
     switch (WSData.wave) {
       case 2: {
         CreateTimer(GetRandomFloat(10.0, 45.0), TimedAOEs);
@@ -139,6 +140,7 @@ methodmap WAVESYSTEM {
   // Taco Bell Edition
   public void run_tacobell() {
     PrintToServer("Wave manager is calling run_tacobell because this.mode is %i", WSData.type);
+    //GlobalAudio.setBGM(tacoBellBGMIndex[WSData.wave], true);
   }
   // Wave Null
   public void run_wavenull() {
