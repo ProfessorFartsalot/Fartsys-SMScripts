@@ -11,11 +11,6 @@ void sudo(int task) {
     case 1: {
       WaveSystem().init();
     }
-    //Wave running
-    case 2: {
-      WaveSystem().run();
-      return;
-    }
   //Force Tornado
   case 3: {
     if (WeatherManager.CanFormTornado()) {
@@ -481,55 +476,55 @@ void sudo(int task) {
   case 111: {
     MapLighting[1].Repair();
   }
-  case 112:{
+  case 112: {
     MapLighting[2].Repair();
   }
-  case 113:{
+  case 113: {
     MapLighting[3].Repair();
   }
-  case 114:{
+  case 114: {
     MapLighting[4].Repair();
   }
-  case 115:{
+  case 115: {
     MapLighting[5].Repair();
   }
-  case 116:{
+  case 116: {
     MapLighting[6].Repair();
   }
-  case 117:{
+  case 117: {
     MapLighting[7].Repair();
   }
-  case 118:{
+  case 118: {
     MapLighting[8].Repair();
   }
-  case 119:{
+  case 119: {
     MapLighting[9].Repair();
   }
-  case 120:{
+  case 120: {
     MapLighting[10].Repair();
   }
-  case 121:{
+  case 121: {
     MapLighting[11].Repair();
   }
   //Spoopy
-  case 130:{
+  case 130: {
     FastFire2("gTrain", "StartForward", "", 0.0, false);
     FastFire2("gTelefect", "Start", "", 0.0, false);
     FastFire2("gTelefect", "Stop", "", 3.0, false);
     FastFire2("gTrainSndHaunt", "PlaySound", "", GetRandomFloat(3.0, 7.0), false);
   }
   //Despawn ghosty boi in like 3 seconds
-  case 131:{
+  case 131: {
     FastFire2("gTelefect", "Start", "", 3.0, false);
     FastFire2("gTelefect", "Stop", "", 6.0, false);
     FastFire2("gTrain", "TeleportToPathTrack", "gPathHome", 3.0, false);
   }
   //Determine what boss just deployed.
-  case 132:{
-  //    if(MetalFaceDidIt){
-      //Force phase 4 metal face here
-  //    }
-    switch(BossHandler.bossID){
+  case 132: {
+    //if(MetalFaceDidIt){
+    //Force phase 4 metal face here
+    //}
+    switch(BossHandler.bossID) {
       // brute justice
       case 0:{
         FastFire2("bots_win", "roundwin", "", 0.0, false);
@@ -537,7 +532,7 @@ void sudo(int task) {
     }
   }
   //Metal Face reached spawn point
-  case 133:{
+  case 133: {
     CustomSoundEmitter(SFXArray[3].realPath, 45, false, 0, 1.0, 100);
     FastFire2("FB.MetalFace.Train", "Stop", "", 0.0, false);
     FastFire2("FB.MetalFace.Train", "SetSpeedReal", "50", 3.0, false);
@@ -545,22 +540,22 @@ void sudo(int task) {
     FastFire2("FB.MetalFace.SpawnParticle", "Stop", "", 0.0, false);
   }
   //Tank deployed its bomb
-  case 134:{
+  case 134: {
     BossHandler.TriggerVictory();
     FastFire2("boss_deploy_relay", "Trigger", "", 5.0, false);
   }
   //Spawn metal face
-  case 135:{
+  case 135: {
     BossHandler.TriggerSpawn(2);
   }
   //Metal Face dead
-  case 136:{
+  case 136: {
     if(BossHandler.iBossPhase != 4){
       BossHandler.iBossPhase = 4;
     }
   }
   //Onslaughter dead
-  case 137:{
+  case 137: {
     BossHandler.shouldTick = false;
     FastFire2("OnslaughterTank", "SetHealth", "1", 0.0, false);
     FastFire2("TankRelayDMG", "Enable", "", 0.0, false);
@@ -568,11 +563,10 @@ void sudo(int task) {
     BossHandler.isAlive = false;
   }
   //Sephiroth dead (future code)
-  case 138:{
-
+  case 138: {
   }
   //Wipe mechanic down (MetalFace)
-  case 139:{
+  case 139: {
     BossHandler.shouldTick = false;
     FastFire2("FB.MetalFace", "Kill", "", 0.0, false);
     FastFire2("FB.MetalFace.Train", "Kill", "", 0.0, false);
@@ -589,13 +583,13 @@ void sudo(int task) {
     CreateTimer(0.1, TimedOperator, 201);
   }
   //Debug, somethingsomething siren explosion thingy
-  case 201:{
+  case 201: {
     WeatherManager.sirenPitch = 300.0;
   }
-  case 203:{
+  case 203: {
     BossHandler.bDoTankBuster = true;
   }
-  case 205:{
+  case 205: {
     PrintToChatAll("%N has the max emnity.", GetEmnityMax());
   }
   //Taco Bell Edition
@@ -645,14 +639,14 @@ void sudo(int task) {
   case 305: {
     EmitSoundToAll(BGMArray[6].realPath, _, g_chanBGM, BGMArray[6].SNDLVL, SND_CHANGEVOL, 1.0, _, _, _, _, _, _);
   }
-  case 425:{
+  case 425: {
     for (int i = 0; i < 32; i++) {
       if (IsValidClient(i)) BossHandler.bustNukeTarget = i;
     }
     BossHandler.tickBusterNuclear = true;
   }
-  case 426:{
-//    FastFire2("NukeTankBusterThing", "ForceSpawn", "", 0.0, false);
+  case 426: {
+    // FastFire2("NukeTankBusterThing", "ForceSpawn", "", 0.0, false);
     FastFire2("PL.CannonPitch", "SetPosition", "1.0", 0.0, false);
     FastFire2("PL.SentCart", "ForceSpawn", "", 5.0, false);
     FastFire2("PL.SentPhys", "Wake", "", 5.1, false);
@@ -661,7 +655,7 @@ void sudo(int task) {
     FastFire2("PL.CannonFodder", "Disable", "", 5.3, false);
     FastFire2("PL.SentCartPhys", "Break", "", 6.0, false);
   }
-  case 427:{
+  case 427: {
     FastFire2("PL.NukeCart", "ForceSpawn", "", 0.0, false);
     FastFire2("PL.NukeCartPhys", "Break", "", 1.25, false);
     FastFire2("PL.NukeCartParticle", "Start", "", 1.25, false);
@@ -679,6 +673,10 @@ void sudo(int task) {
     PrintToChatAll("Got 502 but not implemented in popfile, please report this to fartsy!");
     PrintToConsoleAll("[CORE] Phase Change started... phase 4!");
     GlobalAudio.setBGM(11, false);
+  }
+  //Increment Wave Null
+  case 700: {
+
   }
   // FINAL Music system rewrite (again) AGAINNNNNNNNNNNN.... and again!... and again :p and again!
   case 1000: {
@@ -919,6 +917,11 @@ void sudo(int task) {
     RemoveCommandListener(CommandOverride, "sm_admin");
     RemoveCommandListener(CommandOverride, "sm_noclip");
     RemoveCommandListener(CommandOverride, "sm_noclipme");
+  }
+  default: {
+    char LogData[256];
+    Format(LogData, sizeof(LogData), "No valid operator code %i found.", task);
+    AssLogger(LOGLVL_ERROR, LogData);
   }
   }
   return;
