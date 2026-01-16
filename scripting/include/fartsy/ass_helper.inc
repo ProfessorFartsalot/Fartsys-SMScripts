@@ -6,6 +6,20 @@ enum {
   LOGLVL_WARN = 2,
   LOGLVL_ERROR = 3
 };
+//Idle system
+bool _serverActive = false;
+public void OnClientDisconnect_Post() {
+  if (GetClientCount(false) == 0) {
+    _serverActive = false;
+    CreateTimer(300.0, ServerIdleThread);
+  }
+  return;
+}
+public Action ServerIdleThread(Handle timer) {
+  if (!_serverActive) ServerCommand("_restart");
+  return Plugin_Stop;
+}
+
 enum struct PLAYERDATA {
   char classname;
   char name;

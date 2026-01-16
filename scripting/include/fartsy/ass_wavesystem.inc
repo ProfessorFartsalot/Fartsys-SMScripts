@@ -35,6 +35,7 @@ methodmap WAVESYSTEM {
     return WSData.type == WaveTypes_WAVENULL;
   }
   public void init() {
+    _serverActive = true;
     this.update();
     GlobalAudio.Reset();
     core.tacobell = false;
