@@ -56,7 +56,7 @@ methodmap WAVESYSTEM {
     bombState[0].stateMax = DefaultsArray[WSData.wave].defBombStatusMax;
     core.canHWBoss = DefaultsArray[WSData.wave].defCanHWBoss;
     WeatherManager.canTornado = DefaultsArray[WSData.wave].defCanTornado;
-    core.sacPointsMax = DefaultsArray[WSData.wave].defSacPointsMax;
+    ass_sacPointsMax = DefaultsArray[WSData.wave].defSacPointsMax;
     core.FailedCount = 0; // Reset fail count to zero. (See EventWaveFailed - where we play the BGM.)
     WeatherManager.Activate();
     CreateTimer(0.25, TimedOperator, 0); // Print wave information to global chat
@@ -184,10 +184,30 @@ methodmap WAVESYSTEM {
         Format(logdata, sizeof(logdata), "Current type %i does not match detected type %i! Someone must have changed the gamemode! Setting up core data immediately!!!", this.GetType(), target);
         AssLogger(LOGLVL_DEBUG, logdata);
         WSData.type = target;
-        SetupCoreData();
+        core.init_post();
     }
     WSData.wave = this.IsWaveNull() ? WSData.wave : GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount"))
   }
 }
 WAVESYSTEM WS;
 WAVESYSTEM WaveSystem() { return WS; }
+
+//Wave failsafe system - To be implemented better by making an enum struct and doing failSafe[x].execute(); in FartsysAss.sp
+void PerformWaveFailsafe(int x){
+  switch(x){
+    case 0:{
+      ServerCommand("sm_freeze @blue; wait 180; sm_smash @blue;sm_evilrocket @blue");
+    }
+    case 1:{
+      ServerCommand("sm_smite @blue");
+    }
+  }
+}
+
+//Get current wave
+public int GetCurWave() {
+  int ent = FindEntityByClassname(-1, "tf_objective_resource");
+  if (ent != -1) return GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount"));
+  AssLogger(LOGLVL_ERROR, "tf_objective_resource not found");
+  return -1;
+}

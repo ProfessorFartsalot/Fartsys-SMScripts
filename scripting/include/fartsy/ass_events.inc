@@ -9,6 +9,11 @@ public void HookAllEvents() {
   HookEvent("mvm_bomb_alarm_triggered", EventWarning);
   HookEventEx("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
 }
+//Silence cvar changes to minimize chat spam.
+public Action Event_Cvar(Event event, const char[] name, bool dontBroadcast) {
+  event.BroadcastDisabled = true;
+  return Plugin_Handled;
+}
 //Sync client stats when they leave
 public void OnClientDisconnect(int client) {
   //Database Ass_Database = Get_Ass_Database();
@@ -105,7 +110,7 @@ public void EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Br
           }
           case 3: {
             CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}%s{white}! ({limegreen}+1 pt{white})", client, DeathMessage[GetRandomInt(0, 5)]);
-            core.sacPoints++;
+            ass_sacPoints++;
             CustomSoundEmitter(SFXArray[GetRandomInt(11, 26)].realPath, 65, false, 0, 1.0, 100);
           }
           }
@@ -176,9 +181,9 @@ public void EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Br
       }
       case 1024: { //ENERGYBEAM
         char EnergyDeath[32];
-        Format(EnergyDeath, sizeof(EnergyDeath), (core.crusader ? "THE CRUSADER" : core.waveFlags == 1 ? "ONSLAUGHTER" : "LIGHTNING"));
-        weapon = (core.crusader ? "Crusader" : core.waveFlags == 1 ? "Onslaughter" : "Lightning");
-        CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been %s by {red}%s{white}!", client, (core.crusader ? "nuked" : core.waveFlags == 1 ? "deleted" : "struck"), EnergyDeath);
+        Format(EnergyDeath, sizeof(EnergyDeath), (crusader ? "THE CRUSADER" : core.waveFlags == 1 ? "ONSLAUGHTER" : "LIGHTNING"));
+        weapon = (crusader ? "Crusader" : core.waveFlags == 1 ? "Onslaughter" : "Lightning");
+        CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been %s by {red}%s{white}!", client, (crusader ? "nuked" : core.waveFlags == 1 ? "deleted" : "struck"), EnergyDeath);
       }
       case 16384: { //DROWN
         CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N {red}DROWNED{white}.", client);
@@ -254,7 +259,7 @@ public Action EventWaveFailed(Event Spawn_Event, const char[] Spawn_Name, bool S
 public Action SacrificeClient(int client, int attacker, bool wasBombReset) {
   if (attacker <= MaxClients && IsClientInGame(attacker)) {
     core.bombReset = false;
-    core.sacPoints += wasBombReset ? 5 : 1;
+    ass_sacPoints += wasBombReset ? 5 : 1;
     core.sacrificedByClient = false;
     int steamID = GetSteamAccountID(attacker);
     if (!Ass_Database || !steamID) return Plugin_Handled;
@@ -264,4 +269,26 @@ public Action SacrificeClient(int client, int attacker, bool wasBombReset) {
     Ass_Database.Query(Database_FastQuery, query);
   }
   return Plugin_Handled;
+}
+//Queue music for new clients, also track their stats.
+public void OnClientPostAdminCheck(int client) {
+  int steamID = GetSteamAccountID(client);
+  if (!steamID || steamID <= 10000) return;
+  else {
+    if (!Ass_Database) {
+      PrintToServer("No database detected, setting soundPreference for %N to default.", client);
+      soundPreference[client] = GetConVarInt(cvarSNDDefault);
+    }
+    if (!core.tickingClientHealth) {
+      CreateTimer(1.0, TickClientHealth);
+      core.tickingClientHealth = true;
+    }
+    if(!IsFakeClient(client)) AudioManager[client].OnClientConnected(client);
+    char query[1024];
+    Format(query, sizeof(query), "INSERT INTO ass_activity (name, steamid, date, damagedealtsession, killssession, deathssession, bombsresetsession, sacrificessession) VALUES ('%N', %d, CURRENT_DATE, 0, 0, 0, 0, 0) ON DUPLICATE KEY UPDATE name = '%N', date = CURRENT_DATE, damagedealtsession = 0, killssession = 0, deathssession = 0, bombsresetsession = 0, sacrificessession = 0;", client, steamID, client);
+    Ass_Database.Query(Database_FastQuery, query);
+    char queryID[256];
+    Format(queryID, sizeof(queryID), "SELECT soundprefs from ass_activity WHERE steamid = '%d';", steamID);
+    Ass_Database.Query(SQL_SNDPrefs, queryID, client);
+  }
 }

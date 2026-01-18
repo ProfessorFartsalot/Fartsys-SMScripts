@@ -122,7 +122,7 @@ void sudo(int task) {
     switch (core.waveFlags) {
     case 0: {
       CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}A tank has been destroyed. ({limegreen}+1 pt{white})");
-      core.sacPoints++;
+      ass_sacPoints++;
     }
     case 1: {
       CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}ONSLAUGHTER {white}has been destroyed. ({limegreen}+25 pts{white})");
@@ -134,7 +134,7 @@ void sudo(int task) {
       FastFire2("FB.BruteJusticeDMGRelay", "Break", "", 0.0, false);
       FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.5, false);
       core.waveFlags = 0;
-      core.sacPoints += 25;
+      ass_sacPoints += 25;
     }
     case 2: {
       CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}SEPHIROTH {white}has been destroyed. ({limegreen}+100 pts{white})");
@@ -143,8 +143,8 @@ void sudo(int task) {
       FastFire2("FB.Sephiroth", "Disable", "", 0.0, false);
       FastFire2("SephTrain", "TeleportToPathTrack", "Seph01", 0.0, false);
       FastFire2("SephTrain", "Stop", "", 0.0, false);
-      core.canSephNuke = false;
-      core.sacPoints += 100;
+      SephBoss[0].shouldNuke = false;
+      ass_sacPoints += 100;
       core.waveFlags = 0;
       WeatherManager.canTornado = false;
     }
@@ -154,7 +154,7 @@ void sudo(int task) {
   //Bomb Reset (+5)
   case 14: {
     core.bombReset = true;
-    core.sacPoints += 5;
+    ass_sacPoints += 5;
   }
   //Bomb Deployed
   case 15: {
@@ -248,7 +248,7 @@ void sudo(int task) {
   case 30: {
     CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}INSTANT BATH SALT DETONATION! BOTS ARE FROZEN FOR 10 SECONDS! ({red}-10 pts{white})");
     ServerCommand("sm_freeze @blue 10");
-    core.sacPoints -= 10;
+    ass_sacPoints -= 10;
     bombState[3].explode(false);
   }
   //Goob/Kirb spend
@@ -258,14 +258,14 @@ void sudo(int task) {
     FastFire2(i == 1 ? "FB.GiantGoobTemplate" : "FB.BlueKirbTemplate", "ForceSpawn", "", 0.0, false);
     CPrintToChatAll(i == 1 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}GOOBBUE COMING IN FROM ORBIT! ({red}-20 pts{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}BLUE KIRBY FALLING OUT OF THE SKY! ({red}-20 pts{white})");
     CustomSoundEmitter(i == 1 ? SFXArray[51].realPath : SFXArray[21].realPath, 65, false, 0, 1.0, 100);
-    core.sacPoints -= 20;
+    ass_sacPoints -= 20;
   }
   //35K ubup cash spend
   case 32: {
     if (!core.doFailsafe) {
       core.doFailsafe = true;
       CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave fail-safe activated! ({red}-30 pts{white})");
-      core.sacPoints -= 30;
+      ass_sacPoints -= 30;
     } else return;
   }
   //Explosive paradise spend
@@ -280,18 +280,18 @@ void sudo(int task) {
     FastFire2("FB.Fade", "Fade", "", 11.50, false);
     FastFire2("FB.ShakeBOOM", "StartShake", "", 11.50, false);
     FastFire2("NukeAll", "Disable", "", 12.30, false);
-    core.sacPoints -= 40;
+    ass_sacPoints -= 40;
   }
   //Banish Tornadoes
   case 34: {
-    if (WeatherManager.CanFormTornado()) core.sacPoints -= 50;
+    if (WeatherManager.CanFormTornado()) ass_sacPoints -= 50;
     CPrintToChatAll(WeatherManager.CanFormTornado() ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}A PINK KIRBY HAS BANISHED TORNADOES FOR THIS WAVE! ({red}-50 pts{white})" : !WeatherManager.canTornado ? "{red}TTV/professorfartsalot {white}: Please do not, the tornado button. Thanks. ({red} -0 pts{white})" : WeatherManager.hasTornado ? "{red}TTV/professorfartsalot {white}:  You fool. It is much too late for you. ({red} -0 pts{white})" : "{red}TTV/professorfartsalot {white}:  To be honest, I never thought I'd get this far... ({red} -0 pts{white})");
     WeatherManager.canTornado = WeatherManager.hasTornado ? true : false;
   }
   //Ass Gas spend
   case 35: {
     CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}ANYTHING BUT THE ASS GAS!!!! ({red}-60 pts{white})");
-    core.sacPoints -= 60;
+    ass_sacPoints -= 60;
     FastFire2("HurtAll", "AddOutput", "damagetype 524288", 0.0, false);
     FastFire2("FB.ShakeBOOM", "StartShake", "", 0.1, false);
     FastFire2("HurtAll", "AddOutput", "damage 400", 0.0, false);
@@ -302,13 +302,13 @@ void sudo(int task) {
   //Nuclear fallout spend
   case 36: {
     CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}INSTANT FAT MAN DETONATION! ({red}-70 pts{white})");
-    core.sacPoints -= 70;
+    ass_sacPoints -= 70;
     bombState[7].explode(false);
   }
   //Meteor shower spend
   case 37: {
     CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}COSMIC DEVASTATION IMMINENT. ({red}-80 pts{white})");
-    core.sacPoints -= 80;
+    ass_sacPoints -= 80;
     core.canSENTMeteors = true;
     CreateTimer(1.0, SENTMeteorTimer);
     CreateTimer(30.0, TimedOperator, 12);
@@ -316,13 +316,13 @@ void sudo(int task) {
   //300K UbUp Cash
   case 38: {
     CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}150K UbUp Cash Granted to {red}RED{white}! ({red}-90 pts{white})");
-    core.sacPoints -= 90;
+    ass_sacPoints -= 90;
     ServerCommand("sm_addcash @red 300000");
   }
   //Fartsy of the Seventh Taco Bell
   case 39: {
     CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}NOW PRESENTING... PROFESSOR FARTSALOT OF THE SEVENTH TACO BELL! ({red}-100 points{white})");
-    core.sacPoints -= 100;
+    ass_sacPoints -= 100;
     bombState[0].stateMax = 69;
     bombState[0].state = 69;
     FastFire2("Delivery", "Unlock", "", 0.0, false);
@@ -723,7 +723,7 @@ void sudo(int task) {
   case 1006: {
     GlobalAudio.shouldTick = false;
     sudo(1001);
-    core.crusader = true;
+    crusader = true;
     CreateTimer(1.75, CRUSADERINCOMING);
     CreateTimer(25.20, TimedOperator, 9);
     CreateTimer(25.20, TimedOperator, 78);
@@ -796,12 +796,12 @@ void sudo(int task) {
     FastFire2(core.monitorColor ? "FB.Monitor" : "FB.MonitorBW", "Enable", "", 0.0, false);
   }
   case 6942: {
-    core.sacPoints = 2147483647;
+    ass_sacPoints = 2147483647;
   }
   //Do not EVER EVER execute this unless it's an emergency...
   case 6969: {
-    CPrintToChatAll(!WaveSystem().IsActive() ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : core.brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
-    if (!WaveSystem().IsActive() || core.brawler_emergency) return;
+    CPrintToChatAll(!WaveSystem().IsActive() ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
+    if (!WaveSystem().IsActive() || brawler_emergency) return;
     Emerge(0);
   }
   //DEBUG
@@ -998,7 +998,7 @@ public Action TimedOperator(Handle timer, int job) {
     }
     //Seph Nuke Deactivation
     case 11: {
-      core.canSephNuke = false;
+      SephBoss[0].shouldNuke = false;
       return Plugin_Stop;
     }
     //SENTMeteor Timeout
@@ -1036,18 +1036,18 @@ public Action TimedOperator(Handle timer, int job) {
       sudo(1004);
     }
     case 60: {
-      CustomSoundEmitter(SFXArray[40].realPath, 65, false, 0, 1.0, 100);
+      CustomSoundEmitter(SFXArray[40].realPath, SFXArray[40].SNDLVL, false, 0, 1.0, 100);
       return Plugin_Stop;
     }
     case 70: {
       if (WaveSystem().IsActive()) {
         FastFire2("FB.KP*", "Unlock", "", 0.0, false);
-        CustomSoundEmitter(SFXArray[0].realPath, 65, false, 0, 1.0, 100);
+        CustomSoundEmitter(SFXArray[0].realPath, SFXArray[0].SNDLVL, false, 0, 1.0, 100);
       }
       return Plugin_Stop;
     }
     case 71: {
-      CustomSoundEmitter("fartsy/eee/the_horn.wav", 65, false, 0, 1.0, 100);
+      CustomSoundEmitter(SFXArray[62].realPath, SFXArray[62].SNDLVL, false, 0, 1.0, 100);
       return Plugin_Stop;
     }
     case 78: {
@@ -1055,7 +1055,7 @@ public Action TimedOperator(Handle timer, int job) {
       return Plugin_Handled;
     }
     case 79: {
-      core.crusader = false;
+      crusader = false;
       if (WaveSystem().IsActive() && (WaveSystem().GetWave() == 3 || WaveSystem().GetWave() == 5)) {
         sudo(99);
       }
@@ -1078,19 +1078,23 @@ public Action TimedOperator(Handle timer, int job) {
       }
     }
     case 201:{
-    int i = GetRandomInt(0, sizeof(CircleAOEpos)-1);
-    if (!CircleAOEenabled[i]){
-      if (attemptSpawn >= sizeof(CircleAOEpos)) return Plugin_Stop;
-      attemptSpawn++;
-      ServerCommand("fb_operator 200");
+      int i = GetRandomInt(0, sizeof(CircleAOEpos)-1);
+      if (!CircleAOEenabled[i]){
+        if (attemptSpawn >= sizeof(CircleAOEpos)) return Plugin_Stop;
+        attemptSpawn++;
+        sudo(200);
+        return Plugin_Stop;
+      }
+      attemptSpawn = 0;
+      DispatchCircleAOE(CircleAOEpos[i]);
+      PrintToChatAll("AOE %i CircleAOEen[i] = %i attempt %i sizeof %i", i, CircleAOEenabled[i], attemptSpawn, sizeof(CircleAOEpos));
+      CircleAOEenabled[i] = false;
+      CreateTimer(3.0, TimedOperator, 200);
       return Plugin_Stop;
     }
-    attemptSpawn = 0;
-    DispatchCircleAOE(CircleAOEpos[i]);
-    PrintToChatAll("AOE %i CircleAOEen[i] = %i attempt %i sizeof %i", i, CircleAOEenabled[i], attemptSpawn, sizeof(CircleAOEpos));
-    CircleAOEenabled[i] = false;
-    CreateTimer(3.0, TimedOperator, 200);
-    return Plugin_Stop;
+    case 202:{
+      CustomSoundEmitter(SFXArray[60].realPath, SFXArray[60].SNDLVL, false, 0, 1.0, 100);
+      return Plugin_Stop;
     }
     case 6969: {
       if (!WaveSystem().IsActive()) {
