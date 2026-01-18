@@ -37,3 +37,8 @@ public void FastFire2(const char[] target, const char[] input, const char[] para
   AcceptEntityInput(ff2, "AddOutput");
   AcceptEntityInput(ff2, "FireUser1");
 }
+
+//Used for any time we need to fo a LOT of things in quick succession... Or when we want to do something at random.
+enum struct BULKFIRE {
+  char fireStr[256];
+}

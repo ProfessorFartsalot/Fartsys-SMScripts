@@ -1,4 +1,3 @@
-#include <sourcemod>
 public Action Command_AOE(int client, int args){
  float pos[3];
  pos[0] = GetCmdArgFloat(1);
@@ -85,19 +84,19 @@ public Action Command_SacrificePointShop(int client, int args) {
 }
 //Fartsy's A.S.S
 public void ShowFartsysAss(int client) {
-  CPrintToChat(client, (!WaveSystem().IsActive() ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}The sacrificial points counter is currently at %i of %i maximum for this wave." : core.sacPoints <= 9 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {red}You do not have enough sacrifice points to use this shop. You have %i / 10 required." : ""), core.sacPoints, core.sacPointsMax);
-  if (!WaveSystem().IsActive() || core.sacPoints < 10) return;
+  CPrintToChat(client, (!WaveSystem().IsActive() ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}The sacrificial points counter is currently at %i of %i maximum for this wave." : ass_sacPoints <= 9 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {red}You do not have enough sacrifice points to use this shop. You have %i / 10 required." : ""), ass_sacPoints, ass_sacPointsMax);
+  if (!WaveSystem().IsActive() || ass_sacPoints < 10) return;
   Menu menu = new Menu(MenuHandlerFartsysAss, MENU_ACTIONS_DEFAULT);
   char buffer[100];
   menu.SetTitle("Fartsy's Annihilation Supply Shop");
   menu.ExitButton = true;
-  for (int i = 0; i < RoundToFloor(core.sacPoints / 10.0); i++) menu.AddItem(buffer, ass[i].name);
+  for (int i = 0; i < RoundToFloor(ass_sacPoints / 10.0); i++) menu.AddItem(buffer, ass[i].name);
   menu.Display(client, 20);
 }
 //Also Fartsy's A.S.S
 public int MenuHandlerFartsysAss(Menu menu, MenuAction action, int client, int item) {
   if (action == MenuAction_Select) {
-    if (core.sacPoints < ass[item].price) return 0;
+    if (ass_sacPoints < ass[item].price) return 0;
     if(WeatherManager.TornadoWarning && item == 5){
       CPrintToChatAll("{darkred}[Fartsy's Operator] {limegreen}-> {red}%N {darkred}I'm sorry, it is too late for that.. You are doomed...", client);
     }

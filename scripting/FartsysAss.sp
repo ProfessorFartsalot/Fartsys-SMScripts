@@ -1,6 +1,6 @@
 /*                         WELCOME TO FARTSY'S ASS ROTTENBURG.
  *   A FEW THINGS TO KNOW: ONE.... THIS IS INTENDED TO BE USED WITH UBERUPGRADES.
- *   TWO..... THE MUSIC USED WITH THIS MOD MAY OR MAY NOT BE COPYRIGHTED. WE HAVE NO INTENTION ON INFRINGEMENT. THIS PROJECT IS PURELY NON PROFIT AND JUST FOR FUN. SHOULD COPYRIGHT HOLDERS WISH THIS PROJECT BE TAKEN DOWN, I (Fartsy) SHALL OBLIGE WITHOUT HESITATION.
+ *   TWO..... SERVER OPERATORS MAY UPLOAD MUSIC TO BE USED WITH THIS PLUGIN. WE ARE NOT RESPONSIBLE FOR WHAT USERS UPLOAD TO THEIR SERVERS.
  *   THREE..... THIS MOD IS INTENDED FOR USE ON THE HYDROGENHOSTING SERVERS ONLY.
  *   FOUR..... THE DURATION OF MUSIC TIMERS SHOULD BE SET DEPENDING WHAT SONG IS USED. SET THIS USING THE CONFIG FILES. SONG DUR IN SECONDS / 0.0151515151515 = REFIRE TIME.
  *   FIVE..... TIPS AND TRICKS MAY BE ADDED TO THE TIMER, SEE PerformAdverts(Handle timer);
@@ -13,8 +13,12 @@
 #include <fartsy/newcolors>
 #include <fartsy/fastfire2>
 #include <fartsy/ass_enhancer>
-#include <fartsy/ass_helper>
+#include <fartsy/ass_asshop>
+#include <fartsy/ass_bombstate>
 #include <fartsy/ass_bosshandler>
+#include <fartsy/ass_configsystem>
+#include <fartsy/ass_helper>
+#include <fartsy/ass_emergency>
 #include <fartsy/ass_commands>
 #include <fartsy/ass_events>
 #include <fartsy/ass_sudo>
@@ -22,10 +26,9 @@
 #include <fartsy/ass_wavesystem>
 #pragma newdecls required
 #pragma semicolon 1
-public char PLUGIN_VERSION[8] = "8.6.0";
-char[] GET_PLUGIN_VERSION() {
-  return PLUGIN_VERSION;
-}
+
+public char PLUGIN_VERSION[8] = "9.0.0";
+char[] GET_PLUGIN_VERSION() { return PLUGIN_VERSION; }
 
 public Plugin myinfo = {
   name = "Fartsy's Ass - Framework",
@@ -42,11 +45,12 @@ public void OnPluginStart() {
 //Begin executing IO when ready
 public void OnFastFire2Ready() {
   AssLogger(LOGLVL_INFO, "####### FASTFIRE2 IS READY! INITIATE STARTUP SEQUENCE... PREPARE FOR THE END TIMES #######");
+  core.init_pre();
   RegisterAndPrecacheAllFiles();
   RegisterAllCommands();
   HookAllEvents();
   WaveSystem().update();
-  if (WaveSystem().IsDefault()) SetupCoreData();
+  if (WaveSystem().IsDefault()) core.init_post();
   UpdateAllHealers();
   CreateTimer(1.0, UpdateMedicHealing);
   CPrintToChatAll("{fartsyred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
@@ -61,7 +65,7 @@ public void OnFastFire2Ready() {
 
 //Process ticks and requests in real time
 public void OnGameFrame() {
-  if(WeatherManager.TornadoWarning) WeatherManager.TickSiren();
+  if (WeatherManager.TornadoWarning) WeatherManager.TickSiren();
   if (GlobalAudio.shouldTick) GlobalAudio.Tick();
   if (BossHandler.shouldTick) BossHandler.Tick();
   if (BossHandler.tickBusterNuclear) BossHandler.TickBusterNuclear();

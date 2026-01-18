@@ -14,7 +14,7 @@ enum struct SFXARRAY {
   char realPath[64];
   int SNDLVL;
 }
-SFXARRAY SFXArray[127];
+SFXARRAY SFXArray[128];
 
 //Sound preference menu
 char sndPrefs[][128] = {
@@ -77,8 +77,8 @@ enum struct AUDIOMANAGER {
    * @param instant - True = stops music NOW and changes, False = play current song then change
   **/
   void ChangeBGM(int bgm, bool instant) {
-    this.indexBGM = this.VIPBGM > 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
     PrintToChatAll("%i = %i > 0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
+    this.indexBGM = this.VIPBGM > 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
     PrintToServer("Set %i for %N", this.indexBGM, this.Client);
     if (instant) {
       this.timeSeconds = 0.0;
@@ -160,7 +160,7 @@ enum struct AUDIOMANAGER {
         StopSound(this.Client, g_chanBGM, this.cachedPath);
         this.loops = 0;
       }
-      this.stopBGM = false;
+      this.stopBGM = StrContains(BGMArray[this.indexBGM].realPath, "mp3", false) != -1;
       CSEClient(this.Client, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
       strcopy(this.songName, sizeof(this.songName), BGMArray[this.indexBGM].songName);
       this.introSeconds = this.loops >= 1 ? BGMArray[this.indexBGM].introSeconds : 0.0;
@@ -976,5 +976,14 @@ public Action TornadoShaker(Handle timer){
     FastFire2("tornadoshake_f1", "StartShake", "", 0.0, false);
     CreateTimer(1.5, TornadoShaker);
   }
+  return Plugin_Stop;
+}
+
+//Used to keep StopSound from stopping the music we're trying to play - now with support for loop offsets!
+public Action SyncMusic(Handle timer, int client) {
+  int index = AudioManager[client].indexBGM;
+  strcopy(AudioManager[client].cachedPath, sizeof(AudioManager[client].cachedPath), BGMArray[index].realPath);
+  strcopy(AudioManager[client].songName, sizeof(AudioManager[client].songName), BGMArray[index].songName);
+  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, WaveSystem().GetWave(), AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }

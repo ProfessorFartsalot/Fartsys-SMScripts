@@ -1,4 +1,42 @@
 // Fartsy's Boss Handler v1.0.0
+bool canCrusaderNuke = false;
+bool crusader = false;
+int INCOMINGDISPLAYED = 0;
+BULKFIRE crusaderAtk[64];
+
+//Crusader Incoming Timer for Crusader
+public Action CRUSADERINCOMING(Handle timer) {
+  if (crusader && INCOMINGDISPLAYED < 17) {
+    INCOMINGDISPLAYED++;
+    FastFire2("FB.INCOMING", "Display", "", 0.0, false);
+    CreateTimer(1.75, CRUSADERINCOMING);
+  }
+  if (INCOMINGDISPLAYED == 17) INCOMINGDISPLAYED = 0;
+  return Plugin_Stop;
+}
+
+public int iDmgHealingTotal;
+enum struct EMNITYMANAGER {
+  int iBossDamage;
+  int iDamage;
+  int iHealing;
+  int InitHealingValue;
+  int getClientEmnity() {
+    //PrintToConsoleAll ("Getting emnity returned Damage %i + Healing %i / %i Total, or %i Emnity ", this.iDamage, this.iHealing, iDmgHealingTotal, RoundToFloor(((this.iDamage * 1.0 + this.iHealing * 1.0) / ((iDmgHealingTotal == 0) ? 1 : iDmgHealingTotal) * 100)));
+    return RoundToFloor((((this.iDamage + this.iHealing) * 1.0) / (iDmgHealingTotal * 1.0)) * 100.0);
+  }
+  bool IsAboveEmnityThreshold(int value) {
+    if (RoundToFloor(((this.iDamage + this.iHealing) * 1.0) / (iDmgHealingTotal * 1.0)) > value) return true;
+    return false;
+  }
+  void Reset() {
+    this.iBossDamage = 0;
+    this.iDamage = 0;
+    this.iHealing = 0;
+  }
+}
+EMNITYMANAGER EmnityManager[MAXPLAYERS+1];
+
 enum struct BOSSHANDLER {
     int bossID;
     bool bTargetInRange[MAXPLAYERS+1];
@@ -389,6 +427,42 @@ BOSSHANDLER BossHandler;
 BOSSHANDLER Get_Boss_Handler() {
   return BossHandler;
 }
+
+//Custom Bosses - For Sephiroth, index may vary because we don't want to be able to execute code that shouldn't be executed. Example SephBoss[5].attack would run code that's part of SephBoss[4].attack. Also, this.fireCount is how many times FastFire should run, as well being added to this.index to determine what it does.
+enum struct CUSTOMBOSS {
+  bool shouldNuke;
+  char ChatMessage[128];
+  char fireString[128];
+  char sound[64];
+  int index;
+  int fireCount;
+  void attack(){
+    if(this.shouldNuke) {
+      CreateTimer(1.0, NukeTimer, 2);
+      CreateTimer(7.0, TimedOperator, 11);
+    }
+    if (!StrEqual(this.ChatMessage, "")) CPrintToChatAll(this.ChatMessage);
+    for (int i = 0; i < this.fireCount; i++) FastFire2(this.fireString[this.index+i], "", "", 0.0, true);
+  }
+  void Reset() {
+    this.shouldNuke = false;
+    canCrusaderNuke = false;
+  }
+}
+CUSTOMBOSS SephBoss[12];
+CUSTOMBOSS HWBoss[12];
+//CUSTOMBOSS Onslaughter[10];
+
+//Used for nukes, obviously
+public Action NukeTimer(Handle timer, int type) {
+  if (canCrusaderNuke || SephBoss[0].shouldNuke) {
+    CustomSoundEmitter(SFXArray[8].realPath, 65, false, 0, 1.0, 100);
+    FastFire2(type == 1 ? "FB.CrusaderNuke" : "SephNuke", "ForceSpawn", "", 0.0, false);
+    CreateTimer(GetRandomFloat(1.5, 3.0), NukeTimer, type);
+  }
+  return Plugin_Stop;
+}
+
 //Player specific async tick process
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon){
   if (BossHandler.shouldTick) BossHandler.TickForClient(client);
