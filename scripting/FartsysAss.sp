@@ -7,28 +7,27 @@
  *              IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
 
+public char PLUGIN_VERSION[8] = "9.1.0";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
 #include <fartsy/newcolors>
 #include <fartsy/fastfire2>
+#include <fartsy/ass_database>
+#include <fartsy/ass_serverutils>
 #include <fartsy/ass_enhancer>
 #include <fartsy/ass_asshop>
 #include <fartsy/ass_bombstate>
 #include <fartsy/ass_bosshandler>
+#include <fartsy/ass_emergency>
 #include <fartsy/ass_configsystem>
 #include <fartsy/ass_helper>
-#include <fartsy/ass_emergency>
 #include <fartsy/ass_commands>
 #include <fartsy/ass_events>
 #include <fartsy/ass_sudo>
-#include <fartsy/ass_serverutils>
 #include <fartsy/ass_wavesystem>
 #pragma newdecls required
 #pragma semicolon 1
-
-public char PLUGIN_VERSION[8] = "9.0.0";
-char[] GET_PLUGIN_VERSION() { return PLUGIN_VERSION; }
 
 public Plugin myinfo = {
   name = "Fartsy's Ass - Framework",
@@ -51,8 +50,8 @@ public void OnFastFire2Ready() {
   HookAllEvents();
   WaveSystem().update();
   if (WaveSystem().IsDefault()) core.init_post();
-  UpdateAllHealers();
-  CreateTimer(1.0, UpdateMedicHealing);
+  //UpdateAllHealers();
+  //CreateTimer(1.0, UpdateMedicHealing);
   CPrintToChatAll("{fartsyred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
   cvarSNDDefault = CreateConVar("sm_fartsysass_sound", "3", "Default sound for new users, 3 = Everything, 2 = Sounds Only, 1 = Music Only, 0 = Nothing");
   AssLogger(LOGLVL_INFO, "####### STARTUP COMPLETE (v%s) #######", PLUGIN_VERSION);

@@ -603,7 +603,7 @@ void sudo(int task) {
     GlobalAudio.Reset();
     BossHandler.shouldTick = false;
     core.Reset();
-    for (int i = 0; i < sizeof(EmnityManager); i++) EmnityManager[i].Reset();
+    for (int i = 0; i < sizeof(EmnityManager); i++) EmnityManager[i].Clear();
     for (int i = 0; i < sizeof(MapLighting); i++) MapLighting[i].Repair();
     WeatherManager.Reset();
     bombState[0].isReady = false;
