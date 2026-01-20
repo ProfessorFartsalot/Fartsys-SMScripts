@@ -1,11 +1,5 @@
 // ASS Utilities - Advanced server features
-Database Ass_Database_ServerMetrics;
-void Set_Ass_Database_ServerMetrics(Database db) {
-  Ass_Database_ServerMetrics = db;
-}
-Database Get_Ass_Database_ServerMetrics() {
-  return Ass_Database_ServerMetrics;
-}
+
 //Gets the server time as an int array, 0 = hour, 1 = minute, 2 = AM/PM(0/1 respectively)
 void GetServerTime(int retVal[3]) {
     char buffer[8];
@@ -19,6 +13,7 @@ void GetServerTime(int retVal[3]) {
     retVal[1] = minute;
     retVal[2] = ampm;
 }
+
 //Gets the server stats and display it in the server
 public Action StatsTracker(Handle timer) {
   int time[3];
@@ -32,7 +27,7 @@ public Action StatsTracker(Handle timer) {
   FastFire2("FBMetric.TimeAMPM", "SetTextureIndex", ampm, 0.0, false);
   //PrintToChatAll("Current time is %s:%s %s", hour, minute, StringToInt(ampm) == 0 ? "AM" : "PM");
   CreateTimer(15.0, StatsTracker);
-  if (!Get_Ass_Database()) return Plugin_Stop;
+  if (!Ass_Database) return Plugin_Stop;
   char query[512];
   query[0] = '\0'; // Clear buffer
   StrCat(query, sizeof(query), "SELECT 'memory_used_gib' AS name, value FROM memory_used_gib WHERE id = 1 ");

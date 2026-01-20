@@ -3,7 +3,19 @@ bool canCrusaderNuke = false;
 bool crusader = false;
 int INCOMINGDISPLAYED = 0;
 BULKFIRE crusaderAtk[64];
-
+//Registry of all playable classes, used for stats module
+char ClassDefinitions[][32] = {
+  "scout",
+  "sniper",
+  "soldier",
+  "demoman",
+  "medic",
+  "heavy",
+  "pyro",
+  "spy",
+  "engineer",
+  ""
+};
 //Crusader Incoming Timer for Crusader
 public Action CRUSADERINCOMING(Handle timer) {
   if (crusader && INCOMINGDISPLAYED < 17) {
@@ -17,25 +29,74 @@ public Action CRUSADERINCOMING(Handle timer) {
 
 public int iDmgHealingTotal;
 enum struct EMNITYMANAGER {
+  int iAssisted;
   int iBossDamage;
   int iDamage;
   int iHealing;
   int InitHealingValue;
   int getClientEmnity() {
     //PrintToConsoleAll ("Getting emnity returned Damage %i + Healing %i / %i Total, or %i Emnity ", this.iDamage, this.iHealing, iDmgHealingTotal, RoundToFloor(((this.iDamage * 1.0 + this.iHealing * 1.0) / ((iDmgHealingTotal == 0) ? 1 : iDmgHealingTotal) * 100)));
-    return RoundToFloor((((this.iDamage + this.iHealing) * 1.0) / (iDmgHealingTotal * 1.0)) * 100.0);
+    return RoundToFloor((((this.iAssisted + this.iDamage + this.iHealing) * 1.0) / (iDmgHealingTotal * 1.0)) * 100.0);
   }
   bool IsAboveEmnityThreshold(int value) {
-    if (RoundToFloor(((this.iDamage + this.iHealing) * 1.0) / (iDmgHealingTotal * 1.0)) > value) return true;
+    if (RoundToFloor(((this.iAssisted + this.iDamage + this.iHealing) * 1.0) / (iDmgHealingTotal * 1.0)) > value) return true;
     return false;
   }
-  void Reset() {
+  void Add(int client, int type, int i, const char[] optTarget = "") {
+    int steamID = GetSteamAccountID(client);
+    switch (type) {
+      // Damage
+      case 0: {
+        // Add bonus emnity for healers
+        int healer = GetHealerOfClient(client);
+        if (healer != -1) { AddHealerEmnity(healer, RoundToFloor(i * 0.35)); }
+        // Add their damage to the stats system, additionally log it to MySQL stats if possible
+        this.iDamage += i;
+        if (!Ass_Database || !steamID) return;
+        char query[256];
+        Format(query, sizeof(query), "UPDATE ass_activity SET damagedealt = damagedealt + %i, damagedealtsession = damagedealtsession + %i WHERE steamid = %i;", i, i, steamID);
+        Ass_Database.Query(Database_FastQuery, query);
+      }
+      // Healing
+      case 1: {
+        this.iHealing += i;
+        if (!Ass_Database || !steamID) return;
+        char escTarget[32];
+        //if(!StrEqual(optTarget, "")) SQL_EscapeString(Ass_Database, optTarget, escTarget, sizeof(escTarget));
+        //char query[256];
+        //Format(query, sizeof(query), "UPDATE ass_activity SET healingtotal = healingtotal + %i, healingsession = healingsession + %i, lasthealedname = %N, WHERE steamid = %i;", i, i, escTarget, steamID); //TO DO: RESET ON CLIENT DISCONNECT.
+        //Ass_Database.Query(Database_FastQuery, query);
+      }
+      // Other
+      case 2: {
+        this.iAssisted += i;
+      }
+    }
+    iDmgHealingTotal += i;
+  }
+  void Clear() {
+    iDmgHealingTotal -= this.iAssisted;
+    iDmgHealingTotal -= this.iDamage;
+    iDmgHealingTotal -= this.iHealing;
+    this.iAssisted = 0;
     this.iBossDamage = 0;
     this.iDamage = 0;
     this.iHealing = 0;
   }
+  void OnSpawned(int client, int class) {
+    int steamID = GetSteamAccountID(client);
+    if (!Ass_Database || !steamID) return;
+    char strClass[32]; char query[256];
+    strClass = ClassDefinitions[class - 1];
+    Format(query, sizeof(query), "UPDATE ass_activity SET class = '%s' WHERE steamid = %i;", strClass, steamID);
+    Ass_Database.Query(Database_FastQuery, query);
+  }
 }
 EMNITYMANAGER EmnityManager[MAXPLAYERS+1];
+
+void AddHealerEmnity(int healer, int i) {
+  if (IsValidClient(healer)) EmnityManager[healer].Add(healer, 2, i);
+}
 
 enum struct BOSSHANDLER {
     int bossID;

@@ -252,10 +252,16 @@ enum struct AUDIOCONTROLLER {
       }
     }
   }
+  // Events
+  // Handles client disconnects
+  void OnClientDisconnect(int client) {
+    PrintToServer("[AudioManager @ %i] Client %N disconnected, shutting down gracefully!", client, client);
+    AudioManager[client].Client = -1;
+  }
 }
 AUDIOCONTROLLER GlobalAudio;
 
-public Action EnableAudio(Handle timer){
+public Action EnableAudio(Handle timer) {
   GlobalAudio.shouldTick = true;
   return Plugin_Stop;
 }
@@ -323,7 +329,7 @@ public Action Command_Sounds(int client, int args) {
   else {
     char queryID[256];
     Format(queryID, sizeof(queryID), "SELECT soundprefs from ass_activity WHERE steamid = '%d';", steamID);
-    Get_Ass_Database().Query(SQL_SNDPrefs, queryID, client);
+    Ass_Database.Query(SQL_SNDPrefs, queryID, client);
     ShowFartsyMenu(client);
     PrintToChat(client, sndPrefs[soundPreference[client]]);
     return Plugin_Handled;
@@ -348,10 +354,10 @@ public int MenuHandlerFartsy(Menu menu, MenuAction action, int param1, int param
   if (action == MenuAction_Select) {
     char query[256];
     int steamID = GetSteamAccountID(param1);
-    if (!Get_Ass_Database() || !steamID) return 0;
+    if (!Ass_Database || !steamID) return 0;
     else {
       Format(query, sizeof(query), "UPDATE ass_activity SET soundprefs = '%i' WHERE steamid = '%d';", param2, steamID);
-      Get_Ass_Database().Query(Database_FastQuery, query);
+      Ass_Database.Query(Database_FastQuery, query);
       soundPreference[param1] = param2;
       Command_Sounds(param1, 0);
     }

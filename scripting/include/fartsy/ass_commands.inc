@@ -32,10 +32,10 @@ public Action Command_SetFogSEU(int client, int args){
 //Get client's stats via command
 public Action Command_MyStats(int client, int args) {
   int steamID = GetSteamAccountID(client);
-  if (!Get_Ass_Database() || !steamID || steamID <= 10000) return Plugin_Stop;
+  if (!Ass_Database || !steamID || steamID <= 10000) return Plugin_Stop;
   char queryID[256];
   Format(queryID, sizeof(queryID), "SELECT * from ass_activity WHERE steamid = %i;", steamID);
-  Get_Ass_Database().Query(MyStats, queryID, client);
+  Ass_Database.Query(MyStats, queryID, client);
   return Plugin_Continue;
 }
 public void MyStats(Database db, DBResultSet results, const char[] error, int client) {

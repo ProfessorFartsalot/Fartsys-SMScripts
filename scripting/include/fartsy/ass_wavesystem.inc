@@ -40,7 +40,7 @@ methodmap WAVESYSTEM {
     GlobalAudio.Reset();
     core.tacobell = false;
     ServerCommand("fb_startmoney 50000");
-    CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}%s {white} (Core v%s, System v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", "mvm_rottenburg_fartsys_ass-r22", GET_PLUGIN_VERSION(), WaveSystem_Version);
+    CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}%s {white} (Core v%s, System v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", "mvm_rottenburg_fartsys_ass-r22", PLUGIN_VERSION, WaveSystem_Version);
     FastFire2("rain", "Alpha", "0", 0.0, false);
     PrintToChatAll("WaveSystem type %i", this.GetType());
     if (this.IsWaveNull()) {
@@ -50,7 +50,6 @@ methodmap WAVESYSTEM {
 
   public void run() {
     this.update();
-    UpdateAllHealers();
     WSData.IsActive = true;
     bombState[0].state = DefaultsArray[WSData.wave].defBombStatus;
     bombState[0].stateMax = DefaultsArray[WSData.wave].defBombStatusMax;
