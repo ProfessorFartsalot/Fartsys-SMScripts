@@ -3,6 +3,7 @@
 #endif
 #define _jansson_included_
 
+#define JSON_TMP_MAX 8192
 
 /**
  * --- Type
@@ -869,10 +870,14 @@ stock Handle:json_string_format(const String:sFormat[], any:...) {
  * @param ...			    Variable number of format parameters.
  * @return                  Handle to the new String object
  */
-stock Handle:json_string_format_ex(tmpBufferLength, const String:sFormat[], any:...) {
-	new String:sTmp[tmpBufferLength];
+stock Handle:json_string_format_ex(int tmpBufferLength, const char[] sFormat, any:...) {
+	if (tmpBufferLength > JSON_TMP_MAX)
+	{
+		LogError("json_string_format_ex: buffer too small!");
+		return INVALID_HANDLE;
+	}
+	new String:sTmp[JSON_TMP_MAX];
 	VFormat(sTmp, sizeof(sTmp), sFormat, 3);
-
 	return json_string(sTmp);
 }
 

@@ -505,3 +505,14 @@ void SendHudTextAll(int channel, const char[] text, float posX, float posY, floa
     }
   }
 }
+
+// Strips weapons from player
+void StripWeapons(int client) { 
+  int weapon;
+  for (int slot = 0; slot < 6; slot++) {
+    while ((weapon = GetPlayerWeaponSlot(client, slot)) != -1) {
+      RemovePlayerItem(client, weapon);
+      AcceptEntityInput(weapon, "Kill");
+    }
+  }
+}
