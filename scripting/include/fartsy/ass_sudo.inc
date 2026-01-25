@@ -776,14 +776,14 @@ void sudo(int task) {
   //Cycle monitor forward
   case 1009: {
     core.camSel++;
-    if (core.camSel >= 5) core.camSel = 0;
+    if (core.camSel > 5) core.camSel = 0;
     FastFire2("FB.Monitor", "SetCamera", SelectedCamera[core.camSel], 0.0, false);
     FastFire2("FB.MonitorBW", "SetCamera", SelectedCamera[core.camSel], 0.0, false);
   }
   //Cycle monitor back
   case 1010: {
     core.camSel--;
-    if (core.camSel <= -1) core.camSel = 4;
+    if (core.camSel < 0) core.camSel = 5;
     FastFire2("FB.Monitor", "SetCamera", SelectedCamera[core.camSel], 0.0, false);
     FastFire2("FB.MonitorBW", "SetCamera", SelectedCamera[core.camSel], 0.0, false);
   }
@@ -800,8 +800,8 @@ void sudo(int task) {
   }
   //Do not EVER EVER execute this unless it's an emergency...
   case 6969: {
-    CPrintToChatAll(!WaveSystem().IsActive() ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
-    if (!WaveSystem().IsActive() || brawler_emergency) return;
+    CPrintToChatAll(!WaveSystem().IsActive() ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : WaveSystem().IsWaveNull() ? "{darkred} [CORE] Failed to enter emergency mode, it has been disabled by an unknown entity." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
+    if (!WaveSystem().IsActive() || brawler_emergency || WaveSystem().IsWaveNull()) return;
     Emerge(0);
   }
   //DEBUG
@@ -814,7 +814,7 @@ void sudo(int task) {
   case 9000: {
     CreateTimer(10.0, BossHPTimer);
   }
-  case 9010: {
+  /*case 9010: {
     CustomSoundEmitter(TBGM6, 65, true, 1, 1.0, 100);
     CustomSoundEmitter(TBGM4, 65, true, 1, 0.05, 100);
     CustomSoundEmitter(TBGM5, 65, true, 1, 0.05, 100);
@@ -870,7 +870,7 @@ void sudo(int task) {
   case 9022: {
     CustomSoundEmitter(TBGM0, 65, true, 1, 0.05, 100);
     CustomSoundEmitter(TBGM1, 65, true, 1, 1.0, 100);
-  }
+  }*/
   //Test
   case 10000:{
     int ent = FindEntityByClassname(-1, "tf_objective_resource");

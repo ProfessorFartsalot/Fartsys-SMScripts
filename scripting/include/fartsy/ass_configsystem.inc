@@ -1,5 +1,5 @@
 //ASS_CONFIGSYSTEM - Contains the config loaders and all the plugin core data entries.
-
+#include <smjansson> // Needed for JSON parsing
 //Default values per wave
 enum struct DEFAULTS {
   bool defCanHWBoss;
@@ -66,7 +66,7 @@ enum struct COREDATA {
     CreateDirectory(subFolder);
     Format(subFolder, sizeof(subFolder), "%s/Core", basePath);
     CreateDirectory(subFolder);
-    PrintToServer("FartsysAss folder structure created!");
+    AssLogger(LOGLVL_DEBUG, "FartsysAss folder structure created!");
   }
   void init_post() {
     CPrintToChatAll("{gray}[Server]: Reloading!");
@@ -93,73 +93,6 @@ enum struct COREDATA {
     ass[9].name = "[100] Professor Fartsalot";
     for (int i = 0; i < sizeof(ass); i++) ass[i].price = 10 + (10 * i);
     for (int i = 0; i < sizeof(ass); i++) ass[i].purchase = 30 + i;
-    HWBoss[0].index = 0;
-    HWBoss[0].fireCount = 2;
-    HWBoss[0].fireString = "OnUser1 hhh_maker,ForceSpawn,,0.0,1";
-    HWBoss[1].index = 2;
-    HWBoss[1].fireString = "OnUser1 hhh_maker2,ForceSpawn,,0.0,1";
-    HWBoss[2].index = 3;
-    HWBoss[2].fireCount = 1;
-    HWBoss[2].fireString = "OnUser1 monoculus_maker,ForceSpawn,,0.0,1";
-    HWBoss[3].index = 4;
-    HWBoss[3].fireCount = 3;
-    HWBoss[3].fireString = "OnUser1 hhh_maker2,ForceSpawn,,0.0,1";
-    HWBoss[4].index = 7;
-    HWBoss[4].fireString = "OnUser1 SkeleSpawner,Enable,,0.0,1";
-    HWBoss[5].index = 8; 
-    HWBoss[5].fireString = "OnUser1 SkeleSpawner,Disable,,20.0,1";
-    HWBoss[6].index = 5; //Does this access HWBoss[4]?
-    HWBoss[6].fireCount=2;//Does this disable skelespawner after enabling it?...
-    HWBoss[7].index = 8;
-    HWBoss[7].fireString = "OnUser1 merasmus_maker,ForceSpawn,,0.0,1";
-    HWBoss[7].fireCount = 3;
-    HWBoss[8].index = 11;
-    HWBoss[8].fireCount = 2;
-    HWBoss[8].fireString = "OnUser1 hhh_maker2,ForceSpawn,,0.0,1";
-    HWBoss[9].index = 12;
-    HWBoss[9].fireString = "OnUser1 monoculus_maker,ForceSpawn,,0.0,1";
-    HWBoss[10].index = 0;
-    HWBoss[10].fireCount = 2;
-    HWBoss[10].fireString = "OnUser1 merasmus_maker,ForceSpawn,,0.0,1";
-    HWBoss[11].index = 2;
-    HWBoss[11].fireString = "OnUser1 monoculus_maker,ForceSpawn,,0.0,1";
-    HWBoss[11].fireCount = 1;
-    SephBoss[0].index = 0;
-    SephBoss[0].fireCount = 0;
-    SephBoss[0].shouldNuke = true;
-    SephBoss[1].fireString = "OnUser1 SephMeteor,ForceSpawn,,0.0,1";
-    SephBoss[1].ChatMessage = "{blue}Sephiroth: Say goodbye!";
-    SephBoss[1].index = 2;
-    SephBoss[1].fireCount = 1;
-    SephBoss[2].fireString = "OnUser1 SephNuke,ForceSpawn,,0.0,1";
-    SephBoss[2].index = 3;
-    SephBoss[2].fireCount = 1;
-    SephBoss[2].sound = SFXArray[8].realPath;
-    SephBoss[3].fireString = "OnUser1 SephRocketSpammer,FireMultiple,50,0.0,1";
-    SephBoss[3].index = 4;
-    SephBoss[3].fireCount = 4;
-    SephBoss[4].index = 3;
-    SephBoss[4].fireCount = 3;
-    SephBoss[4].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,3.0,1";
-    SephBoss[5].index = 9;
-    SephBoss[5].fireCount = 2;
-    SephBoss[5].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,5.0,1";
-    SephBoss[6].index = 9;
-    SephBoss[6].fireCount = 2;
-    SephBoss[6].fireString = "OnUser1 SkeleSpawner,Enable,,0.0,1";
-    SephBoss[7].index = 3;
-    SephBoss[7].fireCount = 3;
-    SephBoss[7].fireString = "OnUser1 SkeleSpawner,Disable,,20.0,1";
-    SephBoss[8].index = 4;
-    SephBoss[8].fireCount = 1;
-    SephBoss[9].index = 11;
-    SephBoss[9].fireCount = 2;
-    SephBoss[9].fireString = "OnUser1 SephRocketSpammer,FireOnce,,0.0,1";
-    SephBoss[10].index = 12;
-    SephBoss[10].fireCount = 1;
-    SephBoss[10].fireString = "OnUser1 SephRocketSpammer,FireOnce,,5.0,1";
-    SephBoss[11].index = 3;
-    SephBoss[11].fireCount = 4;
     AssLogger(1, "[BULKFIRE] Setting up Crusader...");
     Handle confCoreData = OpenFile("addons/sourcemod/configs/FartsysAss/BulkFire/crusader.ini", "rt", false);
     char bufCoreData[256];
@@ -237,7 +170,7 @@ enum struct COREDATA {
     AssLogger(1, "Core data setup complete!");
   }
   void Reset() {
-    SephBoss[0].Reset();
+ SephBoss[0].Reset();
     this.canHindenburg = false;
     this.canHWBoss = false;
     WaveSystem().SetActive(false);
@@ -343,6 +276,7 @@ char AdvMessage[][256] = {
   "{darkviolet}[{aqua}CORE{darkviolet}] {white}You may always invoke {forestgreen}!return{white} to be returned to spawn.",
   ""
 };
+
 //Random death messages
 char DeathMessage[][64] = {
   "YEETED OUT INTO ORBIT",
@@ -353,6 +287,7 @@ char DeathMessage[][64] = {
   "FARTED INTO THE SKY",
   ""
 };
+
 //Scripted entities, used for spawning in extra entities mid wave.
 char FB_SENT[][64] = {
   "FB.SentMeteor01",
@@ -378,9 +313,11 @@ char SelectedCamera[][32] = {
   "CAM.Front",
   "CAM.Mid",
   "CAM.MidTwo",
+  "Cam.MidThree",
   "CAM.Rear",
-  "CAM.Spawn"
+  "CAM.Kissone"
 };
+
 //Easter eggs
 char SpecEnt[][24] = {
   "Spec.Goobbue",
@@ -390,14 +327,6 @@ char SpecEnt[][24] = {
   "Spec.BlueBall",
   "Spec*"
 };
-//test code
-char TBGM0[16] = "test/bgm0.mp3";
-char TBGM1[16] = "test/bgm1.mp3";
-char TBGM2[16] = "test/bgm2.mp3";
-char TBGM3[16] = "test/bgm3.mp3";
-char TBGM4[16] = "test/bgm4.mp3";
-char TBGM5[16] = "test/bgm5.mp3";
-char TBGM6[16] = "test/bgm6.mp3";
 
 //Register our commands.
 void RegisterAllCommands(){
@@ -417,24 +346,13 @@ void RegisterAllCommands(){
 }
 
 void RegisterAndPrecacheAllFiles(){
-  PrecacheSound(TBGM0, true);
-  PrecacheSound(TBGM2, true);
-  PrecacheSound(TBGM3, true);
-  PrecacheSound(TBGM4, true);
-  PrecacheSound(TBGM5, true);
-  PrecacheSound(TBGM6, true);
-  PrintToServer("PRECACHING THESE SOUNDS SO EARLY IS NOT INTENTIONAL, PLEASE FIX THIS FARTSY.");
-  PrecacheSound("fartsy/misc/brawler/fartsy_dll/intro.mp3", true);
-  PrecacheSound("fartsy/misc/brawler/fartsy_dll/terror.mp3", true);
-  PrecacheSound("fartsy/music/tcmusic/humanhypothesis.wav", true);
   AssLogger(0, "Loading EVERYTHING to RAM...");
   int bgmIndex;
   int sfxIndex;
-  PrintToServer("Precaching BGMs...");
   char _path_BGM[PLATFORM_MAX_PATH];
   char _path_SFX[PLATFORM_MAX_PATH];
-  BuildPath(Path_SM, _path_BGM, sizeof(_path_BGM), "configs/FartsysAss/Files/music.cfg");
-  BuildPath(Path_SM, _path_SFX, sizeof(_path_SFX), "configs/FartsysAss/Files/sfx.cfg");
+  BuildPath(Path_SM, _path_BGM, sizeof(_path_BGM), "configs/FartsysAss/Files/Music.cfg");
+  BuildPath(Path_SM, _path_SFX, sizeof(_path_SFX), "configs/FartsysAss/Files/SFX.cfg");
   if (!FileExists(_path_BGM)) { GenerateDefaultConfig(0, _path_BGM); }
   if (!FileExists(_path_SFX)) { GenerateDefaultConfig(1, _path_SFX); }
   AssLogger(LOGLVL_DEBUG, "Loading BGMs...");
@@ -444,14 +362,14 @@ void RegisterAndPrecacheAllFiles(){
   for (int i = 0; i < sizeof(BGMArray); i++) {
    if (!StrEqual(BGMArray[i].realPath, "")) {
     bgmIndex++;
-    AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %f seconds, Start Loop Point %i seconds, Volume %i   @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].loopSeconds, BGMArray[i].introSeconds, BGMArray[i].SNDLVL, i);
+    AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %f seconds, Start Loop Point %i seconds, Volume %i @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].loopSeconds, BGMArray[i].introSeconds, BGMArray[i].SNDLVL, i);
     PrecacheSound(BGMArray[i].realPath, true);
    }
   }
   for (int i = 0; i < sizeof(SFXArray); i++) {
     if (!StrEqual(SFXArray[i].realPath, "")) {
       sfxIndex++;
-      AssLogger(LOGLVL_DEBUG, "Precaching SFX: %s in position %i", SFXArray[i].realPath, i);
+      AssLogger(LOGLVL_DEBUG, "Precaching SFX: %s @ %i", SFXArray[i].realPath, i);
       PrecacheSound(SFXArray[i].realPath, true);
     }
   }
@@ -477,18 +395,13 @@ char WaveSetup[][] = {
 
 //Gets config file based on the game mode, we use the struct because returning differing array sizes is impossible otherwise.
 char[] OVERRIDE_AND_GET_COREDATA() {
-  switch (WaveSystem().GetType()) {
-    case 0: {
-      return core.configDefault;
-    }
-    case 1: {
-      return core.configTacoBell;
-    }
-    case 2: {
-      return core.configWaveNull;
-    }
+  int type = WaveSystem().GetType();
+  switch (type) {
+    case 0: return core.configDefault;
+    case 1: return core.configTacoBell;
+    case 2: return core.configWaveNull;
     default: {
-      LogError("Gamemode %i out of bounds. Reverting to defaults.", WaveSystem().GetType());
+      LogError("Gamemode %i out of bounds. Reverting to defaults.", type);
       return core.configDefault;
     }
   }
@@ -503,50 +416,48 @@ public bool GenerateDefaultConfig(const int type, const char[] path)
     LogError("Failed to create config file: %s", path);
     return false;
   }
+  WriteFileLine(file, "{"); // Begin JSON
   switch(type) {
     // BGM
     case 0: {
-      WriteFileLine(file, "\"Music\"");
-      WriteFileLine(file, "{");
+      WriteFileLine(file, "  \"Music\": {");
       for (int i = 0; i < sizeof(BGMArray); i++)
       {
-        WriteFileLine(file, "\t\"%d\"", i);
-        WriteFileLine(file, "\t{");
-        WriteFileLine(file, "\t\t\"path\"\t\t\"\"");
-        WriteFileLine(file, "\t\t\"name\"\t\t\"Example Song %d\"", i);
-        WriteFileLine(file, "\t\t\"duration\"\t\"120.0\"");
-        WriteFileLine(file, "\t\t\"intro\"\t\t\"0.0\"");
-        WriteFileLine(file, "\t\t\"loop\"\t\t\"0.0\"");
-        WriteFileLine(file, "\t\t\"volume\"\t\"80\"");
-        WriteFileLine(file, "\t}");
+          WriteFileLine(file, "    \"%d\": {", i);
+          WriteFileLine(file, "      \"path\": \"\",");
+          WriteFileLine(file, "      \"name\": \"Example Song %d\",", i);
+          WriteFileLine(file, "      \"duration\": 120.0,");
+          WriteFileLine(file, "      \"intro\": 0.0,");
+          WriteFileLine(file, "      \"volume\": 80");
+          WriteFileLine(file, i < sizeof(BGMArray) - 1 ? "    }," : "    }");
       }
+      WriteFileLine(file, "  }");
     }
     // SFX
     case 1: {
-      WriteFileLine(file, "\"SFX\"");
-      WriteFileLine(file, "{");
+      WriteFileLine(file, "  \"SFX\": {");
       for (int i = 0; i < sizeof(SFXArray); i++)
       {
-        WriteFileLine(file, "\t\"%d\"", i);
-        WriteFileLine(file, "\t{");
-        WriteFileLine(file, "\t\t\"path\"\t\t\"\"");
-        WriteFileLine(file, "\t\t\"name\"\t\t\"Example SFX %d\"", i);
-        WriteFileLine(file, "\t\t\"volume\"\t\"80\"");
-        WriteFileLine(file, "\t}");
+        WriteFileLine(file, "    \"%d\": {", i);
+        WriteFileLine(file, "      \"path\": \"\",");
+        WriteFileLine(file, "      \"name\": \"Example Sound %d\",", i);
+        WriteFileLine(file, "      \"volume\": 80");
+        WriteFileLine(file, i < sizeof(SFXArray) - 1 ? "    }," : "    }");
       }
+      WriteFileLine(file, "  }");
     }
     // Weather
     case 2: {
-      WriteFileLine(file, "\"WeatherManager\"");
-      WriteFileLine(file, "{");
-      WriteFileLine(file, "\t\"defFogStartDist\"\t\"300\"");
-      WriteFileLine(file, "\t\"defFogEndDist\"\t\"3000\"");
-      WriteFileLine(file, "\t\"defFogDensity\"\t\"0.55\"");
-      WriteFileLine(file, "\t\"fogChangeRate\"\t\"0.001\"");
-      WriteFileLine(file, "\t\"fogChangeRateRGB\"\t\"0.25\"");
+      WriteFileLine(file, "  \"WeatherManager\": {");
+      WriteFileLine(file, "    \"defFogStartDist\": \"300\"");
+      WriteFileLine(file, "    \"defFogEndDist\": \"3000\"");
+      WriteFileLine(file, "    \"defFogDensity\": \"0.55\"");
+      WriteFileLine(file, "    \"fogChangeRate\": \"0.001\"");
+      WriteFileLine(file, "    \"fogChangeRateRGB\": \"0.25\"");
+      WriteFileLine(file, "  }");
     }
   }
-  WriteFileLine(file, "}");
+  WriteFileLine(file, "}"); // End JSON
   CloseHandle(file);
   LogMessage("Generated example config: %s", path);
   return true;
@@ -555,62 +466,326 @@ public bool GenerateDefaultConfig(const int type, const char[] path)
 // Loads various config files
 void LoadConfig(int type)
 {
-  Handle kv = CreateKeyValues(type == 0 ? "Music" : type == 1 ? "SFX" : "WeatherManager");
+  // Attempt to load json config file
   char path[PLATFORM_MAX_PATH];
   BuildPath(Path_SM, path, sizeof(path), type == 0 ? "configs/FartsysAss/Files/Music.cfg" : type == 1 ? "configs/FartsysAss/Files/SFX.cfg" : "configs/FartsysAss/Weather/WeatherManager.cfg");
-  if (!FileToKeyValues(kv, path))
+  Handle jsHandle = json_load_file(path);
+  if (jsHandle == INVALID_HANDLE) SetFailState("Failed to load json %s", path);
+
+  // Attempt to locate headers
+  char header[32];
+  strcopy(header, 32, type == 0 ? "Music" : type == 1 ? "SFX" : "WeatherManager");
+  Handle jsHeader = json_object_get(jsHandle, header);
+  if (jsHeader == INVALID_HANDLE) { CloseHandle(jsHandle); SetFailState("Failed to locate header, missing json root object \"%s\" in file %s", header, path); }
+
+  // Iterate json file
+  Handle jsIter = json_object_iter(jsHeader);
+  while (jsIter != INVALID_HANDLE)
   {
-    CloseHandle(kv);
-    SetFailState("Failed to read %s", path);
-    return;
-  }
-  char index[32];
-  int idx;
-  switch (type) {
-    // BGM
-    case 0: {
-      if (KvGotoFirstSubKey(kv)) {
-        do {
-          KvGetSectionName(kv, index, sizeof(index));
-          idx = StringToInt(index);
-          KvGetString(kv, "path", BGMArray[idx].realPath, sizeof(BGMArray[idx].realPath));
-          char fsPath[PLATFORM_MAX_PATH];
-          Format(fsPath, sizeof(fsPath), "sound/%s", BGMArray[idx].realPath);
-          if (!FileExists(fsPath, true) && !StrEqual(BGMArray[idx].realPath, "")) { SetFailState("File does not exist: sound/%s (%s, field %d). Aborting Plugin Load.", BGMArray[idx].realPath, path, idx); }
-          KvGetString(kv, "name", BGMArray[idx].songName, sizeof(BGMArray[].songName));
-          BGMArray[idx].introSeconds = KvGetFloat(kv, "intro", 0.0);
-          BGMArray[idx].loopSeconds  = KvGetFloat(kv, "duration", 0.0);
-          BGMArray[idx].SNDLVL       = KvGetNum(kv, "volume", 80);
-        } while (KvGotoNextKey(kv));
-        CloseHandle(kv);
+    char index[32];
+    json_object_iter_key(jsIter, index, sizeof(index));
+    int idx = StringToInt(index);
+    Handle _jsKey = json_object_iter_value(jsIter);
+    // Process values
+    if (type == 0) { // BGM
+      json_object_get_string(_jsKey, "path", BGMArray[idx].realPath, sizeof(BGMArray[idx].realPath));
+      json_object_get_string(_jsKey, "name", BGMArray[idx].songName, sizeof(BGMArray[idx].songName));
+      BGMArray[idx].introSeconds = json_object_get_float(_jsKey, "intro");
+      BGMArray[idx].loopSeconds = json_object_get_float(_jsKey, "duration");
+      BGMArray[idx].SNDLVL = json_object_get_int(_jsKey, "volume");
+      if (!StrEqual(BGMArray[idx].realPath, "")) {
+        char fsPath[PLATFORM_MAX_PATH];
+        Format(fsPath, sizeof(fsPath), "sound/%s", BGMArray[idx].realPath);
+        if (!FileExists(fsPath, true)) SetFailState("File does not exist: %s (field %d)", fsPath, idx);
       }
     }
-    // SFX
-    case 1: {
-      if (KvGotoFirstSubKey(kv)) {
-        do {
-          KvGetSectionName(kv, index, sizeof(index));
-          idx = StringToInt(index);
-          KvGetString(kv, "path", SFXArray[idx].realPath, sizeof(SFXArray[idx].realPath));
-          char fsPath[PLATFORM_MAX_PATH];
-          Format(fsPath, sizeof(fsPath), "sound/%s", SFXArray[idx].realPath);
-          if (!FileExists(fsPath, true) && !StrEqual(SFXArray[idx].realPath, "")) { SetFailState("File does not exist: sound/%s (%s, field %d). Aborting Plugin Load.", SFXArray[idx].realPath, path, idx); }
-          //KvGetString(kv, "name", SFXArray[idx].sfxName, sizeof(SFXArray[].sfxName));
-          SFXArray[idx].SNDLVL       = KvGetNum(kv, "volume", 80);
-        } while (KvGotoNextKey(kv));
-        CloseHandle(kv);
+    else if (type == 1) { // SFX
+      json_object_get_string(_jsKey, "path", SFXArray[idx].realPath, sizeof(SFXArray[idx].realPath));
+      SFXArray[idx].SNDLVL = json_object_get_int(_jsKey, "volume");
+      if (!StrEqual(SFXArray[idx].realPath, "")) {
+        char fsPath[PLATFORM_MAX_PATH];
+        Format(fsPath, sizeof(fsPath), "sound/%s", SFXArray[idx].realPath);
+        if (!FileExists(fsPath, true)) SetFailState("File does not exist: %s (field %d)", fsPath, idx);
       }
     }
-    // Weather
-    case 2: {
-      KvGotoFirstSubKey(kv);
-      KvGetString(kv, "defFogStartDist", WeatherManager.defFogStartDist, sizeof(WeatherManager.defFogStartDist), "300");
-      KvGetString(kv, "defFogEndDist", WeatherManager.defFogEndDist, sizeof(WeatherManager.defFogEndDist), "3000");
-      WeatherManager.defFogDensity = FloatMin(KvGetFloat(kv, "defFogDensity", 0.55), 1.0);
-      WeatherManager.fogChangeRate = FloatMin(KvGetFloat(kv, "fogChangeRate", 0.001), 1.0);
-      WeatherManager.fogChangeRateRGB = FloatMin(KvGetFloat(kv, "fogChangeRateRGB", 0.25), 1.0);
-      WeatherManager.hasTornado = false;
-      CloseHandle(kv);
+    else if (type == 2) { // Weather
+      json_object_get_string(_jsKey, "defFogStartDist", WeatherManager.defFogStartDist, sizeof(WeatherManager.defFogStartDist));
+      json_object_get_string(_jsKey, "defFogEndDist", WeatherManager.defFogEndDist, sizeof(WeatherManager.defFogEndDist));
+      WeatherManager.defFogDensity = json_object_get_float(_jsKey, "defFogDensity");
+      WeatherManager.fogChangeRate = json_object_get_float(_jsKey, "fogChangeRate");
+      WeatherManager.fogChangeRateRGB = json_object_get_float(_jsKey, "fogChangeRateRGB");
+      break;
     }
+    else { SetFailState("Iterator %i not implemented.", type); } // Unimplemented
+    jsIter = json_object_iter_next(jsHeader, jsIter);
   }
+  SetVarDefaults();
+}
+
+// Extra stuff that hasn't been moved to config files yet
+void SetVarDefaults() {
+  WeatherManager.hasTornado = false;
+  core.bombReset = false;
+  brawler_emergency = false;
+  core.canCrusaderNuke = false;
+  core.canHindenburg = false;
+  core.canHWBoss = false;
+  core.canSENTMeteors = false;
+  core.canSENTShark = false;
+  core.canSENTStars = false; SephBoss[0].shouldNuke = false;
+  crusader = false;
+  core.doFailsafe = false;
+  core.monitorOn = false;
+  core.monitorColor = true;
+  core.sacrificedByClient = false;
+  core.sephiroth = false;
+  core.tacobell = false;
+  core.tickingClientHealth = false;
+  WeatherManager.TornadoWarning = false;
+  core.FailedCount = 0;
+  INCOMINGDISPLAYED = 0;
+  core.camSel = 0;
+  core.CodeEntry = 0;
+  core.failsafeCount = 0;
+  core.lastAdmin = 0;
+  core.nullIndex = 0;
+  ass_sacPoints = 0;
+  ass_sacPointsMax = 60;
+  core.VIPIndex = 0;
+  core.waveFlags = 0;
+  core.HWNMin = 210.0;
+  core.HWNMax = 380.0;
+  MapLighting[0].arcs = "MapLighting.StreetLamp00.arcs";
+  MapLighting[1].arcs = "MapLighting.StreetLamp01.arcs";
+  MapLighting[2].arcs = "MapLighting.StreetLamp02.arcs";
+  MapLighting[3].arcs = "MapLighting.StreetLamp03.arcs";
+  MapLighting[4].arcs = "MapLighting.StreetLamp04.arcs";
+  MapLighting[5].arcs = "MapLighting.StreetLamp05.arcs";
+  MapLighting[6].arcs = "MapLighting.StreetLamp06.arcs";
+  MapLighting[7].arcs = "MapLighting.StreetLamp07.arcs";
+  MapLighting[8].arcs = "MapLighting.StreetLamp08.arcs";
+  MapLighting[9].arcs = "MapLighting.StreetLamp09.arcs";
+  MapLighting[10].arcs = "MapLighting.StreetLamp0A.arcs";
+  MapLighting[11].arcs = "MapLighting.StreetLamp0B.arcs";
+  MapLighting[12].arcs = "MapLighting.StreetLamp0C.arcs";
+  MapLighting[0].beam = "MapLighting.StreetLamp00.beam";
+  MapLighting[1].beam = "MapLighting.StreetLamp01.beam";
+  MapLighting[2].beam = "MapLighting.StreetLamp02.beam";
+  MapLighting[3].beam = "MapLighting.StreetLamp03.beam";
+  MapLighting[4].beam = "MapLighting.StreetLamp04.beam";
+  MapLighting[5].beam = "MapLighting.StreetLamp05.beam";
+  MapLighting[6].beam = "MapLighting.StreetLamp06.beam";
+  MapLighting[7].beam = "MapLighting.StreetLamp07.beam";
+  MapLighting[8].beam = "MapLighting.StreetLamp08.beam";
+  MapLighting[9].beam = "MapLighting.StreetLamp09.beam";
+  MapLighting[10].beam = "MapLighting.StreetLamp0A.beam";
+  MapLighting[11].beam = "MapLighting.StreetLamp0B.beam";
+  MapLighting[12].beam = "MapLighting.StreetLamp0C.beam";
+  MapLighting[0].buzz = "MapLighting.StreetLamp00.buzz";
+  MapLighting[1].buzz = "MapLighting.StreetLamp01.buzz";
+  MapLighting[2].buzz = "MapLighting.StreetLamp02.buzz";
+  MapLighting[3].buzz = "MapLighting.StreetLamp03.buzz";
+  MapLighting[4].buzz = "MapLighting.StreetLamp04.buzz";
+  MapLighting[5].buzz = "MapLighting.StreetLamp05.buzz";
+  MapLighting[6].buzz = "MapLighting.StreetLamp06.buzz";
+  MapLighting[7].buzz = "MapLighting.StreetLamp07.buzz";
+  MapLighting[8].buzz = "MapLighting.StreetLamp08.buzz";
+  MapLighting[9].buzz = "MapLighting.StreetLamp09.buzz";
+  MapLighting[10].buzz = "MapLighting.StreetLamp0A.buzz";
+  MapLighting[11].buzz = "MapLighting.StreetLamp0B.buzz";
+  MapLighting[12].buzz = "MapLighting.StreetLamp0C.buzz";
+  MapLighting[0].explosion = "MapLighting.StreetLamp00.explosion";
+  MapLighting[1].explosion = "MapLighting.StreetLamp01.explosion";
+  MapLighting[2].explosion = "MapLighting.StreetLamp02.explosion";
+  MapLighting[3].explosion = "MapLighting.StreetLamp03.explosion";
+  MapLighting[4].explosion = "MapLighting.StreetLamp04.explosion";
+  MapLighting[5].explosion = "MapLighting.StreetLamp05.explosion";
+  MapLighting[6].explosion = "MapLighting.StreetLamp06.explosion";
+  MapLighting[7].explosion = "MapLighting.StreetLamp07.explosion";
+  MapLighting[8].explosion = "MapLighting.StreetLamp08.explosion";
+  MapLighting[9].explosion = "MapLighting.StreetLamp09.explosion";
+  MapLighting[10].explosion = "MapLighting.StreetLamp0A.explosion";
+  MapLighting[11].explosion = "MapLighting.StreetLamp0B.explosion";
+  MapLighting[12].explosion = "MapLighting.StreetLamp0C.explosion";
+  MapLighting[0].light = "MapLighting.StreetLamp00.light";
+  MapLighting[1].light = "MapLighting.StreetLamp01.light";
+  MapLighting[2].light = "MapLighting.StreetLamp02.light";
+  MapLighting[3].light = "MapLighting.StreetLamp03.light";
+  MapLighting[4].light = "MapLighting.StreetLamp04.light";
+  MapLighting[5].light = "MapLighting.StreetLamp05.light";
+  MapLighting[6].light = "MapLighting.StreetLamp06.light";
+  MapLighting[7].light = "MapLighting.StreetLamp07.light";
+  MapLighting[8].light = "MapLighting.StreetLamp08.light";
+  MapLighting[9].light = "MapLighting.StreetLamp09.light";
+  MapLighting[10].light = "MapLighting.StreetLamp0A.light";
+  MapLighting[11].light = "MapLighting.StreetLamp0B.light";
+  MapLighting[12].light = "MapLighting.StreetLamp0C.light";
+  MapLighting[0].status = "MapLighting.StreetLamp00.status";
+  MapLighting[1].status = "MapLighting.StreetLamp01.status";
+  MapLighting[2].status = "MapLighting.StreetLamp02.status";
+  MapLighting[3].status = "MapLighting.StreetLamp03.status";
+  MapLighting[4].status = "MapLighting.StreetLamp04.status";
+  MapLighting[5].status = "MapLighting.StreetLamp05.status";
+  MapLighting[6].status = "MapLighting.StreetLamp06.status";
+  MapLighting[7].status = "MapLighting.StreetLamp07.status";
+  MapLighting[8].status = "MapLighting.StreetLamp08.status";
+  MapLighting[9].status = "MapLighting.StreetLamp09.status";
+  MapLighting[10].status = "MapLighting.StreetLamp0A.status";
+  MapLighting[11].status = "MapLighting.StreetLamp0B.status";
+  MapLighting[12].status = "MapLighting.StreetLamp0C.status";
+  MapLighting[0].stun = "MapLighting.StreetLamp00.stun";
+  MapLighting[1].stun = "MapLighting.StreetLamp01.stun";
+  MapLighting[2].stun = "MapLighting.StreetLamp02.stun";
+  MapLighting[3].stun = "MapLighting.StreetLamp03.stun";
+  MapLighting[4].stun = "MapLighting.StreetLamp04.stun";
+  MapLighting[5].stun = "MapLighting.StreetLamp05.stun";
+  MapLighting[6].stun = "MapLighting.StreetLamp06.stun";
+  MapLighting[7].stun = "MapLighting.StreetLamp07.stun";
+  MapLighting[8].stun = "MapLighting.StreetLamp08.stun";
+  MapLighting[9].stun = "MapLighting.StreetLamp09.stun";
+  MapLighting[10].stun = "MapLighting.StreetLamp0A.stun";
+  MapLighting[11].stun = "MapLighting.StreetLamp0B.stun";
+  MapLighting[12].stun = "MapLighting.StreetLamp0C.stun";
+  MapLighting[0].zap = "MapLighting.StreetLamp00.zap";
+  MapLighting[1].zap = "MapLighting.StreetLamp01.zap";
+  MapLighting[2].zap = "MapLighting.StreetLamp02.zap";
+  MapLighting[3].zap = "MapLighting.StreetLamp03.zap";
+  MapLighting[4].zap = "MapLighting.StreetLamp04.zap";
+  MapLighting[5].zap = "MapLighting.StreetLamp05.zap";
+  MapLighting[6].zap = "MapLighting.StreetLamp06.zap";
+  MapLighting[7].zap = "MapLighting.StreetLamp07.zap";
+  MapLighting[8].zap = "MapLighting.StreetLamp08.zap";
+  MapLighting[9].zap = "MapLighting.StreetLamp09.zap";
+  MapLighting[10].zap = "MapLighting.StreetLamp0A.zap";
+  MapLighting[11].zap = "MapLighting.StreetLamp0B.zap";
+  MapLighting[12].zap = "MapLighting.StreetLamp0C.zap";
+  bombState[8].canHindenburg = true;
+  bombState[4].canSENTStars = true;
+  bombState[6].canSENTShark = true;
+  bombState[5].explDly = 1.7;
+  bombState[1].explEnt = "SmallExplosion";
+  bombState[2].explEnt = "MediumExplosion";
+  bombState[3].explEnt = "MediumExplosion";
+  bombState[4].explEnt = "MediumExplosion";
+  bombState[5].explEnt = "LargeExplosion";
+  bombState[6].explEnt = "LargeExplosion";
+  bombState[7].explEnt = "LargeExplosion";
+  bombState[8].explEnt = "LargeExplosion";
+  bombState[1].explShake = "SmallExploShake";
+  bombState[2].explShake = "MedExploShake";
+  bombState[3].explShake = "MedExploShake";
+  bombState[4].explShake = "MedExploShake";
+  bombState[5].explShake = "LargeExploShake";
+  bombState[6].explShake = "LargeExploShake";
+  bombState[7].explShake = "LargeExploShake";
+  bombState[8].explShake = "LargeExploShake";
+  bombState[5].explShakeDly = 1.7;
+  bombState[1].explSnd = SFXArray[1].realPath;
+  bombState[2].explSnd = SFXArray[2].realPath;
+  bombState[3].explSnd = SFXArray[2].realPath;
+  bombState[4].explSnd = SFXArray[2].realPath;
+  bombState[5].explSnd = SFXArray[4].realPath;
+  bombState[6].explSnd = SFXArray[3].realPath;
+  bombState[7].explSnd = SFXArray[35].realPath;
+  bombState[8].explSnd = SFXArray[35].realPath;
+  bombState[1].identifier = "Bombs.FreedomBomb";
+  bombState[2].identifier = "Bombs.ElonBust";
+  bombState[3].identifier = "Bombs.BathSalts";
+  bombState[4].identifier = "Bombs.FallingStar";
+  bombState[5].identifier = "Bombs.MajorKong";
+  bombState[6].identifier = "Bombs.SharkTorpedo";
+  bombState[7].identifier = "Bombs.FatMan";
+  bombState[8].identifier = "Bombs.Hydrogen";
+  bombState[0].isMoving = false;
+  bombState[5].isNuclear = true;
+  bombState[7].isNuclear = true;
+  bombState[8].isNuclear = true;
+  bombState[5].NukeStart = 1.7;
+  bombState[0].isReady = false;
+  bombState[1].name = "{red}FREEDOM BOMB{white}";
+  bombState[2].name = "{red}ELON BUST{white}";
+  bombState[3].name = "{orange}BATH SALTS{white}";
+  bombState[4].name = "{gold}FALLING STAR{white}";
+  bombState[5].name = "{red}MAJOR KONG{white}";
+  bombState[6].name = "{aqua}SHARK{white}";
+  bombState[7].name = "{orange}FAT MAN{white}";
+  bombState[8].name = "{red}HYDROGEN{white}";
+  bombState[1].sacVal = 5;
+  bombState[2].sacVal = 5;
+  bombState[3].sacVal = 5;
+  bombState[4].sacVal = 10;
+  bombState[5].sacVal = 15;
+  bombState[6].sacVal = 20;
+  bombState[7].sacVal = 25;
+  bombState[8].sacVal = 50;
+  bombState[3].shouldFreezeBots = true;
+  bombState[0].state = 0;
+  bombState[0].stateMax = 0;
+  HWBoss[0].index = 0;
+  HWBoss[0].fireCount = 2;
+  HWBoss[0].fireString = "OnUser1 hhh_maker,ForceSpawn,,0.0,1";
+  HWBoss[1].index = 2;
+  HWBoss[1].fireString = "OnUser1 hhh_maker2,ForceSpawn,,0.0,1";
+  HWBoss[2].index = 3;
+  HWBoss[2].fireCount = 1;
+  HWBoss[2].fireString = "OnUser1 monoculus_maker,ForceSpawn,,0.0,1";
+  HWBoss[3].index = 4;
+  HWBoss[3].fireCount = 3;
+  HWBoss[3].fireString = "OnUser1 hhh_maker2,ForceSpawn,,0.0,1";
+  HWBoss[4].index = 7;
+  HWBoss[4].fireString = "OnUser1 SkeleSpawner,Enable,,0.0,1";
+  HWBoss[5].index = 8; 
+  HWBoss[5].fireString = "OnUser1 SkeleSpawner,Disable,,20.0,1";
+  HWBoss[6].index = 5; //Does this access HWBoss[4]?
+  HWBoss[6].fireCount=2;//Does this disable skelespawner after enabling it?...
+  HWBoss[7].index = 8;
+  HWBoss[7].fireString = "OnUser1 merasmus_maker,ForceSpawn,,0.0,1";
+  HWBoss[7].fireCount = 3;
+  HWBoss[8].index = 11;
+  HWBoss[8].fireCount = 2;
+  HWBoss[8].fireString = "OnUser1 hhh_maker2,ForceSpawn,,0.0,1";
+  HWBoss[9].index = 12;
+  HWBoss[9].fireString = "OnUser1 monoculus_maker,ForceSpawn,,0.0,1";
+  HWBoss[10].index = 0;
+  HWBoss[10].fireCount = 2;
+  HWBoss[10].fireString = "OnUser1 merasmus_maker,ForceSpawn,,0.0,1";
+  HWBoss[11].index = 2;
+  HWBoss[11].fireString = "OnUser1 monoculus_maker,ForceSpawn,,0.0,1";
+  HWBoss[11].fireCount = 1;
+ SephBoss[0].index = 0;
+ SephBoss[0].fireCount = 0;
+ SephBoss[0].shouldNuke = true;
+ SephBoss[1].fireString = "OnUser1 SephMeteor,ForceSpawn,,0.0,1";
+ SephBoss[1].ChatMessage = "{blue}Sephiroth: Say goodbye!";
+ SephBoss[1].index = 2;
+ SephBoss[1].fireCount = 1;
+ SephBoss[2].fireString = "OnUser1 SephNuke,ForceSpawn,,0.0,1";
+ SephBoss[2].index = 3;
+ SephBoss[2].fireCount = 1;
+ SephBoss[2].sound = SFXArray[8].realPath;
+ SephBoss[3].fireString = "OnUser1 SephRocketSpammer,FireMultiple,50,0.0,1";
+ SephBoss[3].index = 4;
+ SephBoss[3].fireCount = 4;
+ SephBoss[4].index = 3;
+ SephBoss[4].fireCount = 3;
+ SephBoss[4].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,3.0,1";
+ SephBoss[5].index = 9;
+ SephBoss[5].fireCount = 2;
+ SephBoss[5].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,5.0,1";
+ SephBoss[6].index = 9;
+ SephBoss[6].fireCount = 2;
+ SephBoss[6].fireString = "OnUser1 SkeleSpawner,Enable,,0.0,1";
+ SephBoss[7].index = 3;
+ SephBoss[7].fireCount = 3;
+ SephBoss[7].fireString = "OnUser1 SkeleSpawner,Disable,,20.0,1";
+ SephBoss[8].index = 4;
+ SephBoss[8].fireCount = 1;
+ SephBoss[9].index = 11;
+ SephBoss[9].fireCount = 2;
+ SephBoss[9].fireString = "OnUser1 SephRocketSpammer,FireOnce,,0.0,1";
+ SephBoss[10].index = 12;
+ SephBoss[10].fireCount = 1;
+ SephBoss[10].fireString = "OnUser1 SephRocketSpammer,FireOnce,,5.0,1";
+ SephBoss[11].index = 3;
+ SephBoss[11].fireCount = 4;
 }

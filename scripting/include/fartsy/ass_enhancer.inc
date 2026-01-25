@@ -123,7 +123,7 @@ enum struct AUDIOMANAGER {
     this.indexBGM = 0;
     this.timeSeconds = 0.0;
     if (IsValidClient(this.Client)) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(this.Client, g_chanBGM, BGMArray[s].realPath);
-    AssLogger(LOGLVL_DEBUG, "AudioManager has been reset!");
+  //  AssLogger(LOGLVL_DEBUG, "AudioManager has been reset!");
   }
   void SetInEvent(bool inEvent){
     this.EventMode = inEvent;
