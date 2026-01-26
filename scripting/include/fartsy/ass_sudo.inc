@@ -32,6 +32,8 @@ void sudo(int task) {
       return;
     }
     case 1: {
+      BossHandler.bossID = 0;
+      BossHandler.shouldTick = true;
       FastFire2("FB.OnslaughterBase", "SetModelScale", "0.19", 0.0, false);
       FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.0, false);
       FastFire2("FB.BruteJustice", "Enable", "", 3.0, false);
@@ -125,16 +127,9 @@ void sudo(int task) {
       ass_sacPoints++;
     }
     case 1: {
-      CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}ONSLAUGHTER {white}has been destroyed. ({limegreen}+25 pts{white})");
-      FastFire2("TankRelayDMG", "Enable", "", 1.0, false);
-      FastFire2("TankRelayDMG", "Disable", "", 60.0, false);
-      FastFire2("FB.BruteJustice", "Disable", "", 0.0, false);
-      FastFire2("FB.BruteJusticeTrain", "Stop", "", 0.0, false);
-      FastFire2("FB.BruteJusticeParticles", "Stop", "", 0.0, false);
-      FastFire2("FB.BruteJusticeDMGRelay", "Break", "", 0.0, false);
-      FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.5, false);
       core.waveFlags = 0;
-      ass_sacPoints += 25;
+      CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}ONSLAUGHTER {white}has been destroyed. ({limegreen}+25 pts{white})");
+      BossHandler.OnKilled();
     }
     case 2: {
       CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}SEPHIROTH {white}has been destroyed. ({limegreen}+100 pts{white})");
@@ -147,6 +142,7 @@ void sudo(int task) {
       ass_sacPoints += 100;
       core.waveFlags = 0;
       WeatherManager.canTornado = false;
+      BossHandler.OnKilled();
     }
     }
     return;
@@ -554,14 +550,6 @@ void sudo(int task) {
       BossHandler.iBossPhase = 4;
     }
   }
-  //Onslaughter dead
-  case 137: {
-    BossHandler.shouldTick = false;
-    FastFire2("OnslaughterTank", "SetHealth", "1", 0.0, false);
-    FastFire2("TankRelayDMG", "Enable", "", 0.0, false);
-    FastFire2("TankRelayDMG", "Disable", "", 10.0, false);
-    BossHandler.isAlive = false;
-  }
   //Sephiroth dead (future code)
   case 138: {
   }
@@ -938,7 +926,7 @@ public Action CommandOverride(int client, const char[] command, int argc)
 public Action TimedOperator(Handle timer, int job) {
     switch (job) {
     case 0: {
-      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, AudioManager[i].VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().GetWave(), AudioManager[i].songName, GlobalAudio.VIPIndex);
+      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, AudioManager[i].VIPBGM >= 0 && GlobalAudio.VIPIndex > 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().GetWave(), AudioManager[i].songName, GlobalAudio.VIPIndex);
     }
     //Boss script
     case 2: {

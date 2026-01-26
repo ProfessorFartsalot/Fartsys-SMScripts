@@ -138,22 +138,42 @@ enum struct BOSSHANDLER {
             }
         }
     }
+    //Handle deaths
+    void OnKilled() {
+      PrintToChatAll("Boss %i was killed.", this.bossID);
+      switch(this.bossID) {
+        case 0: {
+          FastFire2("OnslaughterTank", "SetHealth", "1", 0.0, false);
+          FastFire2("TankRelayDMG", "Enable", "", 1.0, false);
+          FastFire2("TankRelayDMG", "Disable", "", 10.0, false);
+          FastFire2("FB.BruteJustice", "Disable", "", 0.0, false);
+          FastFire2("FB.BruteJusticeTrain", "Stop", "", 0.0, false);
+          FastFire2("FB.BruteJusticeParticles", "Stop", "", 0.0, false);
+          FastFire2("FB.BruteJusticeDMGRelay", "Break", "", 0.0, false);
+          FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.5, false);
+          ass_sacPoints += 25;
+          this.isAlive = false;
+          this.shouldTick = false;
+        }
+      }
+    }
     //For tracking model and skipping player ready check if boss is alive
-    void Tick(){
+    void Tick() {
         //PrintToServer("Boss %i, hp %i/%i", this.bossID, this.iBossEntHealth, this.iBossEntMaxHealth);
         if (this.shouldTickBGM) (this.TickBGM());
-        if(this.isAlive && !WaveSystem().IsActive()){
+        if (this.isAlive && !WaveSystem().IsActive()){
             PrintToChatAll("PLACEHOLDER -- FORCE PLAYERS TO BE READY IF NOT IN WAVE.");
         }
-        if(this.tickBuster) this.TickBuster();
-        switch(this.bossID){
-            case 0:{
+        if (this.tickBuster) this.TickBuster();
+        switch(this.bossID) {
+            case 0: {
                 float pos[3], ang[3], vel[3], newPos[3];
                 vel[0] = 0.0;
                 vel[1] = 0.0;
                 vel[2] = 0.0;
                 int BossEnt = FindEntityByTargetname("FB.BruteJusticeTrain", "func_tracktrain");
                 int BossTP = FindEntityByTargetname("FB.OnslaughterBase", "base_boss");
+                if (!IsValidEntity(BossTP)) { sudo(13); this.OnKilled(); }
                 GetEntPropVector(BossEnt, Prop_Send, "m_vecOrigin", pos);
                 GetEntPropVector(BossEnt, Prop_Data, "m_angRotation", ang);
                 newPos[0] = pos[0];
@@ -161,10 +181,8 @@ enum struct BOSSHANDLER {
                 newPos[2] = pos[2] + 0.0;
                 TeleportEntity(BossTP, newPos, ang, vel);
             }
-            case 1:{
-
-            }
-            case 2:{
+            case 1: {}
+            case 2: {
                 this.iBossEnt = FindEntityByTargetname("FB.MetalBase", "base_boss");
                 if (!IsValidEntity(this.iBossEnt)) this.iBossPhase = 4;
                 else {
