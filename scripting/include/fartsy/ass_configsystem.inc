@@ -72,7 +72,7 @@ enum struct COREDATA {
     CPrintToChatAll("{gray}[Server]: Reloading!");
     AssLogger(LOGLVL_INFO, "[Server]: Reloading!");
     char _path_WM[PLATFORM_MAX_PATH];
-    BuildPath(Path_SM, _path_WM, sizeof(_path_WM), "configs/FartsysAss/Weather/WeatherManager.cfg");
+    BuildPath(Path_SM, _path_WM, sizeof(_path_WM), "configs/FartsysAss/Weather/WeatherManager.json");
     if (!FileExists(_path_WM)) { GenerateDefaultConfig(2, _path_WM); }
     strcopy(this.configDefault, sizeof(this.configDefault),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults.ini");
     strcopy(this.configTacoBell, sizeof(this.configTacoBell),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_TacoBell.ini");
@@ -351,8 +351,8 @@ void RegisterAndPrecacheAllFiles(){
   int sfxIndex;
   char _path_BGM[PLATFORM_MAX_PATH];
   char _path_SFX[PLATFORM_MAX_PATH];
-  BuildPath(Path_SM, _path_BGM, sizeof(_path_BGM), "configs/FartsysAss/Files/Music.cfg");
-  BuildPath(Path_SM, _path_SFX, sizeof(_path_SFX), "configs/FartsysAss/Files/SFX.cfg");
+  BuildPath(Path_SM, _path_BGM, sizeof(_path_BGM), "configs/FartsysAss/Files/Music.json");
+  BuildPath(Path_SM, _path_SFX, sizeof(_path_SFX), "configs/FartsysAss/Files/SFX.json");
   if (!FileExists(_path_BGM)) { GenerateDefaultConfig(0, _path_BGM); }
   if (!FileExists(_path_SFX)) { GenerateDefaultConfig(1, _path_SFX); }
   AssLogger(LOGLVL_DEBUG, "Loading BGMs...");
@@ -362,7 +362,7 @@ void RegisterAndPrecacheAllFiles(){
   for (int i = 0; i < sizeof(BGMArray); i++) {
    if (!StrEqual(BGMArray[i].realPath, "")) {
     bgmIndex++;
-    AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %f seconds, Start Loop Point %i seconds, Volume %i @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].loopSeconds, BGMArray[i].introSeconds, BGMArray[i].SNDLVL, i);
+    AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %f seconds, Start Loop Point %f seconds, Volume %i @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].loopSeconds, BGMArray[i].introSeconds, BGMArray[i].SNDLVL, i);
     PrecacheSound(BGMArray[i].realPath, true);
    }
   }
@@ -468,7 +468,7 @@ void LoadConfig(int type)
 {
   // Attempt to load json config file
   char path[PLATFORM_MAX_PATH];
-  BuildPath(Path_SM, path, sizeof(path), type == 0 ? "configs/FartsysAss/Files/Music.cfg" : type == 1 ? "configs/FartsysAss/Files/SFX.cfg" : "configs/FartsysAss/Weather/WeatherManager.cfg");
+  BuildPath(Path_SM, path, sizeof(path), type == 0 ? "configs/FartsysAss/Files/Music.json" : type == 1 ? "configs/FartsysAss/Files/SFX.json" : "configs/FartsysAss/Weather/WeatherManager.json");
   Handle jsHandle = json_load_file(path);
   if (jsHandle == INVALID_HANDLE) SetFailState("Failed to load json %s", path);
 
