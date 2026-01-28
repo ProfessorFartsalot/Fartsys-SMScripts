@@ -33,6 +33,7 @@ void sudo(int task) {
     }
     case 1: {
       BossHandler.bossID = 0;
+      BossHandler.isAlive = true;
       BossHandler.shouldTick = true;
       FastFire2("FB.OnslaughterBase", "SetModelScale", "0.19", 0.0, false);
       FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.0, false);
@@ -395,6 +396,11 @@ void sudo(int task) {
     FastFire2("HurtAll", "AddOutput", "damage 777777.777", 0.0, false);
     FastFire2("HurtAll", "Enable", "", 0.1, false);
     FastFire2("HurtAll", "Disable", "", 2.1, false);
+  }
+  case 75:{
+    char onsHP[32];
+    Format(onsHP, 32, "%i", GetBossHealthModifier(640000));
+    PrintToChatAll(onsHP);
   }
   //Prev wave
   case 98: {
@@ -871,11 +877,11 @@ void sudo(int task) {
   }
   case 21000:{
     int i = FindTarget(0, "Professor", true, false);
-    AudioManager.setEventMode(i, 29, true);
+    AudioManager.setEventMode(i, 44, true);
   }
   case 22000:{
     int i = FindTarget(0, "Professor", true, false);
-    AudioManager.setEventMode(i, 29, false);
+    AudioManager.setEventMode(i, 44, false);
   }
   case 42690:{
     BossHandler.bossID = 69;

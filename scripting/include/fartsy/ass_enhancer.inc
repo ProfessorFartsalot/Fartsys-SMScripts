@@ -844,7 +844,6 @@ enum struct WEATHERMANAGER {
         this.sirenPitch = (this.sirenPitch < this.sirenPitchTarget) ? FloatMin(this.sirenPitch+=this.sirenPitchRate, this.sirenPitchTarget) : FloatMax(this.sirenPitch-=this.sirenPitchRate, this.sirenPitchTarget);
         FloatToString(this.sirenPitch, targetPitch, sizeof(targetPitch));
         FastFire2("Weather.Siren", "Pitch", targetPitch, 0.0, false);
-        PrintToServer("SirenPitch = %s", targetPitch);
       }
     }
   }

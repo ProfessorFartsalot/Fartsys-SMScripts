@@ -508,13 +508,23 @@ void SendHudTextAll(int channel, const char[] text, float posX, float posY, floa
   }
 }
 
-// Strips weapons from player
-void StripWeapons(int client) { 
-  int weapon;
-  for (int slot = 0; slot < 6; slot++) {
-    while ((weapon = GetPlayerWeaponSlot(client, slot)) != -1) {
-      RemovePlayerItem(client, weapon);
-      AcceptEntityInput(weapon, "Kill");
+float GetTotalWeaponDamageBonus()
+{
+    float totalDamageBonus = 0.0;
+    for (int client = 1; client <= MaxClients; client++)
+    {
+        if (!IsClientInGame(client) || !IsPlayerAlive(client)) continue;
+        for (int slot = 0; slot <= 3; slot++)
+        {
+            int weaponEnt = GetPlayerWeaponSlot(client, slot);
+            if (weaponEnt == -1) continue;
+            Address attr = TF2Attrib_GetByName(weaponEnt, "damage bonus");
+            if (attr <= 0) continue;
+            float dmgValue = TF2Attrib_GetValue(attr);
+            totalDamageBonus += dmgValue;
+            PrintToServer("Got damage bonus value %f from %N", dmgValue, i);
+        }
     }
-  }
+    PrintToServer("Final value %f", totalDamageBonus);
+    return totalDamageBonus;
 }

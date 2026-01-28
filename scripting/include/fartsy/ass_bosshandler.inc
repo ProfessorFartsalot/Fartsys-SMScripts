@@ -752,3 +752,10 @@ public Action DelayedMetalFace(Handle timer){
     BossHandler.shouldTickBGM = true;
     return Plugin_Stop;
 }
+
+// Calculate bonus boss health from client weapon stats
+public int GetBossHealthModifier(int baseHP) {
+  float tD = GetTotalWeaponDamageBonus();
+  PrintToServer("Got Attribute Damage Bonus %f", tD);
+  return RoundFloat(baseHP * (tD / 1.5));
+}
