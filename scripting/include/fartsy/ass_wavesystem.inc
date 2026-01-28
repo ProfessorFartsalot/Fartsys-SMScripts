@@ -37,7 +37,7 @@ methodmap WAVESYSTEM {
   public void init() {
     _serverActive = true;
     this.update();
-    GlobalAudio.Reset();
+    AudioManager.Reset(true);
     core.tacobell = false;
     ServerCommand("fb_startmoney 50000");
     CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}%s {white} (Core v%s, System v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", "mvm_rottenburg_fartsys_ass-r22", PLUGIN_VERSION, WaveSystem_Version);
@@ -88,7 +88,7 @@ methodmap WAVESYSTEM {
   public void run_normal() {
     PrintToServer("Wave manager is calling run_normal because this.type is %i", WSData.type);
     if (WSData.wave == 0) WSData.wave = 1;
-    GlobalAudio.setBGM(DefaultsArray[WSData.wave].defBGMIndex, true);
+    AudioManager.setBGM_Global(DefaultsArray[WSData.wave].defBGMIndex, true);
     switch (WSData.wave) {
       case 2: {
         CreateTimer(GetRandomFloat(10.0, 45.0), TimedAOEs);
@@ -140,7 +140,7 @@ methodmap WAVESYSTEM {
   // Taco Bell Edition
   public void run_tacobell() {
     PrintToServer("Wave manager is calling run_tacobell because this.mode is %i", WSData.type);
-    //GlobalAudio.setBGM(tacoBellBGMIndex[WSData.wave], true);
+    //AudioManager.setBGM(tacoBellBGMIndex[WSData.wave], true);
   }
   // Wave Null
   public void run_wavenull() {

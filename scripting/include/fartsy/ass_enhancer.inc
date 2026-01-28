@@ -37,16 +37,17 @@ public void SQL_SNDPrefs(Database db, DBResultSet results, const char[] error, i
   if (results.FetchRow()) soundPreference[client] = results.FetchInt(0);
 }
 
-//Music system rewrite for the 8th time. I will never make a change. My code will never mend. Still everything's the same and it all just fades to math. Stage 7, Luigi. I don't even know what that is but it's bad!
-/**I have rewritten this stupid thing 8 times now. It now exists in its final form. 
+//Music system rewrite for the 9th time.
+/**I have rewritten this stupid thing 9 times now. It now exists in its final form. Aka, perfect alexander.
  * This is the audio manager. It plays music. It plays music PER CLIENT. It is good at playing MUSIC.
  * It syncs music. It tracks the EXACT MILLISECOND POSITION of the currently playing song.
+ * It is... PERFECT.
 */
 int g_chanBGM;
 int g_indexBGM;
-enum struct AUDIOMANAGER {
+enum struct AUDIOSTATE {
   bool bgmPlaying;
-  bool EventMode;
+  bool eventMode;
   bool shouldTick;
   bool stopBGM;
   bool hasTimeOffset;
@@ -59,212 +60,247 @@ enum struct AUDIOMANAGER {
   float savedLoopSeconds;
   float introSeconds;
   float savedIntroSeconds;
-  int Client;
+  int client;
   int savedIndexBGM;
   int indexBGM;
   int loops;
   int savedLoops;
   int VIPBGM;
-  bool isEventMode() {
-    return this.EventMode;
-  }
-  /** Gets the engine time, accounting for intro offset seconds **/
-  float engineSecondsAdjusted() {
-    return GetEngineTime() + this.introSeconds;
-  }
-  /** Changes the current music. 
-   * @param bgm - The index of the music to be played
-   * @param instant - True = stops music NOW and changes, False = play current song then change
-  **/
-  void ChangeBGM(int bgm, bool instant) {
-    PrintToChatAll("%i = %i > 0 ? %i : %i == 0 ? %i : %i", this.indexBGM, this.VIPBGM, this.VIPBGM, bgm, g_indexBGM, bgm);
-    this.indexBGM = this.VIPBGM > 0 ? this.VIPBGM : bgm == 0 ? g_indexBGM : bgm;
-    PrintToServer("Set %i for %N", this.indexBGM, this.Client);
-    if (instant) {
-      this.timeSeconds = 0.0;
-      CreateTimer(1.0, SyncMusic, this.Client);
-    }
-    PrintToServer("%f",GetEngineTime());
-    this.shouldTick = true;
-    this.hasTimeOffset = BGMArray[this.indexBGM].introSeconds > 0 ? true : false;
-    this.stopBGM = !StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) && !this.EventMode ? true : false;
-    PrintToServer(!StrEqual(this.cachedPath, BGMArray[this.indexBGM].realPath) && !this.EventMode ? "true" : "false");
-    this.bgmPlaying = true;
-    //if (this.indexBGM >= 20) for (int i = 0; i < MaxClients; i++) for (int s = 19; s < bgm; s++) StopSound(i, this.chanBGM, BGMArray[s].realPath); //Very quick, very dirty, very suboptimal, but gets the job done... This stops all boss music.
-  }
-  void EnterEventMode(int bgm) {
-    PrintToChat(this.Client, "Saving %i for you", this.indexBGM);
-    this.VIPBGM = 0;
-    this.savedIndexBGM = this.indexBGM;
-    this.savedTimeSeconds = this.timeSeconds;
-    this.savedLoopSeconds = this.loopSeconds;
-    this.savedIntroSeconds = this.introSeconds;
-    this.savedLoops = this.loops;
-    this.EventMode = true;
-    CSEClient(this.Client, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 0.05, 100);
-    this.ChangeBGM(bgm, true);
-    PrintToServer("[AudioManager] Entering event mode with song %s", BGMArray[bgm].songName);
-  }
-  void ExitEventMode() {
-    StopSound(this.Client, g_chanBGM, BGMArray[this.indexBGM].realPath);
-    this.indexBGM = this.savedIndexBGM;
-    this.loops = this.savedLoops;
-    this.introSeconds = this.savedIntroSeconds;
-    this.loopSeconds = this.savedLoopSeconds;
-    this.timeSeconds = this.savedTimeSeconds;
-    CSEClient(this.Client, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
-    this.EventMode = false;
-    CreateTimer(1.0, SyncMusic, this.Client);
-    PrintToServer("[AudioManager] Exiting event mode with song %s", BGMArray[this.indexBGM].songName);
-  }
-  void Reset() {
-    this.stopBGM = true;
-    this.loops = 0;
-    this.indexBGM = 0;
-    this.timeSeconds = 0.0;
-    if (IsValidClient(this.Client)) for (int s = this.indexBGM; s < sizeof(BGMArray); s++) StopSound(this.Client, g_chanBGM, BGMArray[s].realPath);
-  //  AssLogger(LOGLVL_DEBUG, "AudioManager has been reset!");
-  }
-  void SetInEvent(bool inEvent){
-    this.EventMode = inEvent;
-  }
-  void Stop() {
-    this.bgmPlaying = false;
-    this.indexBGM = 0;
-    this.loops = 0;
-    this.stopBGM = true;
-    this.timeSeconds = 0.0;
-    this.shouldTick = false;
-  }
-  void TickBGM() {
-    if (!IsValidClient(this.Client)) {
-      this.Stop();
-      return;
-    }
-    if (this.EventMode) {
-      if (this.savedIndexBGM != g_indexBGM && this.VIPBGM <= 0) this.savedIndexBGM = g_indexBGM;
-      if (this.engineSecondsAdjusted() > this.savedTimeSeconds + this.savedLoopSeconds) {
-        this.savedTimeSeconds = GetEngineTime();
-        this.savedLoops++;
-        this.savedIntroSeconds = this.savedLoops >= 1 ? BGMArray[this.savedIndexBGM].introSeconds : 0.0;
-        this.savedLoopSeconds = BGMArray[this.savedIndexBGM].loopSeconds;
-      }
-    }
-    this.indexBGM = (!this.EventMode && this.VIPBGM > 0) ? this.VIPBGM : (this.indexBGM == 0 ? g_indexBGM : this.indexBGM);
-    if (this.engineSecondsAdjusted() > this.timeSeconds + this.loopSeconds) {
-      PrintToServer("Playing %i for %N", this.indexBGM, this.Client);
-      this.timeSeconds = GetEngineTime();
-      this.loops++;
-      if (this.stopBGM) {
-        PrintToServer("Stopping %s", this.cachedPath);
-        StopSound(this.Client, g_chanBGM, this.cachedPath);
-        this.loops = 0;
-      }
-      this.stopBGM = StrContains(BGMArray[this.indexBGM].realPath, "mp3", false) != -1;
-      CSEClient(this.Client, BGMArray[this.indexBGM].realPath, BGMArray[this.indexBGM].SNDLVL, true, 1, 1.0, 100);
-      strcopy(this.songName, sizeof(this.songName), BGMArray[this.indexBGM].songName);
-      this.introSeconds = this.loops >= 1 ? BGMArray[this.indexBGM].introSeconds : 0.0;
-      this.loopSeconds = BGMArray[this.indexBGM].loopSeconds;
-      CreateTimer(1.0, SyncMusic, this.Client);
-    }
-  }
-  /** When updated by GlobalAudio */
-  void UpdateBGM() {
-    this.ChangeBGM(this.VIPBGM > 0 && !this.isEventMode() ? this.VIPBGM : this.indexBGM == 0 ? g_indexBGM : this.indexBGM, true);
-    this.shouldTick = true;
-  }
-  /**When a client joins the server, set this audio manager to theirs */
-  void OnClientConnected(int client) {
-    if (!IsValidClient(client) || IsFakeClient(client)) {
-      PrintToServer("Invalid client %N", client);
-      return;
-    }
-    this.Client = client;
-    this.clientIsFresh = true;
-  }
-  /**When a client respawns */
-  void OnClientRespawned() {
-    if (this.clientIsFresh && IsValidClient(this.Client)) {
-      if (soundPreference[this.Client] == 1 || soundPreference[this.Client] == 3) CPrintToChat(this.Client, "[AudioManager v%s] Welcome! We are listening to %s", FSE_VER, BGMArray[g_indexBGM].songName);
-      this.ChangeBGM(g_indexBGM, true);
-      this.clientIsFresh = false;
-    }
-  }
-}
-AUDIOMANAGER AudioManager[MAXPLAYERS+1];
-
-enum struct AUDIOCONTROLLER {
-  bool shouldTick;
   int VIPIndex;
-  void init() {
-    AssLogger(LOGLVL_INFO, "Initializing Global Audio...");
+}
+AUDIOSTATE AudioState[MAXPLAYERS+1];
+
+methodmap AUDIOMANAGER {
+  // Check if client is in event mode
+  public bool isClientInEventMode(int client) { return AudioState[client].eventMode; }
+
+  /** Gets the engine time for a client, accounting for intro offset seconds **/
+  public float engineSecondsAdjusted(int client) {
+    return GetEngineTime() + AudioState[client].introSeconds;
+  }
+
+  // Initialise all AudioStates
+  public void init() {
+    AssLogger(LOGLVL_INFO, "Initializing Audio System...");
     g_chanBGM = 6;
     for (int i = 1; i < MaxClients; ++i) {
-      AudioManager[i].bgmPlaying = false;
-      AudioManager[i].stopBGM = false;
-      AudioManager[i].shouldTick = false;
-      AudioManager[i].cachedPath = "null";
-      AudioManager[i].songName = "null";
-      AudioManager[i].indexBGM = 0;
-      AudioManager[i].loopSeconds = 0.0;
+      AudioState[i].bgmPlaying = false;
+      AudioState[i].stopBGM = false;
+      AudioState[i].shouldTick = false;
+      AudioState[i].cachedPath = "null";
+      AudioState[i].songName = "null";
+      AudioState[i].indexBGM = 0;
+      AudioState[i].loopSeconds = 0.0;
+      AudioState[i].clientIsFresh = true;
+      AudioState[i].VIPIndex = -1;
       if (IsValidClient(i)) {
-        AudioManager[i].Client = i;
+        AudioState[i].client = i;
         for (int x = 0; x < sizeof(BGMArray); ++x) StopSound(i, g_chanBGM, BGMArray[x].realPath);
       }
     }
     g_indexBGM = GetRandomInt(1, 4);
-    this.VIPIndex = -1;
     this.UpdateBGM();
     CreateTimer(1.0, EnableAudio);
   }
-  void Reset() {
-    g_indexBGM = !WaveSystem().IsWaveNull() ? GetRandomInt(1, 4) : 28;
-    for (int i = 0; i < MaxClients; ++i) AudioManager[i].Reset();
+
+  /* Reset all AudioStates
+  * @param fullReset - Reset globally? true/false
+  * @param client - client index to reset for
+  */
+  public void Reset(bool fullReset, int client = 0) {
+    if(fullReset) {
+      g_indexBGM = !WaveSystem().IsWaveNull() ? GetRandomInt(1, 4) : 28;
+      for (int i = 0; i < MaxClients; ++i) this.Reset(false, i);
+      AssLogger(LOGLVL_DEBUG, "All AudioStates have been reset!");
+    }
+    else {
+      AudioState[client].stopBGM = true;
+      AudioState[client].loops = 0;
+      AudioState[client].indexBGM = 0;
+      AudioState[client].timeSeconds = 0.0;
+      if (IsValidClient(client)) for (int s = AudioState[client].indexBGM; s < sizeof(BGMArray); s++) StopSound(client, g_chanBGM, BGMArray[s].realPath);
+      AssLogger(LOGLVL_DEBUG, "AudioState %i has been reset!", client);
+    }
   }
-  void setBGM(int bgm, bool instant){
+
+  /** Changes the current music globally. 
+   * @param bgm - The index of the music to be played
+   * @param instant - True = stops music NOW and changes, False = play current song then change
+  **/
+  public void setBGM_Global(int bgm, bool instant) {
+    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i)) { this.setBGM(i, bgm, instant); }
+  }
+
+  /** Changes the current music for <client>.
+   * @param client - The client index to change music for 
+   * @param bgm - The index of the music to be played
+   * @param instant - True = stops music NOW and changes, False = play current song then change
+  **/
+  public void setBGM(int client, int bgm, bool instant) {
     g_indexBGM = bgm == 0 ? GetRandomInt(1,4) : bgm;
-    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i)) {
-      AudioManager[i].ChangeBGM(bgm, instant);
-      PrintToServer("Setting %N's BGM to %i", i, bgm);
+    if (IsValidClient(client)) PrintToChat(client, "Your BGM was changed. %i = %i > 0 ? %i : %i == 0 ? %i : %i", AudioState[client].indexBGM, AudioState[client].VIPBGM, AudioState[client].VIPBGM, bgm, g_indexBGM, bgm);
+    AudioState[client].indexBGM = AudioState[client].VIPBGM > 0 ? AudioState[client].VIPBGM : bgm == 0 ? g_indexBGM : bgm;
+    PrintToServer("Set %i for %N", AudioState[client].indexBGM, client);
+    if (instant) {
+      AudioState[client].timeSeconds = 0.0;
+      CreateTimer(1.0, SyncMusic, client);
     }
+    PrintToServer("%f",GetEngineTime());
+    AudioState[client].shouldTick = true;
+    AudioState[client].hasTimeOffset = BGMArray[AudioState[client].indexBGM].introSeconds > 0 ? true : false;
+    AudioState[client].stopBGM = !StrEqual(AudioState[client].cachedPath, BGMArray[AudioState[client].indexBGM].realPath) && !this.isClientInEventMode(client) ? true : false;
+    PrintToServer(!StrEqual(AudioState[client].cachedPath, BGMArray[AudioState[client].indexBGM].realPath) && !this.isClientInEventMode(client) ? "true" : "false");
+    AudioState[client].bgmPlaying = true;
+    PrintToServer("Setting %N's BGM to %i", client, bgm);
   }
-  void setVIPBGM(int bgm) {
+
+  /** Sets the VIP's chosen song for all clients */
+  public void setBGM_VIP(int bgm) {
     bgm = bgm <= 0 ? GetDefaultBGM() : bgm;
-    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i) && !AudioManager[i].isEventMode()) {
-      AudioManager[i].VIPBGM = bgm;
+    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i) && !this.isClientInEventMode(i)) {
+      AudioState[i].VIPBGM = bgm;
     }
   }
-  void Stop() {
-    for (int i = 0; i < MaxClients; ++i) AudioManager[i].Stop();
+
+  /** Sets event mode for a client
+   * @param client - The client index to set event mode for
+   * @param bgm - The bgm index to set them to
+   * @param activate - true or false (active/inactive)
+   */
+  public void setEventMode(int client, int bgm, bool activate) {
+    int curBGM = AudioState[client].indexBGM;
+    if (activate) {
+      PrintToChat(client, "Saving %i for you", AudioState[client].indexBGM);
+      AudioState[client].VIPBGM = 0;
+      AudioState[client].savedIndexBGM = AudioState[client].indexBGM;
+      AudioState[client].savedTimeSeconds = AudioState[client].timeSeconds;
+      AudioState[client].savedLoopSeconds = AudioState[client].loopSeconds;
+      AudioState[client].savedIntroSeconds = AudioState[client].introSeconds;
+      AudioState[client].savedLoops = AudioState[client].loops;
+      AudioState[client].eventMode = true;
+      CSEClient(client, BGMArray[curBGM].realPath, BGMArray[curBGM].SNDLVL, true, 1, 0.05, 100); // Set old bgm to low volume
+      PrintToServer("[AudioState] Entering event mode with song %s", BGMArray[bgm].songName);
+      this.setBGM(client, bgm, true);
+    }
+    else {
+      StopSound(client, g_chanBGM, BGMArray[curBGM].realPath);
+      AudioState[client].indexBGM = AudioState[client].savedIndexBGM;
+      AudioState[client].loops = AudioState[client].savedLoops;
+      AudioState[client].introSeconds = AudioState[client].savedIntroSeconds;
+      AudioState[client].loopSeconds = AudioState[client].savedLoopSeconds;
+      AudioState[client].timeSeconds = AudioState[client].savedTimeSeconds;
+      int new_bgm = AudioState[client].indexBGM;
+      CSEClient(client, BGMArray[new_bgm].realPath, BGMArray[new_bgm].SNDLVL, true, 1, 1.0, 100);
+      AudioState[client].eventMode = false;
+      CreateTimer(1.0, SyncMusic, client);
+      PrintToServer("[AudioState] Exiting event mode with song %s", BGMArray[new_bgm].songName);
+    }
   }
-  void Tick() {
-    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i) && AudioManager[i].shouldTick) AudioManager[i].TickBGM();
+
+  // Stops all music
+  public void StopAll() {
+    for (int i = 0; i < MaxClients; ++i) this.Stop(i);
   }
-  /** Sets EVERYONE'S BGM in sync! Unless they're in an event... */
-  void UpdateBGM() {
+
+  // Stops for a client
+  public void Stop(int client) {
+    StopSound(client, g_chanBGM, BGMArray[AudioState[client].indexBGM].realPath);
+    AudioState[client].bgmPlaying = false;
+    AudioState[client].indexBGM = 0;
+    AudioState[client].loops = 0;
+    AudioState[client].stopBGM = true;
+    AudioState[client].timeSeconds = 0.0;
+    AudioState[client].shouldTick = false;
+  }
+
+  // Tick audio if a client should be ticking
+  public void TickGlobal() {
+    for (int i = 0; i < MaxClients; ++i) if (IsValidClient(i) && AudioState[i].shouldTick) this.TickClient(i);
+  }
+
+  // Tick audio for a client
+  public void TickClient(int client) {
+    if (!IsValidClient(client)) {
+      this.Stop(client);
+      return;
+    }
+    if (this.isClientInEventMode(client)) {
+      if (AudioState[client].savedIndexBGM != g_indexBGM && AudioState[client].VIPBGM <= 0) AudioState[client].savedIndexBGM = g_indexBGM;
+      if (this.engineSecondsAdjusted(client) > AudioState[client].savedTimeSeconds + AudioState[client].savedLoopSeconds) {
+        AudioState[client].savedTimeSeconds = GetEngineTime();
+        AudioState[client].savedLoops++;
+        AudioState[client].savedIntroSeconds = AudioState[client].savedLoops >= 1 ? BGMArray[AudioState[client].savedIndexBGM].introSeconds : 0.0;
+        AudioState[client].savedLoopSeconds = BGMArray[AudioState[client].savedIndexBGM].loopSeconds;
+      }
+    }
+    AudioState[client].indexBGM = (!this.isClientInEventMode(client) && AudioState[client].VIPBGM > 0) ? AudioState[client].VIPBGM : (AudioState[client].indexBGM == 0 ? g_indexBGM : AudioState[client].indexBGM);
+    if (this.engineSecondsAdjusted(client) > AudioState[client].timeSeconds + AudioState[client].loopSeconds) {
+      PrintToServer("Playing %i for %N", AudioState[client].indexBGM, client);
+      AudioState[client].timeSeconds = GetEngineTime();
+      AudioState[client].loops++;
+      if (AudioState[client].stopBGM) {
+        PrintToServer("Stopping %s", AudioState[client].cachedPath);
+        StopSound(client, g_chanBGM, AudioState[client].cachedPath);
+        AudioState[client].loops = 0;
+      }
+      AudioState[client].stopBGM = StrContains(BGMArray[AudioState[client].indexBGM].realPath, "mp3", false) != -1;
+      CSEClient(client, BGMArray[AudioState[client].indexBGM].realPath, BGMArray[AudioState[client].indexBGM].SNDLVL, true, 1, 1.0, 100);
+      strcopy(AudioState[client].songName, sizeof(AudioState[client].songName), BGMArray[AudioState[client].indexBGM].songName);
+      AudioState[client].introSeconds = AudioState[client].loops >= 1 ? BGMArray[AudioState[client].indexBGM].introSeconds : 0.0;
+      AudioState[client].loopSeconds = BGMArray[AudioState[client].indexBGM].loopSeconds;
+      CreateTimer(1.0, SyncMusic, client);
+    }
+  }
+
+  // Sets EVERYONE'S BGM in sync! Unless they're in an event...
+  public void UpdateBGM() {
     for (int i = 0; i < MaxClients; ++i) {
       if (IsValidClient(i)) {
-        if (AudioManager[i].isEventMode() || !IsValidClient(i)) {
-          PrintToServer("Client %N valid? %s Event Mode? %s", i, IsValidClient(i) ? "true" : "false", AudioManager[i].isEventMode() ? "true" : "false");
+        if (this.isClientInEventMode(i) || !IsValidClient(i)) {
+          PrintToServer("Client %N valid? %s Event Mode? %s", i, IsValidClient(i) ? "true" : "false", this.isClientInEventMode(i) ? "true" : "false");
           continue;
         }
-        AudioManager[i].UpdateBGM();
+        this.setBGM(i, AudioState[i].VIPBGM > 0 && !this.isClientInEventMode(i) ? AudioState[i].VIPBGM : AudioState[i].indexBGM == 0 ? g_indexBGM : AudioState[i].indexBGM, true);
+        AudioState[i].shouldTick = true;
       }
     }
   }
+
+  // Enables AudioStates
+  public void SetEnabled(bool state) {
+    for (int i = 0; i < MaxClients; i++) { AudioState[i].shouldTick = state; }
+  }
+
   // Events
-  // Handles client disconnects
-  void OnClientDisconnect(int client) {
-    PrintToServer("[AudioManager @ %i] Client %N disconnected, shutting down gracefully!", client, client);
-    AudioManager[client].Client = -1;
+  /** When a client joins the server, set this audio manager to theirs */
+  public void OnClientConnected(int client) {
+    if (!IsValidClient(client) || IsFakeClient(client)) { PrintToServer("Invalid client %N", client); return; }
+    AudioState[client].client = client;
+    AudioState[client].clientIsFresh = true;
+  }
+
+  /** Handles client disconnects */
+  public void OnClientDisconnect(int client) {
+    PrintToServer("[AudioState @ %i] Client %N disconnected, shutting down gracefully!", client, client);
+    AudioState[client].client = -1;
+  }
+
+  /** When a client respawns */
+  public void OnClientRespawned(int client) {
+    if (AudioState[client].clientIsFresh && IsValidClient(client)) {
+      if (soundPreference[client] == 1 || soundPreference[client] == 3) CPrintToChat(client, "[AudioState v%s] Welcome! We are listening to %s", FSE_VER, BGMArray[g_indexBGM].songName);
+      this.setBGM(client, g_indexBGM, true);
+      AudioState[client].clientIsFresh = false;
+    }
   }
 }
-AUDIOCONTROLLER GlobalAudio;
+AUDIOMANAGER AudioManager;
 
 public Action EnableAudio(Handle timer) {
-  GlobalAudio.shouldTick = true;
+  AudioManager.SetEnabled(true);
   return Plugin_Stop;
 }
+
 //Custom sound emitter, I don't know how many fucking times I've rewritten this! See potato.sp
 //int flags:
 //	SND_NOFLAGS= 0,             /**< Nothing */
@@ -282,11 +318,13 @@ void CustomSoundEmitter(char[] sndName, int TSNDLVL, bool isBGM, int flags, floa
     if (isBGM && (soundPreference[i] == 1 || soundPreference[i] == 3) || !isBGM && soundPreference[i] >= 2) EmitSoundToClient(i, sndName, _, g_chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
   }
 }
+
 //Play sound to client. Ripped straight from potato. Allows us to play sounds directly to people when they join.
 void CSEClient(int client, char[] sndName, int TSNDLVL, bool isBGM, int flags, float vol, int pitch) {
   if (!IsValidClient(client)) return;
   if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, _, g_chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
 }
+
 //VIP Music Menu
 public Action Command_Music(int client, int args) {
   int steamID = GetSteamAccountID(client);
@@ -310,9 +348,9 @@ public int MenuHandlerFartsyMusic(Menu menu, MenuAction action, int client, int 
   if (action == MenuAction_Select) {
     AssLogger(LOGLVL_WARN, "WE SHOULDNT BE USING TACO BELL BGM INDEX ANYMORE DUE TO NEW CONFIGS!!!");
     CPrintToChat(client, (bgm == 0 ? "{darkgreen}[CORE] Confirmed. Next song set to {aqua}Default{darkgreen}." : "{limegreen}[CORE] Confirmed. Next song set to {aqua}%s{limegreen}."), BGMArray[bgm].songName);
-    GlobalAudio.setVIPBGM(bgm == 0 ? -1 : bgm);
-    for (int i = 0; i < MaxClients; ++i) AudioManager[i].stopBGM = (!StrEqual(AudioManager[i].cachedPath, BGMArray[bgm].realPath) ? true : false);
-    GlobalAudio.VIPIndex = client;
+    AudioManager.setBGM_VIP(bgm == 0 ? -1 : bgm);
+    for (int i = 0; i < MaxClients; ++i) { AudioState[i].stopBGM = (!StrEqual(AudioState[i].cachedPath, BGMArray[bgm].realPath) ? true : false);
+    AudioState[i].VIPIndex = client; }
   } else if (action == MenuAction_End) CloseHandle(menu);
   return 0;
 }
@@ -867,6 +905,7 @@ public Action GetRandomWeather(Handle timer){
   }
   return Plugin_Stop;
 }
+
 public Action GetRandomWind(Handle timer, int intensity){
   switch(intensity){
     case 0:{
@@ -987,9 +1026,9 @@ public Action TornadoShaker(Handle timer){
 
 //Used to keep StopSound from stopping the music we're trying to play - now with support for loop offsets!
 public Action SyncMusic(Handle timer, int client) {
-  int index = AudioManager[client].indexBGM;
-  strcopy(AudioManager[client].cachedPath, sizeof(AudioManager[client].cachedPath), BGMArray[index].realPath);
-  strcopy(AudioManager[client].songName, sizeof(AudioManager[client].songName), BGMArray[index].songName);
-  AssLogger(LOGLVL_INFO, "[AudioManager for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, WaveSystem().GetWave(), AudioManager[client].songName, AudioManager[client].cachedPath, AudioManager[client].loopSeconds, BGMArray[index].introSeconds);
+  int index = AudioState[client].indexBGM;
+  strcopy(AudioState[client].cachedPath, sizeof(AudioState[client].cachedPath), BGMArray[index].realPath);
+  strcopy(AudioState[client].songName, sizeof(AudioState[client].songName), BGMArray[index].songName);
+  AssLogger(LOGLVL_INFO, "[AudioState for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, WaveSystem().GetWave(), AudioState[client].songName, AudioState[client].cachedPath, AudioState[client].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
 }

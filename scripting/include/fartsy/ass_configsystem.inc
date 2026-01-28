@@ -79,7 +79,7 @@ enum struct COREDATA {
     strcopy(this.configWaveNull, sizeof(this.configWaveNull),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_WaveNull.ini");
     WaveSystem().SetActive(false);
     WaveSystem().SetWave(0);
-    GlobalAudio.init();
+    AudioManager.init();
     AssLogger(1, "Setting up bosses...");
     ass[0].name = "[10] Bath Salts";
     ass[1].name = "[20] Summon Goobbue or Kirby";

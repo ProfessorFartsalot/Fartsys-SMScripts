@@ -309,14 +309,14 @@ public Action PerformWaveAdverts(Handle timer) {
     int emnity;
     char tbuffer[16];
     char HintText[256];
-    //int sPos = RoundToFloor((AudioManager.timeSeconds() / (GetEngineTime() + AudioManager.loopSeconds)) * AudioManager.loopSeconds);
+    //int sPos = RoundToFloor((AudioState.timeSeconds() / (GetEngineTime() + AudioState.loopSeconds)) * AudioState.loopSeconds);
     for (int i = 0; i <= MaxClients; ++i) { //might need to be i++??
       if (IsValidClient(i)) {
-        int sPos = RoundToFloor(AudioManager[i].engineSecondsAdjusted() - AudioManager[i].timeSeconds);
-        int tPos = RoundToFloor(AudioManager[i].loopSeconds);
+        int sPos = RoundToFloor(AudioManager.engineSecondsAdjusted(i) - AudioState[i].timeSeconds);
+        int tPos = RoundToFloor(AudioState[i].loopSeconds);
         Format(buffer, 16, "%02d:%02d", sPos / 60, sPos % 60);
         Format(tbuffer, 16, "%02d:%02d", tPos / 60, tPos % 60);
-        Format(HintText, sizeof(HintText), (bombState[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : bombState[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)"), bombState[0].state, bombState[0].stateMax, ass_sacPoints, ass_sacPointsMax, AudioManager[i].songName, buffer, tbuffer);
+        Format(HintText, sizeof(HintText), (bombState[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : bombState[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)"), bombState[0].state, bombState[0].stateMax, ass_sacPoints, ass_sacPointsMax, AudioState[i].songName, buffer, tbuffer);
         emnity = EmnityManager[i].getClientEmnity();
         PrintHintText(i, (WeatherManager.TornadoWarning ? "%s \n\n[TORNADO WARNING]" : "%s\n\nEmnity: %i٪"), HintText, emnity >= 0 ? emnity : 0);
         StopSound(i, SNDCHAN_STATIC, "UI/hint.wav");

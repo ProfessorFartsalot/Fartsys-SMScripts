@@ -20,7 +20,7 @@ public Action Event_Cvar(Event event, const char[] name, bool dontBroadcast) {
 
 //Sync client stats when they leave
 public void OnClientDisconnect(int client) {
-  GlobalAudio.OnClientDisconnect(client);
+  AudioManager.OnClientDisconnect(client);
   int steamID = GetSteamAccountID(client);
   if (steamID) { EmnityManager[client].Clear(); }
   if (!Ass_Database || !steamID || steamID <= 10000) return;
@@ -36,7 +36,7 @@ public void EventSpawn(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Br
   int client = GetClientOfUserId(Spawn_Event.GetInt("userid"));
   if (IsValidClient(client)) {
     int class = Spawn_Event.GetInt("class");
-    AudioManager[client].OnClientRespawned();
+    AudioManager.OnClientRespawned(client);
     EmnityManager[client].OnSpawned(client, class);
   }
 }
@@ -136,7 +136,7 @@ public void OnClientPostAdminCheck(int client) {
       CreateTimer(1.0, TickClientHealth);
       core.tickingClientHealth = true;
     }
-    if(!IsFakeClient(client)) AudioManager[client].OnClientConnected(client);
+    if(!IsFakeClient(client)) AudioManager.OnClientConnected(client);
     char query[1024];
     Format(query, sizeof(query), "INSERT INTO ass_activity (name, steamid, date, damagedealtsession, killssession, deathssession, bombsresetsession, sacrificessession) VALUES ('%N', %d, CURRENT_DATE, 0, 0, 0, 0, 0) ON DUPLICATE KEY UPDATE name = '%N', date = CURRENT_DATE, damagedealtsession = 0, killssession = 0, deathssession = 0, bombsresetsession = 0, sacrificessession = 0;", client, steamID, client);
     Ass_Database.Query(Database_FastQuery, query);
