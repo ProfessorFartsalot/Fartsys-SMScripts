@@ -110,11 +110,11 @@ public int MenuHandlerFartsysAss(Menu menu, MenuAction action, int client, int i
 public Action Command_GetCurrentSong(int client, int args) {
   char buffer[16];
   char tbuffer[16];
-  int sPos = RoundToFloor(AudioManager[client].engineSecondsAdjusted() - AudioManager[client].timeSeconds);
-  int tPos = RoundToFloor(AudioManager[client].loopSeconds);
+  int sPos = RoundToFloor(AudioManager.engineSecondsAdjusted(client) - AudioState[client].timeSeconds);
+  int tPos = RoundToFloor(AudioState[client].loopSeconds);
   Format(buffer, 16, "%02d:%02d", sPos / 60, sPos % 60);
   Format(tbuffer, 16, "%02d:%02d", tPos / 60, tPos % 60);
-  CPrintToChat(client, "The current song (%i) is: {limegreen}%s {orange}(%s / %s)", AudioManager[client].indexBGM, AudioManager[client].songName, buffer, tbuffer);
+  CPrintToChat(client, "The current song (%i) is: {limegreen}%s {orange}(%s / %s)", AudioState[client].indexBGM, AudioState[client].songName, buffer, tbuffer);
   return Plugin_Handled;
 }
 

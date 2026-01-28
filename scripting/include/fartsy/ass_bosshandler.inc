@@ -131,29 +131,49 @@ enum struct BOSSHANDLER {
             //Metallizer (wip) To Do: Only change to Inferno if we're in boss attack range. Use a trigger_multiple for this. To Do, delay this by like 1 second so the DJMM sound can play properly.
             case 2:{
                 sudo(1001);
-                GlobalAudio.Stop();
-                GlobalAudio.setBGM(20, true);
+                AudioManager.Stop(true);
+                AudioManager.setBGM_Global(20, true);
                 CustomSoundEmitter(SFXArray[106].realPath, 65, false, 0, 1.0, 100); //DJMM SFX
                 CreateTimer(1.5, DelayedMetalFace);
             }
         }
     }
+    //Handle deaths
+    void OnKilled() {
+      PrintToChatAll("Boss %i was killed.", this.bossID);
+      switch(this.bossID) {
+        case 0: {
+          FastFire2("OnslaughterTank", "SetHealth", "1", 0.0, false);
+          FastFire2("TankRelayDMG", "Enable", "", 1.0, false);
+          FastFire2("TankRelayDMG", "Disable", "", 10.0, false);
+          FastFire2("FB.BruteJustice", "Disable", "", 0.0, false);
+          FastFire2("FB.BruteJusticeTrain", "Stop", "", 0.0, false);
+          FastFire2("FB.BruteJusticeParticles", "Stop", "", 0.0, false);
+          FastFire2("FB.BruteJusticeDMGRelay", "Break", "", 0.0, false);
+          FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.5, false);
+          ass_sacPoints += 25;
+          this.isAlive = false;
+          this.shouldTick = false;
+        }
+      }
+    }
     //For tracking model and skipping player ready check if boss is alive
-    void Tick(){
+    void Tick() {
         //PrintToServer("Boss %i, hp %i/%i", this.bossID, this.iBossEntHealth, this.iBossEntMaxHealth);
         if (this.shouldTickBGM) (this.TickBGM());
-        if(this.isAlive && !WaveSystem().IsActive()){
+        if (this.isAlive && !WaveSystem().IsActive()){
             PrintToChatAll("PLACEHOLDER -- FORCE PLAYERS TO BE READY IF NOT IN WAVE.");
         }
-        if(this.tickBuster) this.TickBuster();
-        switch(this.bossID){
-            case 0:{
+        if (this.tickBuster) this.TickBuster();
+        switch(this.bossID) {
+            case 0: {
                 float pos[3], ang[3], vel[3], newPos[3];
                 vel[0] = 0.0;
                 vel[1] = 0.0;
                 vel[2] = 0.0;
                 int BossEnt = FindEntityByTargetname("FB.BruteJusticeTrain", "func_tracktrain");
                 int BossTP = FindEntityByTargetname("FB.OnslaughterBase", "base_boss");
+                if (!IsValidEntity(BossTP)) { sudo(13); this.OnKilled(); }
                 GetEntPropVector(BossEnt, Prop_Send, "m_vecOrigin", pos);
                 GetEntPropVector(BossEnt, Prop_Data, "m_angRotation", ang);
                 newPos[0] = pos[0];
@@ -161,10 +181,8 @@ enum struct BOSSHANDLER {
                 newPos[2] = pos[2] + 0.0;
                 TeleportEntity(BossTP, newPos, ang, vel);
             }
-            case 1:{
-
-            }
-            case 2:{
+            case 1: {}
+            case 2: {
                 this.iBossEnt = FindEntityByTargetname("FB.MetalBase", "base_boss");
                 if (!IsValidEntity(this.iBossEnt)) this.iBossPhase = 4;
                 else {
@@ -222,7 +240,7 @@ enum struct BOSSHANDLER {
                         }
                         case 2:{
                             //PrintToChatAll("Recognized 1 -> 2, things are heating up!");
-                            GlobalAudio.setBGM(22, false);
+                            AudioManager.setBGM_Global(22, false);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT1x0", 3.00, false);
                             FastFire2("FB.MetalFace.SkeleSpawner", "Enable", "", 0.0, false);
                             FastFire2("FB.MetalFace.SkeleSpawner", "Disable", "", 120.0, false);
@@ -236,7 +254,7 @@ enum struct BOSSHANDLER {
                         }
                         case 3:{
                             //PrintToChatAll("Recognized 2 -> 3, oh boi");
-                            GlobalAudio.setBGM(24, false);
+                            AudioManager.setBGM_Global(24, false);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT2x0", 3.00, false);
                             FastFire2("FB.MetalFace.MerasmusSpawner", "ForceSpawn", "", 5.0, false); //Spawn halloween bosses at MetalFace's location
                             FastFire2("FB.MetalFace.MonoculusSpawner", "ForceSpawn", "", 7.0, false); //Spawn halloween bosses at MetalFace's location
@@ -248,7 +266,7 @@ enum struct BOSSHANDLER {
                         }
                         case 4:{
                             //PrintToChatAll("Recognized 3 -> 4, OHSHITOHFUCKOHNO");
-                            GlobalAudio.setBGM(26, true);
+                            AudioManager.setBGM_Global(26, true);
                             FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFT3x0", 3.00, false);
                             FastFire2("FB.MetalFace.GigaBuster", "ForceSpawn", "", 10.0, false);
                         }
@@ -317,7 +335,7 @@ enum struct BOSSHANDLER {
                     CSEClient(i, BGMArray[iBGM0].realPath, BGMArray[iBGM0].SNDLVL, true, 1, 1.0, 100);
                 }
             }
-            GlobalAudio.setBGM(iBGM0, false);
+            AudioManager.setBGM_Global(iBGM0, false);
         }
     }
     //Tank buster thing
@@ -727,7 +745,7 @@ public Action ResetTickBuster(Handle time){
 
 //Spawn metal face
 public Action DelayedMetalFace(Handle timer){
-    GlobalAudio.setBGM(20, true);
+    AudioManager.setBGM_Global(20, true);
     CustomSoundEmitter(SFXArray[68].realPath, 65, false, 0, 1.0, 100); //Evil Laugh
     CreateTimer(3.2, QueueBossSound, GetRandomInt(10,14));
     sudo(1000);

@@ -32,6 +32,8 @@ void sudo(int task) {
       return;
     }
     case 1: {
+      BossHandler.bossID = 0;
+      BossHandler.shouldTick = true;
       FastFire2("FB.OnslaughterBase", "SetModelScale", "0.19", 0.0, false);
       FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.0, false);
       FastFire2("FB.BruteJustice", "Enable", "", 3.0, false);
@@ -125,16 +127,9 @@ void sudo(int task) {
       ass_sacPoints++;
     }
     case 1: {
-      CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}ONSLAUGHTER {white}has been destroyed. ({limegreen}+25 pts{white})");
-      FastFire2("TankRelayDMG", "Enable", "", 1.0, false);
-      FastFire2("TankRelayDMG", "Disable", "", 60.0, false);
-      FastFire2("FB.BruteJustice", "Disable", "", 0.0, false);
-      FastFire2("FB.BruteJusticeTrain", "Stop", "", 0.0, false);
-      FastFire2("FB.BruteJusticeParticles", "Stop", "", 0.0, false);
-      FastFire2("FB.BruteJusticeDMGRelay", "Break", "", 0.0, false);
-      FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.5, false);
       core.waveFlags = 0;
-      ass_sacPoints += 25;
+      CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}ONSLAUGHTER {white}has been destroyed. ({limegreen}+25 pts{white})");
+      BossHandler.OnKilled();
     }
     case 2: {
       CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {red}SEPHIROTH {white}has been destroyed. ({limegreen}+100 pts{white})");
@@ -147,6 +142,7 @@ void sudo(int task) {
       ass_sacPoints += 100;
       core.waveFlags = 0;
       WeatherManager.canTornado = false;
+      BossHandler.OnKilled();
     }
     }
     return;
@@ -554,14 +550,6 @@ void sudo(int task) {
       BossHandler.iBossPhase = 4;
     }
   }
-  //Onslaughter dead
-  case 137: {
-    BossHandler.shouldTick = false;
-    FastFire2("OnslaughterTank", "SetHealth", "1", 0.0, false);
-    FastFire2("TankRelayDMG", "Enable", "", 0.0, false);
-    FastFire2("TankRelayDMG", "Disable", "", 10.0, false);
-    BossHandler.isAlive = false;
-  }
   //Sephiroth dead (future code)
   case 138: {
   }
@@ -600,7 +588,7 @@ void sudo(int task) {
   }
   //Reset Map
   case 300: {
-    GlobalAudio.Reset();
+    AudioManager.Reset(true);
     BossHandler.shouldTick = false;
     core.Reset();
     for (int i = 0; i < sizeof(EmnityManager); i++) EmnityManager[i].Clear();
@@ -664,15 +652,15 @@ void sudo(int task) {
   }
   //LOOP SYSTEM
   case 500: {
-    GlobalAudio.setBGM(9, false);
+    AudioManager.setBGM_Global(9, false);
   }
   case 501: {
-    GlobalAudio.setBGM(10, false);
+    AudioManager.setBGM_Global(10, false);
   }
   case 502: {
     PrintToChatAll("Got 502 but not implemented in popfile, please report this to fartsy!");
     PrintToConsoleAll("[CORE] Phase Change started... phase 4!");
-    GlobalAudio.setBGM(11, false);
+    AudioManager.setBGM_Global(11, false);
   }
   //Increment Wave Null
   case 700: {
@@ -680,13 +668,13 @@ void sudo(int task) {
   }
   // FINAL Music system rewrite (again) AGAINNNNNNNNNNNN.... and again!... and again :p and again!
   case 1000: {
-    GlobalAudio.UpdateBGM();
+    AudioManager.UpdateBGM();
   }
   //Stop current song
   case 1001: {
     for (int i = 0; i <= MaxClients; i++) {
-      if (StrEqual(BGMArray[AudioManager[i].indexBGM].realPath, "null")) continue;
-      StopSound(i, g_chanBGM, BGMArray[AudioManager[i].indexBGM].realPath);
+      if (StrEqual(BGMArray[AudioState[i].indexBGM].realPath, "null")) continue;
+      StopSound(i, g_chanBGM, BGMArray[AudioState[i].indexBGM].realPath);
     }
     return;
   }
@@ -721,7 +709,7 @@ void sudo(int task) {
   }
   //Crusader
   case 1006: {
-    GlobalAudio.shouldTick = false;
+    AudioManager.SetEnabled(false);
     sudo(1001);
     crusader = true;
     CreateTimer(1.75, CRUSADERINCOMING);
@@ -883,11 +871,11 @@ void sudo(int task) {
   }
   case 21000:{
     int i = FindTarget(0, "Professor", true, false);
-    AudioManager[i].EnterEventMode(29);
+    AudioManager.setEventMode(i, 29, true);
   }
   case 22000:{
     int i = FindTarget(0, "Professor", true, false);
-    AudioManager[i].ExitEventMode();
+    AudioManager.setEventMode(i, 29, false);
   }
   case 42690:{
     BossHandler.bossID = 69;
@@ -938,7 +926,7 @@ public Action CommandOverride(int client, const char[] command, int argc)
 public Action TimedOperator(Handle timer, int job) {
     switch (job) {
     case 0: {
-      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, AudioManager[i].VIPBGM >= 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().GetWave(), AudioManager[i].songName, GlobalAudio.VIPIndex);
+      for (int i = 1; i < MaxClients; ++i) if(IsValidClient(i)) CPrintToChat(i, AudioState[i].VIPBGM >= 0 && AudioState[i].VIPIndex > 0 ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s{white} (requested by VIP {forestgreen}%N{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave %i: {forestgreen}%s", WaveSystem().GetWave(), AudioState[i].songName, AudioState[i].VIPIndex);
     }
     //Boss script
     case 2: {
@@ -947,7 +935,7 @@ public Action TimedOperator(Handle timer, int job) {
     }
     //Boss script pt 2
     case 3: {
-      GlobalAudio.setBGM(16, true);
+      AudioManager.setBGM_Global(16, true);
       FastFire2("FB.FadeTotalBLCK", "Fade", "", 0.0, false);
       FastFire2("FB.FadeTotalBLCK", "Fade", "", 3.0, false);
       FastFire2("FB.FadeTotalBLCK", "Fade", "", 7.0, false);
@@ -976,8 +964,8 @@ public Action TimedOperator(Handle timer, int job) {
     //DO THE THING ALREADY
     case 7: {
       core.sephiroth = true;
-      //AudioManager.ticksBGM = 0;
-      //AudioManager.loopSeconds = BGMArray[16].loopSeconds;
+      //AudioState.ticksBGM = 0;
+      //AudioState.loopSeconds = BGMArray[16].loopSeconds;
     }
     //Signal boss to actually spawn after delay.
     case 8: {
