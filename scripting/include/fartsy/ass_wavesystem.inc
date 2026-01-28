@@ -110,8 +110,10 @@ methodmap WAVESYSTEM {
         core.HWNMin = 140.0;
         for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
         FastFire2("w5_engie_hints", "Trigger", "", 3.0, false);
-        FastFire2("FB.OnslaughterBase", "SetHealth", "320000", 0.0, false);
-        FastFire2("FB.OnslaughterBase", "SetHealth", "320000", 1.0, false);
+        char onsHP[32];
+        Format(onsHP, 32, "%i", GetBossHealthModifier(640000));
+        FastFire2("FB.OnslaughterBase", "SetHealth", onsHP, 0.0, false);
+        FastFire2("FB.OnslaughterBase", "SetHealth", onsHP, 1.0, false);
         float f = GetRandomFloat(60.0, 180.0);
         CreateTimer(f, TimedOperator, 70);
       }

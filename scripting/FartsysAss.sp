@@ -7,7 +7,7 @@
  *              IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
 
-public char PLUGIN_VERSION[8] = "9.3.0";
+public char PLUGIN_VERSION[8] = "9.3.2";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
@@ -26,6 +26,7 @@ public char PLUGIN_VERSION[8] = "9.3.0";
 #include <fartsy/ass_events>
 #include <fartsy/ass_sudo>
 #include <fartsy/ass_wavesystem>
+#include <tf2attributes>
 #pragma newdecls required
 #pragma semicolon 1
 
