@@ -7,7 +7,7 @@
  *              IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
 
-public char PLUGIN_VERSION[8] = "9.3.2";
+public char PLUGIN_VERSION[8] = "9.3.3";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>

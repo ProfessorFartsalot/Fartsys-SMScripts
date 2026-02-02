@@ -522,7 +522,7 @@ float GetTotalWeaponDamageBonus()
             if (attr <= 0) continue;
             float dmgValue = TF2Attrib_GetValue(attr);
             totalDamageBonus += dmgValue;
-            PrintToServer("Got damage bonus value %f from %N", dmgValue, i);
+            PrintToServer("Got damage bonus value %f from %N", dmgValue, client);
         }
     }
     PrintToServer("Final value %f", totalDamageBonus);
