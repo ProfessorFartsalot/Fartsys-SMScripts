@@ -794,7 +794,7 @@ void sudo(int task) {
   }
   //Do not EVER EVER execute this unless it's an emergency...
   case 6969: {
-    CPrintToChatAll(!WaveSystem().IsActive() ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : WaveSystem().IsWaveNull() ? "{darkred} [CORE] Failed to enter emergency mode, it has been disabled by an unknown entity." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED...");
+    CPrintToChatAll(!WaveSystem().IsActive() ? "{darkred} [CORE] ERROR, attempted to invoke function without an active wave." : brawler_emergency ? "{darkred}[CORE] Failed to enter emergency mode, it is already active." : WaveSystem().IsWaveNull() ? "{darkred} [CORE] Failed to enter emergency mode, it has been disabled by an unknown entity." : "{darkred}[CORE] EMERGENCY MODE ACTIVATED... (v%s)", BEM_VER);
     if (!WaveSystem().IsActive() || brawler_emergency || WaveSystem().IsWaveNull()) return;
     Emerge(0);
   }

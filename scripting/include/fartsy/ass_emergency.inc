@@ -1,3 +1,4 @@
+char BEM_VER[8] = "1.0.1";
 int BEM = 0;
 bool brawler_emergency;
 //Brawler Emergency Mode Rewrite
@@ -126,13 +127,13 @@ void Emerge(int stage){
     case 20:{
       bombState[0].state = 48;
       bombState[0].stateMax = 50;
-      ServerCommand("fb_operator 15;fb_operator15;fb_operator 15;fb_operator 15;fb_operator 15;fb_operator 15");
+      ServerCommand("fb_operator 15;fb_operator 15;fb_operator 15;fb_operator 15;fb_operator 15;fb_operator 15");
       for (int i = 0; i < 12; i++) {
         sudo(GetRandomInt(30, 37));
         sudo(GetRandomInt(40, 44));
         sudo(1003);
       }
-      CreateTimer(1.0, TimedOperator, 6969);
+      CreateTimer(30.0, TimedOperator, 6969);
       return;
     }
     case 21:{
