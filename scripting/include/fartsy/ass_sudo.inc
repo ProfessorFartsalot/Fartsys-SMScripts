@@ -156,10 +156,7 @@ void sudo(int task) {
     }
   //Shark Enable & notify bomb push began
     case 20: {
-      BombRegistry[0].isMoving = true;
-      CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}Bomb push in progress.");
-      FastFire2("FB.PayloadWarning", "Enable", "", 0.0);
-      CreateTimer(3.0, SharkTimer);
+      Bombs.StartPush();
     }
   //Shark Disable
     case 21: {

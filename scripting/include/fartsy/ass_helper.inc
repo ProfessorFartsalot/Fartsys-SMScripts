@@ -47,24 +47,6 @@ void AssLogger(int logLevel, const char[] logData, any...) {
 }
 
 int attemptSpawn = 0;
-bool isGoobbue = false;
-
-stock int GetEmnityMax() {
-  int result = 0;
-  int score = -1;
-  int tempscore = 0;
-  for(int i = 0; i < MaxClients; ++i) {
-    if(!IsValidClient(i)) {
-      continue;
-    }
-    tempscore = EmnityManager[i].getClientEmnity();
-    if(score == - 1 || tempscore > score) {
-      result = i;
-      score = tempscore;
-    }
-  }
-  return result;
-}
 
 public int GetHealerOfClient(int client){
   for (int i = 1; i <= MaxClients; ++i){

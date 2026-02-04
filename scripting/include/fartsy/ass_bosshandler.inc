@@ -97,6 +97,23 @@ void AddHealerEmnity(int healer, int i) {
   if (IsValidClient(healer)) EmnityManager[healer].Add(healer, 2, i);
 }
 
+public int GetEmnityMax() {
+  int result = 0;
+  int score = -1;
+  int tempscore = 0;
+  for(int i = 0; i < MaxClients; ++i) {
+    if(!IsValidClient(i)) {
+      continue;
+    }
+    tempscore = EmnityManager[i].getClientEmnity();
+    if(score == - 1 || tempscore > score) {
+      result = i;
+      score = tempscore;
+    }
+  }
+  return result;
+}
+
 enum struct BOSSHANDLER {
   int bossID;
   bool bTargetInRange[MAXPLAYERS + 1];
@@ -481,7 +498,6 @@ enum struct BOSSHANDLER {
     CreateTimer(3.0, OnBossSpawn_Post, baseHP);
     switch (this.bossID) {
       case 0: {
-        PrintToChatAll("SPAWNING WITH %s HP", bossHP);
         FastFire2("FB.OnslaughterBase", "SetHealth", bossHP, 0.5);
         FastFire2("FB.OnslaughterBase", "SetHealth", bossHP, 1.5);
         FastFire2("FB.OnslaughterBase", "SetModelScale", "0.19", 0.0);
