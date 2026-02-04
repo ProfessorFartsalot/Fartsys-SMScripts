@@ -1,4 +1,4 @@
-//ASS_CONFIGSYSTEM - Contains the config loaders and all the plugin core data entries.
+ //ASS_CONFIGSYSTEM - Contains the config loaders and all the plugin core data entries.
 #include <smjansson> // Needed for JSON parsing
 //Default values per wave
 enum struct DEFAULTS {
@@ -74,9 +74,9 @@ enum struct COREDATA {
     char _path_WM[PLATFORM_MAX_PATH];
     BuildPath(Path_SM, _path_WM, sizeof(_path_WM), "configs/FartsysAss/Weather/WeatherManager.json");
     if (!FileExists(_path_WM)) { GenerateDefaultConfig(2, _path_WM); }
-    strcopy(this.configDefault, sizeof(this.configDefault),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults.ini");
-    strcopy(this.configTacoBell, sizeof(this.configTacoBell),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_TacoBell.ini");
-    strcopy(this.configWaveNull, sizeof(this.configWaveNull),"addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_WaveNull.ini");
+    strcopy(this.configDefault, sizeof(this.configDefault), "addons/sourcemod/configs/FartsysAss/Core/WaveDefaults.ini");
+    strcopy(this.configTacoBell, sizeof(this.configTacoBell), "addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_TacoBell.ini");
+    strcopy(this.configWaveNull, sizeof(this.configWaveNull), "addons/sourcemod/configs/FartsysAss/Core/WaveDefaults_WaveNull.ini");
     WaveSystem().SetActive(false);
     WaveSystem().SetWave(0);
     AudioManager.init();
@@ -97,22 +97,22 @@ enum struct COREDATA {
     Handle confCoreData = OpenFile("addons/sourcemod/configs/FartsysAss/BulkFire/crusader.ini", "rt", false);
     char bufCoreData[256];
     int crusaderIndex = -1;
-    if(confCoreData == INVALID_HANDLE) return;
-    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))){
+    if (confCoreData == INVALID_HANDLE) return;
+    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))) {
       TrimString(bufCoreData);
-      if (!StrContains(bufCoreData, "OnUser1")){
+      if (!StrContains(bufCoreData, "OnUser1")) {
         crusaderIndex++;
         Format(crusaderAtk[crusaderIndex].fireStr, 256, bufCoreData);
       }
-      if (IsEndOfFile(confCoreData)) break;
+      if (IsEndOfFile(confCoreData))break;
     }
     AssLogger(1, "[BULKFIRE] Setting up Lightning Flashes...");
     confCoreData = OpenFile("addons/sourcemod/configs/FartsysAss/BulkFire/lightning_flash.ini", "rt", false);
     int lightningFlashIndex = -1;
-    if(confCoreData == INVALID_HANDLE) return;
-    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))){
+    if (confCoreData == INVALID_HANDLE) return;
+    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))) {
       TrimString(bufCoreData);
-      if (!StrContains(bufCoreData, "OnUser1")){
+      if (!StrContains(bufCoreData, "OnUser1")) {
         lightningFlashIndex++;
         Format(lightningFlash[lightningFlashIndex].fireStr, 256, bufCoreData);
       }
@@ -121,10 +121,10 @@ enum struct COREDATA {
     AssLogger(1, "[BULKFIRE] Setting up Lightning Strikes...");
     confCoreData = OpenFile("addons/sourcemod/configs/FartsysAss/BulkFire/lightning_strike.ini", "rt", false);
     int lightningStrikeIndex = -1;
-    if(confCoreData == INVALID_HANDLE) return;
-    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))){
+    if (confCoreData == INVALID_HANDLE) return;
+    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))) {
       TrimString(bufCoreData);
-      if (!StrContains(bufCoreData, "OnUser1")){
+      if (!StrContains(bufCoreData, "OnUser1")) {
         lightningStrikeIndex++;
         Format(lightningStrike[lightningStrikeIndex].fireStr, 256, bufCoreData);
       }
@@ -134,33 +134,33 @@ enum struct COREDATA {
     PrintToServer("confCoreData returned %s", OVERRIDE_AND_GET_COREDATA());
     confCoreData = OpenFile(OVERRIDE_AND_GET_COREDATA(), "rt", false);
     int defIndexHW, defIndexTornado, defIndexBGM, defIndexBS, defIndexBSM, defIndexSPM; // Start at 0 because we don't have a wave 0
-    if(confCoreData == INVALID_HANDLE) return;
-    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))){
+    if (confCoreData == INVALID_HANDLE) return;
+    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))) {
       TrimString(bufCoreData);
-      if (!StrContains(bufCoreData, "Wave.defCanHWBoss:")){
+      if (!StrContains(bufCoreData, "Wave.defCanHWBoss:")) {
         defIndexHW++;
         DefaultsArray[defIndexHW].defCanHWBoss = CharToBool(bufCoreData);
       }
-      else if(!StrContains(bufCoreData, "Wave.defCanTornado:")){
+      else if (!StrContains(bufCoreData, "Wave.defCanTornado:")) {
         defIndexTornado++;
         DefaultsArray[defIndexTornado].defCanTornado = CharToBool(bufCoreData);
       }
-      else if(!StrContains(bufCoreData, "Wave.defBGMIndex:")){
+      else if (!StrContains(bufCoreData, "Wave.defBGMIndex:")) {
         defIndexBGM++;
         ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBGMIndex:", "", true);
         DefaultsArray[defIndexBGM].defBGMIndex = StringToInt(bufCoreData);
       }
-      else if(!StrContains(bufCoreData, "Wave.defBombStatus:")){
+      else if (!StrContains(bufCoreData, "Wave.defBombStatus:")) {
         defIndexBS++;
         ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBombStatus:", "", true);
         DefaultsArray[defIndexBS].defBombStatus = StringToInt(bufCoreData);
       }
-      else if(!StrContains(bufCoreData, "Wave.defBombStatusMax:")){
+      else if (!StrContains(bufCoreData, "Wave.defBombStatusMax:")) {
         defIndexBSM++;
         ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBombStatusMax:", "", true);
         DefaultsArray[defIndexBSM].defBombStatusMax = StringToInt(bufCoreData);
       }
-      else if(!StrContains(bufCoreData, "Wave.defSacPointsMax:")){
+      else if (!StrContains(bufCoreData, "Wave.defSacPointsMax:")) {
         defIndexSPM++;
         ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defSacPointsMax:", "", true);
         DefaultsArray[defIndexSPM].defSacPointsMax = StringToInt(bufCoreData);
@@ -170,7 +170,7 @@ enum struct COREDATA {
     AssLogger(1, "Core data setup complete!");
   }
   void Reset() {
- SephBoss[0].Reset();
+    SephBoss[0].Reset();
     this.canHindenburg = false;
     this.canHWBoss = false;
     WaveSystem().SetActive(false);
@@ -181,21 +181,21 @@ enum struct COREDATA {
 COREDATA core;
 
 //Messages to be printed when the fail safe has been triggered.
-char failsafe[][256] = {
-  "{orange}🔥Burnt Mocha🍵 {white}: FAILSAFE HAS BEEN TRIGGERED. ROBOT EXTERMINATION IN PROGRESS. [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Nice try. You think this is funny? How about THIS instead? [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: (╯°□°）╯︵ ¡¡¡pƎ⅄O˥ԀƎp Ǝq O┴ ┴∩Oq∀ SI SS∀ S,ɹOSSƎℲOɹԀ [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Flips a coin and... HEADS! [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Pwofessow's b-butt is a-about to be depwoyed!!! JUST KIDDING - GET FUCKED. [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: We aren't so different, you and I. Oh wait, yes we are. You're a pile of scrap and I'm actually useful! :> [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: *BZZT* Sorry, time's up! [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: It's only me and you, who is gonna save you now? [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Nope. [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Sometimes I even amaze myself. [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Some disassembly required. [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Oops, I did it again! [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Not on my watch! [Failsafe Activated]",
-  "{orange}🔥Burnt Mocha🍵 {white}: Sometimes you scare me! [Failsafe Activated]",
+char failsafe[][256] =  {
+  "{orange}🔥Burnt Mocha🍵 {white}: FAILSAFE HAS BEEN TRIGGERED. ROBOT EXTERMINATION IN PROGRESS. [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Nice try. You think this is funny? How about THIS instead? [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: (╯°□°）╯︵ ¡¡¡pƎ⅄O˥ԀƎp Ǝq O┴ ┴∩Oq∀ SI SS∀ S,ɹOSSƎℲOɹԀ [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Flips a coin and... HEADS! [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Pwofessow's b-butt is a-about to be depwoyed!!! JUST KIDDING - GET FUCKED. [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: We aren't so different, you and I. Oh wait, yes we are. You're a pile of scrap and I'm actually useful! :> [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: *BZZT* Sorry, time's up! [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: It's only me and you, who is gonna save you now? [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Nope. [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Sometimes I even amaze myself. [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Some disassembly required. [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Oops, I did it again! [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Not on my watch! [Failsafe Activated]", 
+  "{orange}🔥Burnt Mocha🍵 {white}: Sometimes you scare me! [Failsafe Activated]", 
   "{orange}🔥Burnt Mocha🍵 {white}: You know, I never really thought about it. [Failsafe Activated]"
 };
 
@@ -226,29 +226,29 @@ bool CircleAOEenabled[] = {
   true,
   true
 };
-float CircleAOEpos[][3] = {
-  {2370.0, -1670.0, -645.0},
-  {1050.0, -1790.0, -535.0},
-  {1150.0, -1520.0, -535.0},
-  {1830.0, -1550.0, -600.0},
-  {1925.0, -1875.0, -580.0},
-  {1485.0, -1460.0, -585.0},
-  {1630.0, -1680.0, -590.0},
-  {1370.0, -1360.0, -570.0},
-  {1350.0, -1690.0, -570.0},
-  {2270.0, -900.0, -400.0},
-  {1920.0, -490.0, -400.0},
-  {1825.0, -650.0, -400.0},
-  {980.0, -560.0, -400.0},
-  {650.0, -880.0, -400.0},
-  {1690.0, -870.0, -500.0},
-  {1400.0, -870.0, -500.0},
-  {1050.0, -980.0, -500.0},
-  {1500.0, -480.0, -480.0},
-  {800.0, -1100.0, -480.0},
-  {520.0, -1400.0, -470.0},
-  {550.0, -1730.0, -500.0},
-  {1030.0, -1740.0, -530.0}
+float CircleAOEpos[][3] =  {
+  { 2370.0, -1670.0, -645.0 },
+  { 1050.0, -1790.0, -535.0 },
+  { 1150.0, -1520.0, -535.0 },
+  { 1830.0, -1550.0, -600.0 },
+  { 1925.0, -1875.0, -580.0 },
+  { 1485.0, -1460.0, -585.0 },
+  { 1630.0, -1680.0, -590.0 },
+  { 1370.0, -1360.0, -570.0 },
+  { 1350.0, -1690.0, -570.0 },
+  { 2270.0, -900.0, -400.0 },
+  { 1920.0, -490.0, -400.0 },
+  { 1825.0, -650.0, -400.0 },
+  { 980.0, -560.0, -400.0 },
+  { 650.0, -880.0, -400.0 },
+  { 1690.0, -870.0, -500.0 },
+  { 1400.0, -870.0, -500.0 },
+  { 1050.0, -980.0, -500.0 },
+  { 1500.0, -480.0, -480.0 },
+  { 800.0, -1100.0, -480.0 },
+  { 520.0, -1400.0, -470.0 },
+  { 550.0, -1730.0, -500.0 },
+  { 1030.0, -1740.0, -530.0 }
 };
 
 //Return position
@@ -259,13 +259,13 @@ float Return[3] = {
 };
 
 //Bomb paths
-char BOMBPATH[][32] = {
-  "bombpath_right_prefer_flankers",
+char BOMBPATH[][32] =  {
+  "bombpath_right_prefer_flankers", 
   "bombpath_left_prefer_flankers"
 }
 
 //Idle advertisements in chat
-char AdvMessage[][256] = {
+char AdvMessage[][256] =  {
   "{darkviolet}[{aqua}CORE{darkviolet}] {white}We have a Discord server: {forestgreen}https://discord.com/invite/ZfUUQWxCmw",
   "{darkviolet}[{aqua}CORE{darkviolet}] {white}Remember to buy your upgrades using {forestgreen}!buy",
   "{darkviolet}[{aqua}CORE{darkviolet}] {white}You may invoke {forestgreen}!sounds {white}to configure what sounds you hear from the plugin, or {forestgreen}!stats{white} to see your stats.",
@@ -329,7 +329,7 @@ char SpecEnt[][24] = {
 };
 
 //Register our commands.
-void RegisterAllCommands(){
+void RegisterAllCommands() {
   AssLogger(1, "Registering commands...");
   RegServerCmd("fb_operator", Command_Operator, "Serverside only. Does nothing when executed as client.");
   RegAdminCmd("sm_music", Command_Music, ADMFLAG_RESERVATION, "Set music to be played for the next wave");
@@ -345,7 +345,7 @@ void RegisterAllCommands(){
   RegConsoleCmd("sm_fogstartendupdate", Command_SetFogSEU, "[TESTING] Set fog start end with optional flag");
 }
 
-void RegisterAndPrecacheAllFiles(){
+void RegisterAndPrecacheAllFiles() {
   AssLogger(0, "Loading EVERYTHING to RAM...");
   int bgmIndex;
   int sfxIndex;
@@ -360,11 +360,11 @@ void RegisterAndPrecacheAllFiles(){
   AssLogger(LOGLVL_DEBUG, "Loading SFX...");
   LoadConfig(1);
   for (int i = 0; i < sizeof(BGMArray); i++) {
-   if (!StrEqual(BGMArray[i].realPath, "")) {
-    bgmIndex++;
-    AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %f seconds, Start Loop Point %f seconds, Volume %i @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].loopSeconds, BGMArray[i].introSeconds, BGMArray[i].SNDLVL, i);
-    PrecacheSound(BGMArray[i].realPath, true);
-   }
+    if (!StrEqual(BGMArray[i].realPath, "")) {
+      bgmIndex++;
+      AssLogger(LOGLVL_DEBUG, "Precaching BGM: %s (%s), Duration %f seconds, Start Loop Point %f seconds, Volume %i @ %i", BGMArray[i].songName, BGMArray[i].realPath, BGMArray[i].loopSeconds, BGMArray[i].introSeconds, BGMArray[i].SNDLVL, i);
+      PrecacheSound(BGMArray[i].realPath, true);
+    }
   }
   for (int i = 0; i < sizeof(SFXArray); i++) {
     if (!StrEqual(SFXArray[i].realPath, "")) {
@@ -385,8 +385,8 @@ char WaveSetup[][] = {
   "OnUser1 CommonSpells,Enable,,0.0,1", // Activate common spells
   "OnUser1 OldSpawn,Enable,,0.0,1", //Activate Old Spawn
   "OnUser1 NewSpawn,Disable,,0.0,1", //De-activate New Spawn
-  "OnUser1 Classic_Mode_Intel1,Enable,,0.0,1", //enable intel 1
-  "OnUser1 Classic_Mode_Intel2,Enable,,0.0,1", //enable intel 2
+  "OnUser1 Classic_Mode_Intel1,Enable,,0.0,1", //Enable intel 1
+  "OnUser1 Classic_Mode_Intel2,Enable,,0.0,1", //Enable intel 2
   "OnUser1 Classic_Mode_Intel3,Enable,,0.0,1",
   "OnUser1 Classic_Mode_Intel4,Enable,,0.0,1",
   "OnUser1 Classic_Mode_Intel5,Enable,,0.0,1",
@@ -397,9 +397,9 @@ char WaveSetup[][] = {
 char[] OVERRIDE_AND_GET_COREDATA() {
   int type = WaveSystem().GetType();
   switch (type) {
-    case 0: return core.configDefault;
-    case 1: return core.configTacoBell;
-    case 2: return core.configWaveNull;
+    case 0:return core.configDefault;
+    case 1:return core.configTacoBell;
+    case 2:return core.configWaveNull;
     default: {
       LogError("Gamemode %i out of bounds. Reverting to defaults.", type);
       return core.configDefault;
@@ -417,19 +417,19 @@ public bool GenerateDefaultConfig(const int type, const char[] path)
     return false;
   }
   WriteFileLine(file, "{"); // Begin JSON
-  switch(type) {
+  switch (type) {
     // BGM
     case 0: {
       WriteFileLine(file, "  \"Music\": {");
       for (int i = 0; i < sizeof(BGMArray); i++)
       {
-          WriteFileLine(file, "    \"%d\": {", i);
-          WriteFileLine(file, "      \"path\": \"\",");
-          WriteFileLine(file, "      \"name\": \"Example Song %d\",", i);
-          WriteFileLine(file, "      \"duration\": 120.0,");
-          WriteFileLine(file, "      \"intro\": 0.0,");
-          WriteFileLine(file, "      \"volume\": 80");
-          WriteFileLine(file, i < sizeof(BGMArray) - 1 ? "    }," : "    }");
+        WriteFileLine(file, "    \"%d\": {", i);
+        WriteFileLine(file, "      \"path\": \"\",");
+        WriteFileLine(file, "      \"name\": \"Example Song %d\",", i);
+        WriteFileLine(file, "      \"duration\": 120.0,");
+        WriteFileLine(file, "      \"intro\": 0.0,");
+        WriteFileLine(file, "      \"volume\": 80");
+        WriteFileLine(file, i < sizeof(BGMArray) - 1 ? "    }," : "    }");
       }
       WriteFileLine(file, "  }");
     }
@@ -487,7 +487,7 @@ void LoadConfig(int type)
     int idx = StringToInt(index);
     Handle _jsKey = json_object_iter_value(jsIter);
     // Process values
-    if (type == 0) { // BGM
+    if (type == 0) {  // BGM
       json_object_get_string(_jsKey, "path", BGMArray[idx].realPath, sizeof(BGMArray[idx].realPath));
       json_object_get_string(_jsKey, "name", BGMArray[idx].songName, sizeof(BGMArray[idx].songName));
       BGMArray[idx].introSeconds = json_object_get_float(_jsKey, "intro");
@@ -499,7 +499,7 @@ void LoadConfig(int type)
         if (!FileExists(fsPath, true)) SetFailState("File does not exist: %s (field %d)", fsPath, idx);
       }
     }
-    else if (type == 1) { // SFX
+    else if (type == 1) {  // SFX
       json_object_get_string(_jsKey, "path", SFXArray[idx].realPath, sizeof(SFXArray[idx].realPath));
       SFXArray[idx].SNDLVL = json_object_get_int(_jsKey, "volume");
       if (!StrEqual(SFXArray[idx].realPath, "")) {
@@ -508,7 +508,7 @@ void LoadConfig(int type)
         if (!FileExists(fsPath, true)) SetFailState("File does not exist: %s (field %d)", fsPath, idx);
       }
     }
-    else if (type == 2) { // Weather
+    else if (type == 2) {  // Weather
       json_object_get_string(_jsKey, "defFogStartDist", WeatherManager.defFogStartDist, sizeof(WeatherManager.defFogStartDist));
       json_object_get_string(_jsKey, "defFogEndDist", WeatherManager.defFogEndDist, sizeof(WeatherManager.defFogEndDist));
       WeatherManager.defFogDensity = json_object_get_float(_jsKey, "defFogDensity");
@@ -524,6 +524,7 @@ void LoadConfig(int type)
 
 // Extra stuff that hasn't been moved to config files yet
 void SetVarDefaults() {
+  SetupBombSystem();
   WeatherManager.hasTornado = false;
   core.bombReset = false;
   brawler_emergency = false;
@@ -659,68 +660,6 @@ void SetVarDefaults() {
   MapLighting[10].zap = "MapLighting.StreetLamp0A.zap";
   MapLighting[11].zap = "MapLighting.StreetLamp0B.zap";
   MapLighting[12].zap = "MapLighting.StreetLamp0C.zap";
-  bombState[8].canHindenburg = true;
-  bombState[4].canSENTStars = true;
-  bombState[6].canSENTShark = true;
-  bombState[5].explDly = 1.7;
-  bombState[1].explEnt = "SmallExplosion";
-  bombState[2].explEnt = "MediumExplosion";
-  bombState[3].explEnt = "MediumExplosion";
-  bombState[4].explEnt = "MediumExplosion";
-  bombState[5].explEnt = "LargeExplosion";
-  bombState[6].explEnt = "LargeExplosion";
-  bombState[7].explEnt = "LargeExplosion";
-  bombState[8].explEnt = "LargeExplosion";
-  bombState[1].explShake = "SmallExploShake";
-  bombState[2].explShake = "MedExploShake";
-  bombState[3].explShake = "MedExploShake";
-  bombState[4].explShake = "MedExploShake";
-  bombState[5].explShake = "LargeExploShake";
-  bombState[6].explShake = "LargeExploShake";
-  bombState[7].explShake = "LargeExploShake";
-  bombState[8].explShake = "LargeExploShake";
-  bombState[5].explShakeDly = 1.7;
-  bombState[1].explSnd = SFXArray[1].realPath;
-  bombState[2].explSnd = SFXArray[2].realPath;
-  bombState[3].explSnd = SFXArray[2].realPath;
-  bombState[4].explSnd = SFXArray[2].realPath;
-  bombState[5].explSnd = SFXArray[4].realPath;
-  bombState[6].explSnd = SFXArray[3].realPath;
-  bombState[7].explSnd = SFXArray[35].realPath;
-  bombState[8].explSnd = SFXArray[35].realPath;
-  bombState[1].identifier = "Bombs.FreedomBomb";
-  bombState[2].identifier = "Bombs.ElonBust";
-  bombState[3].identifier = "Bombs.BathSalts";
-  bombState[4].identifier = "Bombs.FallingStar";
-  bombState[5].identifier = "Bombs.MajorKong";
-  bombState[6].identifier = "Bombs.SharkTorpedo";
-  bombState[7].identifier = "Bombs.FatMan";
-  bombState[8].identifier = "Bombs.Hydrogen";
-  bombState[0].isMoving = false;
-  bombState[5].isNuclear = true;
-  bombState[7].isNuclear = true;
-  bombState[8].isNuclear = true;
-  bombState[5].NukeStart = 1.7;
-  bombState[0].isReady = false;
-  bombState[1].name = "{red}FREEDOM BOMB{white}";
-  bombState[2].name = "{red}ELON BUST{white}";
-  bombState[3].name = "{orange}BATH SALTS{white}";
-  bombState[4].name = "{gold}FALLING STAR{white}";
-  bombState[5].name = "{red}MAJOR KONG{white}";
-  bombState[6].name = "{aqua}SHARK{white}";
-  bombState[7].name = "{orange}FAT MAN{white}";
-  bombState[8].name = "{red}HYDROGEN{white}";
-  bombState[1].sacVal = 5;
-  bombState[2].sacVal = 5;
-  bombState[3].sacVal = 5;
-  bombState[4].sacVal = 10;
-  bombState[5].sacVal = 15;
-  bombState[6].sacVal = 20;
-  bombState[7].sacVal = 25;
-  bombState[8].sacVal = 50;
-  bombState[3].shouldFreezeBots = true;
-  bombState[0].state = 0;
-  bombState[0].stateMax = 0;
   HWBoss[0].index = 0;
   HWBoss[0].fireCount = 2;
   HWBoss[0].fireString = "OnUser1 hhh_maker,ForceSpawn,,0.0,1";
@@ -734,10 +673,10 @@ void SetVarDefaults() {
   HWBoss[3].fireString = "OnUser1 hhh_maker2,ForceSpawn,,0.0,1";
   HWBoss[4].index = 7;
   HWBoss[4].fireString = "OnUser1 SkeleSpawner,Enable,,0.0,1";
-  HWBoss[5].index = 8; 
+  HWBoss[5].index = 8;
   HWBoss[5].fireString = "OnUser1 SkeleSpawner,Disable,,20.0,1";
   HWBoss[6].index = 5; //Does this access HWBoss[4]?
-  HWBoss[6].fireCount=2;//Does this disable skelespawner after enabling it?...
+  HWBoss[6].fireCount = 2; //Does this disable skelespawner after enabling it?...
   HWBoss[7].index = 8;
   HWBoss[7].fireString = "OnUser1 merasmus_maker,ForceSpawn,,0.0,1";
   HWBoss[7].fireCount = 3;
@@ -752,40 +691,40 @@ void SetVarDefaults() {
   HWBoss[11].index = 2;
   HWBoss[11].fireString = "OnUser1 monoculus_maker,ForceSpawn,,0.0,1";
   HWBoss[11].fireCount = 1;
- SephBoss[0].index = 0;
- SephBoss[0].fireCount = 0;
- SephBoss[0].shouldNuke = true;
- SephBoss[1].fireString = "OnUser1 SephMeteor,ForceSpawn,,0.0,1";
- SephBoss[1].ChatMessage = "{blue}Sephiroth: Say goodbye!";
- SephBoss[1].index = 2;
- SephBoss[1].fireCount = 1;
- SephBoss[2].fireString = "OnUser1 SephNuke,ForceSpawn,,0.0,1";
- SephBoss[2].index = 3;
- SephBoss[2].fireCount = 1;
- SephBoss[2].sound = SFXArray[8].realPath;
- SephBoss[3].fireString = "OnUser1 SephRocketSpammer,FireMultiple,50,0.0,1";
- SephBoss[3].index = 4;
- SephBoss[3].fireCount = 4;
- SephBoss[4].index = 3;
- SephBoss[4].fireCount = 3;
- SephBoss[4].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,3.0,1";
- SephBoss[5].index = 9;
- SephBoss[5].fireCount = 2;
- SephBoss[5].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,5.0,1";
- SephBoss[6].index = 9;
- SephBoss[6].fireCount = 2;
- SephBoss[6].fireString = "OnUser1 SkeleSpawner,Enable,,0.0,1";
- SephBoss[7].index = 3;
- SephBoss[7].fireCount = 3;
- SephBoss[7].fireString = "OnUser1 SkeleSpawner,Disable,,20.0,1";
- SephBoss[8].index = 4;
- SephBoss[8].fireCount = 1;
- SephBoss[9].index = 11;
- SephBoss[9].fireCount = 2;
- SephBoss[9].fireString = "OnUser1 SephRocketSpammer,FireOnce,,0.0,1";
- SephBoss[10].index = 12;
- SephBoss[10].fireCount = 1;
- SephBoss[10].fireString = "OnUser1 SephRocketSpammer,FireOnce,,5.0,1";
- SephBoss[11].index = 3;
- SephBoss[11].fireCount = 4;
+  SephBoss[0].index = 0;
+  SephBoss[0].fireCount = 0;
+  SephBoss[0].shouldNuke = true;
+  SephBoss[1].fireString = "OnUser1 SephMeteor,ForceSpawn,,0.0,1";
+  SephBoss[1].ChatMessage = "{blue}Sephiroth: Say goodbye!";
+  SephBoss[1].index = 2;
+  SephBoss[1].fireCount = 1;
+  SephBoss[2].fireString = "OnUser1 SephNuke,ForceSpawn,,0.0,1";
+  SephBoss[2].index = 3;
+  SephBoss[2].fireCount = 1;
+  SephBoss[2].sound = SFXArray[8].realPath;
+  SephBoss[3].fireString = "OnUser1 SephRocketSpammer,FireMultiple,50,0.0,1";
+  SephBoss[3].index = 4;
+  SephBoss[3].fireCount = 4;
+  SephBoss[4].index = 3;
+  SephBoss[4].fireCount = 3;
+  SephBoss[4].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,3.0,1";
+  SephBoss[5].index = 9;
+  SephBoss[5].fireCount = 2;
+  SephBoss[5].fireString = "OnUser1 SephRocketSpammer,FireMultiple,10,5.0,1";
+  SephBoss[6].index = 9;
+  SephBoss[6].fireCount = 2;
+  SephBoss[6].fireString = "OnUser1 SkeleSpawner,Enable,,0.0,1";
+  SephBoss[7].index = 3;
+  SephBoss[7].fireCount = 3;
+  SephBoss[7].fireString = "OnUser1 SkeleSpawner,Disable,,20.0,1";
+  SephBoss[8].index = 4;
+  SephBoss[8].fireCount = 1;
+  SephBoss[9].index = 11;
+  SephBoss[9].fireCount = 2;
+  SephBoss[9].fireString = "OnUser1 SephRocketSpammer,FireOnce,,0.0,1";
+  SephBoss[10].index = 12;
+  SephBoss[10].fireCount = 1;
+  SephBoss[10].fireString = "OnUser1 SephRocketSpammer,FireOnce,,5.0,1";
+  SephBoss[11].index = 3;
+  SephBoss[11].fireCount = 4;
 }

@@ -143,7 +143,7 @@ int FindEntityByTargetname(char[] targetname, char[] classname)
   char namebuf[32];
   int index = -1;
   namebuf[0] = '\0';
- 
+
   while(strcmp(namebuf, targetname) != 0 && (index = FindEntityByClassname(index, classname)) != -1){
     GetEntPropString(index, Prop_Data, "m_iName", namebuf, sizeof(namebuf));
     //PrintToServer("Found %s, index %i", namebuf, index);
@@ -221,7 +221,7 @@ stock float FloatMin(float a, float b) {
 }
 
 // Returns the greater of two floats
-stock float FloatMax(float a, float b) { 
+stock float FloatMax(float a, float b) {
   return a >= b ? a : b;
 }
 
@@ -241,29 +241,7 @@ public Action DispatchCircleAOE(float pos[3]) {
     float v[3];
     float rot[3];
     TeleportEntity(ent, pos, rot, v);
-    FastFire2("CircleTemplate", "ForceSpawn", "", 0.0, false);
-  }
-  return Plugin_Stop;
-}
-//Track bombState[0].state and update entities every 0.1 seconds
-public Action BombStatusUpdater(Handle timer) {
-  if (WaveSystem().IsActive()) {
-    CreateTimer(0.1, BombStatusUpdater);
-    if (bombState[0].state < bombState[0].stateMax) {
-      switch (bombState[0].state) {
-      case 8, 16, 24, 32, 40, 48, 56, 64: {
-        int curBomb = bombState[0].getCurBomb();
-        bombState[0].stateMax = bombState[0].state;
-        bombState[0].isReady = true;
-        core.canSENTShark = bombState[curBomb].canSENTShark;
-        FastFire2("Bombs*", "Disable", "", 0.0, false);
-        FastFire2("Delivery", "Unlock", "", 0.0, false);
-        FastFire2(bombState[curBomb].identifier, "Enable", "", 0.0, false);
-        CustomSoundEmitter(SFXArray[56].realPath, 65, false, 0, 1.0, 100);
-        CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}Your team's %s {forestgreen}is now available for deployment!", bombState[curBomb].name);
-      }
-      }
-    } else if (bombState[0].state > bombState[0].stateMax) bombState[0].state = bombState[0].upperLimit();
+    FastFire2("CircleTemplate", "ForceSpawn");
   }
   return Plugin_Stop;
 }
@@ -271,8 +249,8 @@ public Action BombStatusUpdater(Handle timer) {
 //RobotLaunchTimer (Randomly fling robots)
 public Action RobotLaunchTimer(Handle timer) {
   if (!WaveSystem().IsActive()) return Plugin_Stop;
-  FastFire2("FB.RobotLauncher", "Enable", "", 0.0, false);
-  FastFire2("FB.RobotLauncher", "Disable", "", 7.5, false);
+  FastFire2("FB.RobotLauncher", "Enable", "", 0.0);
+  FastFire2("FB.RobotLauncher", "Disable", "", 7.5);
   CreateTimer(GetRandomFloat(5.0, 30.0), RobotLaunchTimer);
   return Plugin_Stop;
 }
@@ -286,9 +264,9 @@ public Action SacrificePointsUpdater(Handle timer) {
 
 //BombStatus (Add points to Bomb Status occasionally)
 public Action BombStatusAddTimer(Handle timer) {
-  if (WaveSystem().IsActive() && (bombState[0].state < bombState[0].stateMax)) {
-    bombState[0].isReady = false;
-    bombState[0].state++;
+  if (WaveSystem().IsActive() && (g_BombIndex < BombRegistry[0].stateMax)) {
+    BombRegistry[0].isReady = false;
+    g_BombIndex++;
     CreateTimer(GetRandomFloat(10.0, 45.0), BombStatusAddTimer);
   }
   return Plugin_Stop;
@@ -316,7 +294,7 @@ public Action PerformWaveAdverts(Handle timer) {
         int tPos = RoundToFloor(AudioState[i].loopSeconds);
         Format(buffer, 16, "%02d:%02d", sPos / 60, sPos % 60);
         Format(tbuffer, 16, "%02d:%02d", tPos / 60, tPos % 60);
-        Format(HintText, sizeof(HintText), (bombState[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : bombState[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)"), bombState[0].state, bombState[0].stateMax, ass_sacPoints, ass_sacPointsMax, AudioState[i].songName, buffer, tbuffer);
+        Format(HintText, sizeof(HintText), (BombRegistry[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : BombRegistry[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i \n Music: %s (%s/%s)"), g_BombIndex, BombRegistry[0].stateMax, ass_sacPoints, ass_sacPointsMax, AudioState[i].songName, buffer, tbuffer);
         emnity = EmnityManager[i].getClientEmnity();
         PrintHintText(i, (WeatherManager.TornadoWarning ? "%s \n\n[TORNADO WARNING]" : "%s\n\nEmnity: %i٪"), HintText, emnity >= 0 ? emnity : 0);
         StopSound(i, SNDCHAN_STATIC, "UI/hint.wav");
@@ -341,59 +319,59 @@ public Action OnslaughterATK(Handle timer) {
   if (BossHandler.isAlive) {
     if (core.waveFlags == 1) {
       CreateTimer(GetRandomFloat(5.0, 7.0), OnslaughterATK);
-      FastFire2("BruteJusticeDefaultATK", "FireMultiple", "3", 5.0, false);
+      FastFire2("BruteJusticeDefaultATK", "FireMultiple", "3", 5.0);
       switch (GetRandomInt(1, 10)) {
-      case 1, 6: {
-        FastFire2("BruteJusticeLaserParticle", "Start", "", 0.0, false);
-        CustomSoundEmitter(SFXArray[38].realPath, 65, false, 0, 1.0, 100);
-        FastFire2("BruteJusticeLaser", "TurnOn", "", 1.40, false);
-        FastFire2("BruteJusticeLaserHurtAOE", "Enable", "", 1.40, false);
-        FastFire2("BruteJusticeLaserParticle", "Stop", "", 3.00, false);
-        FastFire2("BruteJusticeLaser", "TurnOff", "", 3.25, false);
-        FastFire2("BruteJusticeLaserHurtAOE", "Disable", "", 3.25, false);
-      }
-      case 2, 8: {
-        FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 0.0, false);
-        FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 2.5, false);
-        FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 5.0, false);
-        FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 9.0, false);
-        FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 12.0, false);
-        FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 15.0, false);
-      }
-      case 3, 7: {
-        FastFire2("BruteJusticeFlameParticle", "Start", "", 0.0, false);
-        FastFire2("BruteJusticeFlamethrowerHurtAOE", "Enable", "", 0.0, false);
-        CustomSoundEmitter(SFXArray[39].realPath, 65, false, 0, 1.0, 100);
-        FastFire2("SND.BruteJusticeFlameATK", "PlaySound", "", 1.25, false);
-        FastFire2("BruteJusticeFlamethrowerHurtAOE", "Disable", "", 5.0, false);
-        FastFire2("BruteJusticeFlameParticle", "Stop", "", 5.0, false);
-        FastFire2("SND.BruteJusticeFlameATK", "FadeOut", ".25", 5.0, false);
-        CreateTimer(5.0, TimedOperator, 60);
-        FastFire2("SND.BruteJusticeFlameATK", "StopSound", "", 5.1, false);
-      }
-      case 4: {
-        FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "10", 0.0, false);
-        FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "10", 3.0, false);
-        FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "10", 5.0, false);
-      }
-      case 5: {
-        FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "50", 0.0, false);
-        FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 0.0, false);
-        FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 2.5, false);
-        FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 5.0, false);
-        FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 9.0, false);
-        FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 12.0, false);
-        FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 15.0, false);
-      }
-      case 9: {
-        FastFire2("BruteJusticeRocketSpammer", "FireOnce", "", 0.0, false);
-        FastFire2("BruteJusticeRocketSpammer", "FireOnce", "", 5.0, false);
-      }
-      case 10: {
-        FastFire2("BruteJusticeRocketSpammer", "FireMultiple", "10", 0.0, false);
-        FastFire2("BruteJusticeRocketSpammer", "FireMultiple", "10", 3.0, false);
-        FastFire2("BruteJusticeRocketSpammer", "FireMultiple", "10", 5.0, false);
-      }
+        case 1, 6: {
+          FastFire2("BruteJusticeLaserParticle", "Start");
+          CustomSoundEmitter(SFXArray[38].realPath, 65, false, 0, 1.0, 100);
+          FastFire2("BruteJusticeLaser", "TurnOn", "", 1.40);
+          FastFire2("BruteJusticeLaserHurtAOE", "Enable", "", 1.40);
+          FastFire2("BruteJusticeLaserParticle", "Stop", "", 3.00);
+          FastFire2("BruteJusticeLaser", "TurnOff", "", 3.25);
+          FastFire2("BruteJusticeLaserHurtAOE", "Disable", "", 3.25);
+        }
+        case 2, 8: {
+          FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 0.0);
+          FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 2.5);
+          FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 5.0);
+          FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 9.0);
+          FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 12.0);
+          FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 15.0);
+        }
+        case 3, 7: {
+          FastFire2("BruteJusticeFlameParticle", "Start");
+          FastFire2("BruteJusticeFlamethrowerHurtAOE", "Enable");
+          CustomSoundEmitter(SFXArray[39].realPath, 65, false, 0, 1.0, 100);
+          FastFire2("SND.BruteJusticeFlameATK", "PlaySound", "", 1.25);
+          FastFire2("BruteJusticeFlamethrowerHurtAOE", "Disable", "", 5.0);
+          FastFire2("BruteJusticeFlameParticle", "Stop", "", 5.0);
+          FastFire2("SND.BruteJusticeFlameATK", "FadeOut", ".25", 5.0);
+          CreateTimer(5.0, TimedOperator, 60);
+          FastFire2("SND.BruteJusticeFlameATK", "StopSound", "", 5.1);
+        }
+        case 4: {
+          FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "10", 0.0);
+          FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "10", 3.0);
+          FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "10", 5.0);
+        }
+        case 5: {
+          FastFire2("BruteJusticeGrenadeSpammer", "FireMultiple", "50", 0.0);
+          FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 0.0);
+          FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 2.5);
+          FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 5.0);
+          FastFire2("BruteJusticeJarateSpawner00", "ForceSpawn", "", 9.0);
+          FastFire2("BruteJusticeJarateSpawner01", "ForceSpawn", "", 12.0);
+          FastFire2("BruteJusticeJarateSpawner02", "ForceSpawn", "", 15.0);
+        }
+        case 9: {
+          FastFire2("BruteJusticeRocketSpammer", "FireOnce", "", 0.0);
+          FastFire2("BruteJusticeRocketSpammer", "FireOnce", "", 5.0);
+        }
+        case 10: {
+          FastFire2("BruteJusticeRocketSpammer", "FireMultiple", "10", 0.0);
+          FastFire2("BruteJusticeRocketSpammer", "FireMultiple", "10", 3.0);
+          FastFire2("BruteJusticeRocketSpammer", "FireMultiple", "10", 5.0);
+        }
       }
     }
   }
@@ -405,7 +383,7 @@ public Action SephATK(Handle timer) {
   if (core.waveFlags == 2) {
     float f = GetRandomFloat(5.0, 10.0);
     CreateTimer(f, SephATK);
-    FastFire2("SephArrows", "FireMultiple", "3", 5.0, false);
+    FastFire2("SephArrows", "FireMultiple", "3", 5.0);
     SephBoss[GetRandomInt(0, 11)].attack();
   }
   return Plugin_Stop;
@@ -425,8 +403,9 @@ public Action BossHPTimer(Handle timer) {
 
 //Shark Timer
 public Action SharkTimer(Handle timer) {
-  if (core.canSENTShark) {
-    FastFire2("SentSharkTorpedo", "ForceSpawn", "", 0.0, false);
+  if (Bombs.getCurBomb().canSENTShark) {
+    PrintToChatAll("TODO: DISABLE SHARK BOMB WHEN IT DEPLOYS. ENABLE IT WHEN BOMB IS READY.");
+    FastFire2("SentSharkTorpedo", "ForceSpawn");
     CreateTimer(GetRandomFloat(2.0, 5.0), SharkTimer);
     CustomSoundEmitter(SFXArray[GetRandomInt(43, 50)].realPath, 65, false, 0, 1.0, 100);
   }
@@ -436,8 +415,8 @@ public Action SharkTimer(Handle timer) {
 //SpecTimer
 public Action SpecTimer(Handle timer) {
   if (WaveSystem().IsActive()) {
-    FastFire2("Spec*","Disable","", 0.0, false);
-    FastFire2(SpecEnt[GetRandomInt(0, 5)], "Enable", "", 0.1, false);
+    FastFire2("Spec*","Disable");
+    FastFire2(SpecEnt[GetRandomInt(0, 5)], "Enable", "", 0.1);
     CreateTimer(GetRandomFloat(10.0, 30.0), SpecTimer);
   }
   return Plugin_Stop;
@@ -447,15 +426,16 @@ public Action SpecTimer(Handle timer) {
 public Action SENTMeteorTimer(Handle timer) {
   if (core.canSENTMeteors) {
     CreateTimer(5.0, SENTMeteorTimer);
-    FastFire2(FB_SENT[GetRandomInt(0, 4)], "ForceSpawn", "", 0.0, false); // replace me with teleportEntity eventually then forcespawn...
+    FastFire2(FB_SENT[GetRandomInt(0, 4)], "ForceSpawn"); // replace me with teleportEntity eventually then forcespawn...
   }
   return Plugin_Stop;
 }
 
 //SENTStars (Scripted Entity Stars)
 public Action SENTStarTimer(Handle timer) {
+  PrintToChatAll("Core can sent starts: %i", core.canSENTStars == true ? 1 : 0);
   if (core.canSENTStars) {
-    FastFire2(FB_SENT[10], "ForceSpawn", "", 0.0, false); // replace me with teleportEntity eventually then forcespawn...
+    FastFire2(FB_SENT[10], "ForceSpawn"); // replace me with teleportEntity eventually then forcespawn...
     CreateTimer(GetRandomFloat(0.75, 1.5), SENTStarTimer);
   }
   return Plugin_Stop;
@@ -510,21 +490,21 @@ void SendHudTextAll(int channel, const char[] text, float posX, float posY, floa
 
 float GetTotalWeaponDamageBonus()
 {
-    float totalDamageBonus = 0.0;
-    for (int client = 1; client <= MaxClients; client++)
+  float totalDamageBonus = 0.0;
+  for (int client = 1; client <= MaxClients; client++)
+  {
+    if (!IsClientInGame(client) || !IsPlayerAlive(client)) continue;
+    for (int slot = 0; slot <= 3; slot++)
     {
-        if (!IsClientInGame(client) || !IsPlayerAlive(client)) continue;
-        for (int slot = 0; slot <= 3; slot++)
-        {
-            int weaponEnt = GetPlayerWeaponSlot(client, slot);
-            if (weaponEnt == -1) continue;
-            Address attr = TF2Attrib_GetByName(weaponEnt, "damage bonus");
-            if (attr <= 0) continue;
-            float dmgValue = TF2Attrib_GetValue(attr);
-            totalDamageBonus += dmgValue;
-            PrintToServer("Got damage bonus value %f from %N", dmgValue, client);
-        }
+      int weaponEnt = GetPlayerWeaponSlot(client, slot);
+      if (weaponEnt == -1) continue;
+      Address attr = TF2Attrib_GetByName(weaponEnt, "damage bonus");
+      if (attr <= 0) continue;
+      float dmgValue = TF2Attrib_GetValue(attr);
+      totalDamageBonus += dmgValue;
+      PrintToServer("Got damage bonus value %f from %N", dmgValue, client);
     }
-    PrintToServer("Final value %f", totalDamageBonus);
-    return totalDamageBonus;
+  }
+  PrintToServer("Final value %f", totalDamageBonus);
+  return totalDamageBonus;
 }

@@ -121,7 +121,7 @@ public Action Command_GetCurrentSong(int client, int args) {
 //Determine which bomb has been recently pushed and tell the client if a bomb is ready or not.
 public Action Command_FBBombStatus(int client, int args) {
   char bombStatusMsg[256];
-  Format(bombStatusMsg, sizeof(bombStatusMsg), (bombState[0].isMoving ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}(%i/%i) Your team is currently pushing a %s!" : bombState[0].isReady ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}(%i/%i) Your team's %s is ready!" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}(%i/%i) Your team recently deployed a %s! Please wait for the next bomb."), bombState[0].state, bombState[0].stateMax, bombState[RoundToFloor(bombState[0].state / 8.0)].name);
+  Format(bombStatusMsg, sizeof(bombStatusMsg), (BombRegistry[0].isMoving ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}(%i/%i) Your team is currently pushing a %s!" : BombRegistry[0].isReady ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}(%i/%i) Your team's %s is ready!" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}(%i/%i) Your team recently deployed a %s! Please wait for the next bomb."), g_BombIndex, BombRegistry[0].stateMax, BombRegistry[Bombs.getCurBombID()].name);
   CPrintToChat(client, bombStatusMsg);
   return Plugin_Handled;
 }
