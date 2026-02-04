@@ -1,0 +1,1 @@
+native void SCR_SendEvent(const char[] event, const char[] message, any ...);

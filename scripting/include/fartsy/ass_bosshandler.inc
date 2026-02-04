@@ -139,7 +139,7 @@ enum struct BOSSHANDLER {
   }
   //Handle deaths
   void OnKilled() {
-    PrintToChatAll("Boss %i was killed.", this.bossID);
+    if (this.isAlive) SCR_SendEvent("Boss Slain", this.bossID == 0 ? "Onslaughter has been killed!" : this.bossID == 1 ? "Sephiroth has been killed!" : "Metal Face has been killed!");
     switch (this.bossID) {
       case 0: {
         FastFire2("OnslaughterTank", "SetHealth", "1");
@@ -151,10 +151,20 @@ enum struct BOSSHANDLER {
         FastFire2("TankRelayDMG", "Enable", "", 1.0);
         FastFire2("TankRelayDMG", "Disable", "", 10.0);
         ass_sacPoints += 25;
-        this.isAlive = false;
-        this.shouldTick = false;
+      }
+      //Sephiroth lost
+      case 1: {
+        
+      }
+      //Metal Face lost
+      case 2: {
+        FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFTHOME");
       }
     }
+    this.isAlive = false;
+    this.shouldTick = false;
+    this.tickBuster = false;
+    this.iBossPhase = 0;
   }
   //For tracking model and skipping player ready check if boss is alive
   void Tick() {
@@ -426,26 +436,7 @@ enum struct BOSSHANDLER {
     TeleportEntity(iSpin, pPos, fVelocity, fVelocity);
     TeleportEntity(iNukeTemplate, nPos, fVelocity, fVelocity);
   }
-  //Boss was slain
-  void TriggerDeath() {
-    this.shouldTick = false;
-    this.tickBuster = false;
-    this.iBossPhase = 0;
-    switch (this.bossID) {
-      //Onslaughter lost
-      case 0: {
-        
-      }
-      //Sephiroth lost
-      case 1: {
-        
-      }
-      //Metal Face lost
-      case 2: {
-        FastFire2("FB.MetalFace.Train", "TeleportToPathTrack", "MFTHOME");
-      }
-    }
-  }
+
   //Boss reached bomb hatch
   void TriggerVictory() {
     this.shouldTick = false;
@@ -480,15 +471,68 @@ enum struct BOSSHANDLER {
     }
   }
   //Spawn the boi
-  void TriggerSpawn(int boss) {
+  void OnSpawned(int boss) {
     this.bossID = boss;
+    this.isAlive = true;
     this.shouldTick = true;
-    switch (boss) {
+    int baseHP = GetBossHealthModifier(640000)
+    char bossHP[64];
+    Format(bossHP, 64, "%i", baseHP);
+    CreateTimer(3.0, OnBossSpawn_Post, baseHP);
+    switch (this.bossID) {
       case 0: {
-        
+        PrintToChatAll("SPAWNING WITH %s HP", bossHP);
+        FastFire2("FB.OnslaughterBase", "SetHealth", bossHP, 0.5);
+        FastFire2("FB.OnslaughterBase", "SetHealth", bossHP, 1.5);
+        FastFire2("FB.OnslaughterBase", "SetModelScale", "0.19", 0.0);
+        FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.0);
+        FastFire2("FB.BruteJustice", "Enable", "", 3.0);
+        FastFire2("FB.BruteJusticeTrain", "StartForward", "", 3.0);
+        FastFire2("FB.BruteJusticeParticles", "Start", "", 3.0);
+        CreateTimer(5.0, OnslaughterATK);
+        FastFire2("tank_boss", "AddOutput", "rendermode 10", 3.0);
+        FastFire2("tank_boss", "AddOutput", "rendermode 10", 7.0);
+        CreateTimer(10.0, BossHPTimer);
       }
       case 1: {
-        
+        FastFire2("FB.Sephiroth", "Enable", "", 0.0);
+        FastFire2("SephMeteor", "SetParent", "FB.Sephiroth", 0.0);
+        FastFire2("SephTrain", "SetSpeedReal", "12", 0.0);
+        FastFire2("SephTrain", "TeleportToPathTrack", "Seph01", 0.0);
+        FastFire2("SephTrain", "StartForward", "", 0.1);
+        FastFire2("SephTrain", "SetSpeedReal", "12", 20.5);
+        FastFire2("FB.SephParticles", "Start", "", 3.0);
+        FastFire2("tank_boss", "AddOutput", "rendermode 10", 3.0);
+        FastFire2("tank_boss", "AddOutput", "rendermode 10", 7.0);
+        FastFire2("FB.BruteJusticeDMGRelay", "Kill", "", 0.0);
+        switch (GetClientCount(true)) {
+          case 1: {
+            FastFire2("SephTrain", "SetSpeedReal", "40", 23.0);
+            FastFire2("tank_boss", "SetHealth", "409600", 1.0);
+            FastFire2("FB.SephDMGRelay", "SetHealth", "32768000", 1.0);
+          }
+          case 2: {
+            FastFire2("SephTrain", "SetSpeedReal", "35", 23.0);
+            FastFire2("tank_boss", "SetHealth", "614400", 1.0);
+            FastFire2("FB.SephDMGRelay", "SetHealth", "32768000", 1.0);
+          }
+          case 3: {
+            FastFire2("SephTrain", "SetSpeedReal", "35", 23.0);
+            FastFire2("tank_boss", "SetHealth", "614400", 1.0);
+            FastFire2("FB.SephDMGRelay", "SetHealth", "131072000", 1.0);
+          }
+          case 4: {
+            FastFire2("SephTrain", "SetSpeedReal", "30", 23.0);
+            FastFire2("tank_boss", "SetHealth", "819200", 1.0);
+            FastFire2("FB.SephDMGRelay", "SetHealth", "262144000", 1.0);
+          }
+          case 5, 6, 7, 8, 9, 10: {
+            FastFire2("SephTrain", "SetSpeedReal", "25", 23.0);
+            FastFire2("tank_boss", "SetHealth", "819200", 1.0);
+            FastFire2("FB.SephDMGRelay", "SetHealth", "655360000", 1.0);
+          }
+        }
+        CreateTimer(30.0, BossHPTimer);
       }
       case 2: {
         this.EmitSpawnSound(2);
@@ -713,6 +757,11 @@ public Action QueueBossSound(Handle timer, int sound) {
     }
   }
   return Plugin_Stop;
+}
+
+//When a boss spawns - delayed by 3s to give vars time to update.
+public Action OnBossSpawn_Post(Handle timer, int hp) {
+  SCR_SendEvent("Boss Spawned", BossHandler.bossID == 0 ? "Onslaughter has spawned with %i HP!" : BossHandler.bossID == 1 ? "Sephiroth has spawned with %i HP!" : "Metal Face has spawned with %i HP!", hp); return Plugin_Stop;
 }
 
 //Teleport all entities to the client every frame
