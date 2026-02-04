@@ -1,5 +1,6 @@
  //Bomb states (note to self, any additions made to this array for custom things like shop purchases or boss events should be at the END of the array, prioritize actual bombs first so as not to break anything in the event we add more bombs.. and remember to adjust bombstate[x].explode(false) in the .sp file)
-int g_BombIndex; // TODO: Use this for the bombstate index instead of having 9 copies of it in the array below lmao
+int g_BombIndex;
+bool isGoobbue;
 enum struct BOMBREGISTRY {
   bool canHindenburg;
   bool canSENTStars;
@@ -83,6 +84,13 @@ methodmap BOMBCONTROLLER {
     g_BombIndex = 0;
     BombRegistry[0].stateMax = 10;
   }
+  public void StartPush() {
+    BombRegistry[0].isMoving = true;
+    CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}Your team is pushing a %s.", this.getCurBomb().name);
+    FastFire2("FB.PayloadWarning", "Enable", "", 0.0);
+    if (g_BombIndex == 48) CreateTimer(3.0, SharkTimer);
+    if (SCR_IsAvailable()) SCR_SendEvent("[Bomb State]", "The team is currently pushing a %s.", this.getCurBomb().name);
+  }
 }
 BOMBCONTROLLER Bombs;
 
@@ -101,9 +109,10 @@ public Action BombStatusUpdater(Handle timer) {
           FastFire2(BombRegistry[curBomb].identifier, "Enable");
           CustomSoundEmitter(SFXArray[56].realPath, 65, false, 0, 1.0, 100);
           CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {forestgreen}Your team's %s {forestgreen}is now available for deployment!", BombRegistry[curBomb].name);
+          if (SCR_IsAvailable()) SCR_SendEvent("[Bomb State]", "The team's %s is now available for deployment!", Bombs.getCurBomb().name);
         }
       }
-    } else if (g_BombIndex > BombRegistry[0].stateMax)g_BombIndex = Bombs.getUpperLimit();
+    } else if (g_BombIndex > BombRegistry[0].stateMax) g_BombIndex = Bombs.getUpperLimit();
   }
   return Plugin_Stop;
 }

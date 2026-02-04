@@ -7,10 +7,11 @@
  *        IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
 
-public char PLUGIN_VERSION[8] = "9.4.2";
+public char PLUGIN_VERSION[8] = "9.4.3";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
+#include <fartsy/tf2_damagebits>
 #include <fartsy/newcolors>
 #include <fartsy/fastfire2>
 #include <fartsy/ass_discord>
@@ -40,7 +41,7 @@ public Plugin myinfo = {
 };
 
 public void OnPluginStart() {
-  if (GetExtensionFileStatus("smjansson.ext") != 1) { SetFailState("Required extension (smjansson) is not loaded!"); return; }
+  if (GetExtensionFileStatus("smjansson.ext") != 1) { SetFailState("Required extension (smjansson) is not loaded!"); }
   AssLogger(LOGLVL_INFO, "Starting up Fartsy's Framework! Waiting for Map Start...");
 }
 

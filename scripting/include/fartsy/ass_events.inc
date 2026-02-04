@@ -83,12 +83,13 @@ public void OnWaveBegin(Event bgEvent, const char[] bgName, bool bgBroadcast) {
 }
 // When a wave starts. Delayed by 3 seconds so vars have time to update.
 public Action OnWaveBegin_Post(Handle timer) {
-  SCR_SendEvent("Wave Started", "[CORE] Wave %i started! \n[AudioManager] Now playing %s", WaveSystem().GetWave(), BGMArray[g_indexBGM].songName); return Plugin_Stop;
+  if (SCR_IsAvailable()) SCR_SendEvent("Wave Started", "[CORE] Wave %i started! \n[AudioManager] Now playing %s", WaveSystem().GetWave(), BGMArray[g_indexBGM].songName); return Plugin_Stop;
 }
 //When we win
 public Action EventWaveComplete(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   sudo(300);
   CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}You've defeated the wave!");
+  if (SCR_IsAvailable()) SCR_SendEvent("Wave Complete", "The wave has been defeated.");
   return Plugin_Continue;
 }
 
@@ -99,17 +100,18 @@ public Action EventWarning(Event Spawn_Event, const char[] Spawn_Name, bool Spaw
     char fs[256];
     strcopy(fs, 256, failsafe[GetRandomInt(0, sizeof(failsafe) - 1)]);
     CPrintToChatAll("%s Counter: %i", fs, core.failsafeCount);
-    SCR_SendEvent("FAILSAFE TRIGGERED", fs);
+    if (SCR_IsAvailable()) SCR_SendEvent("FAILSAFE TRIGGERED", "%s, Counter: %i", fs, core.failsafeCount);
     EmitSoundToAll(SFXArray[55].realPath);
     PerformWaveFailsafe(GetRandomInt(0, 1));
     core.doFailsafe = false;
-  } else CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {darkred}PROFESSOR'S ASS IS ABOUT TO BE DEPLOYED!!!");
+  } else CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {darkred}PROFESSOR'S ASS IS ABOUT TO BE DEPLOYED!!!"); if (SCR_IsAvailable()) SCR_SendEvent("WARNING", "PROFESSOR'S ASS IS ABOUT TO BE DEPLOYED!!!");
   return Plugin_Handled;
 }
 
 //When the wave fails
 public Action EventWaveFailed(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   CPrintToChatAll("{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Wave {red}failed {white}successfully!");
+  if (SCR_IsAvailable()) SCR_SendEvent("Wave Failed", "Wave failed!");
   sudo(300);
   return Plugin_Continue;
 }
@@ -123,6 +125,7 @@ public Action SacrificeClient(int client, int attacker, bool wasBombReset) {
     int steamID = GetSteamAccountID(attacker);
     if (!Ass_Database || !steamID) return Plugin_Handled;
     char query[256];
+    if (wasBombReset) { if (SCR_IsAvailable()) SCR_SendEvent("Bomb Reset", "%N reset the bomb by sacrificing %N!", attacker, client);}
     CPrintToChatAll(wasBombReset ? "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Client {red}%N {white}has reset the ass! ({limegreen}+5 pts{white})" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}Client {red}%N {white}has sacrificed {blue}%N {white}for the ass! ({limegreen}+1 pt{white})", attacker, client);
     Format(query, sizeof(query), wasBombReset ? "UPDATE ass_activity SET bombsreset = bombsreset + 1, bombsresetsession = bombsresetsession + 1 WHERE steamid = %i;" : "UPDATE ass_activity SET sacrifices = sacrifices + 1, sacrificessession = sacrificessession + 1 WHERE steamid = %i;", steamID);
     Ass_Database.Query(Database_FastQuery, query);
@@ -160,133 +163,134 @@ void SendDeathLog(int attacker, int client, int damagebits, const char[] wep) {
   char weapon[32];
   strcopy(weapon, sizeof(weapon), wep);
   if (IsValidClient(attacker) && core.sacrificedByClient) SacrificeClient(client, attacker, core.bombReset); else if (IsFakeClient(attacker) && WaveSystem().IsWaveNull() && core.sacrificedByClient) { CPrintToChatAll("Oh dear, {red} %N has sacrificed %N!", attacker, client); }
-  switch (damagebits) {
-    case 1: {  //CRUSH
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was crushed by a {red}FALLING ROCK FROM OUTER SPACE{white}!", client);
-      weapon = "Meteor to the Face";
-    }
-    case 8: {  //BURN
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}MELTED{white}.", client);
-      weapon = "Melted by Sharts or Ass Gas";
-    }
-    case 16: {  //FREEZE
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was flattened out by a {red}TRAIN{white}!", client);
-      weapon = "Attempted Train Robbery";
-    }
-    case 32: {  //FALL
-      if (WeatherManager.hasTornado) {
-        switch (GetClientTeam(client)) {
-          case 2: {
-            CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}%s{white}!", client, DeathMessage[GetRandomInt(0, 5)]);
-            weapon = "Yeeted into Orbit via Tornado";
-          }
-          case 3: {
-            CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}%s{white}! ({limegreen}+1 pt{white})", client, DeathMessage[GetRandomInt(0, 5)]);
-            ass_sacPoints++;
-            CustomSoundEmitter(SFXArray[GetRandomInt(11, 26)].realPath, 65, false, 0, 1.0, 100);
-          }
+  if (damagebits & DMG_CRUSH) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was crushed by a {red}FALLING ROCK FROM OUTER SPACE{white}!", client);
+    strcopy(weapon, sizeof(weapon), "Meteor to the Face");
+  }
+  if (damagebits & DMG_BURN) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}MELTED{white}.", client);
+    strcopy(weapon, sizeof(weapon), "Melted by Sharts or Ass Gas");
+  }
+  if (damagebits & DMG_FREEZE) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was flattened out by a {red}TRAIN{white}!", client);
+    strcopy(weapon, sizeof(weapon), "Attempted Train Robbery");
+  }
+  if (damagebits & DMG_FALL) {
+    if (WeatherManager.hasTornado) {
+      switch (GetClientTeam(client)) {
+        case 2: {
+          CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}%s{white}!", client, DeathMessage[GetRandomInt(0, 5)]);
+          strcopy(weapon, sizeof(weapon), "Yeeted into Orbit via Tornado");
         }
-      } else {
-        CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N fell to a {red}CLUMSY PAINFUL DEATH{white}!", client);
-        weapon = "Tripped on a LEGO";
-      }
-    }
-    case 64: {  //BLAST
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N went {red} KABOOM{white}!", client);
-      weapon = "Gone Kaboom!";
-    }
-    case 128: {  //CLUB
-      if (core.canHindenburg) {
-        CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N is {red}CRASHING THE HINDENBURG{white}!!!", client);
-        weapon = "Crashing the Hindenburg";
-      }
-    }
-    case 256: {  //SHOCK
-      if (core.CodeEntry > 0) {
-        CPrintToChatAll("{darkviolet}[{red}EXTERMINATUS{darkviolet}] {white}Client %N has humliated themselves with an {red}incorrect {white}key entry!", client);
-        weapon = "Failed FB Code Entry";
-        int i = GetRandomInt(1, 16);
-        switch (i) {
-          case 1, 3, 10: {
-            FastFire2("BG.Meteorites1", "ForceSpawn");
-            CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {white}Uh oh, a {red}METEOR{white}has been spotted coming towards Dovah's Ass!!!");
-            FastFire2("bg.meteorite1", "StartForward", "", 0.1);
-          }
-          case 2, 5, 16: {
-            CreateTimer(0.5, TimedOperator, 71);
-            FastFire2("FB.TankTrain", "TeleportToPathTrack", "Tank01");
-            FastFire2("FB.TankTrain", "StartForward", "", 0.25);
-            FastFire2("FB.TankTrain", "SetSpeed", "1", 0.35);
-            FastFire2("FB.Tank", "Enable", "", 1.0);
-          }
-          case 4, 8, 14: {
-            CustomSoundEmitter("ambient/alarms/train_horn_distant1.wav", 65, false, 0, 1.0, 100);
-            FastFire2("TrainSND", "PlaySound");
-            FastFire2("TrainDamage", "Enable");
-            FastFire2("Train01", "Enable");
-            CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {orange}KISSONE'S TRAIN{white}is {red}INCOMING{white}. Look out!");
-            FastFire2("TrainTrain", "TeleportToPathTrack", "TrainTrack01");
-            FastFire2("TrainTrain", "StartForward", "", 0.1);
-          }
-          case 6, 9: {
-            WeatherManager.canTornado = true;
-            CreateTimer(1.0, TimedOperator, 41);
-          }
-          case 7, 13: {
-            CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {white}Uh oh, it appears to have started raining a {red}METEOR SHOWER{white}!!!");
-            core.canSENTMeteors = true;
-            CreateTimer(1.0, SENTMeteorTimer);
-            CreateTimer(30.0, TimedOperator, 12);
-          }
-          case 11: {
-            FastFire2("FB.Slice", "Enable");
-            CustomSoundEmitter("ambient/sawblade_impact1.wav", 65, false, 0, 1.0, 100);
-            FastFire2("FB.Slice", "Disable", "", 1.0);
-          }
+        case 3: {
+          CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}%s{white}! ({limegreen}+1 pt{white})", client, DeathMessage[GetRandomInt(0, 5)]);
+          ass_sacPoints++;
+          CustomSoundEmitter(SFXArray[GetRandomInt(11, 26)].realPath, 65, false, 0, 1.0, 100);
         }
       }
-    }
-    case 512: {  //SONIC
-      CPrintToChatAll("{darkviolet}[{red}EXTERMINATUS{darkviolet}] {white}Client %N has sacrificed themselves with a {forestgreen}correct {white}key entry! Prepare your anus!", client);
-      sudo(1006);
-      weapon = "Correct FB Code Entry";
-    }
-    case 1024: {  //ENERGYBEAM
-      char EnergyDeath[32];
-      Format(EnergyDeath, sizeof(EnergyDeath), (crusader ? "THE CRUSADER" : core.waveFlags == 1 ? "ONSLAUGHTER" : "LIGHTNING"));
-      weapon = (crusader ? "Crusader" : core.waveFlags == 1 ? "Onslaughter" : "Lightning");
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been %s by {red}%s{white}!", client, (crusader ? "nuked" : core.waveFlags == 1 ? "deleted" : "struck"), EnergyDeath);
-    }
-    case 16384: {  //DROWN
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N {red}DROWNED{white}.", client);
-      weapon = "Darwin Award for Drowning";
-    }
-    case 32768: {  //PARALYZE
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been crushed by a {darkviolet}MYSTERIOUS BLUE BALL{white}!", client);
-      weapon = "Mysterious Blue Ball";
-    }
-    case 65536: {  //NERVEGAS
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been {red}SLICED TO RIBBONS{white}!", client);
-      weapon = "FB Code Entry Failed";
-    }
-    case 131072: {  //POISON
-      CPrintToChat(client, "{darkviolet}[{red}CORE{darkviolet}] {white}Please don't sit {red}IDLE {white}in the FC Tavern.");
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was killed for standing in the Tavern instead of helping their team!", client);
-      weapon = "Idle in FC Tavern..?";
-    }
-    case 262144: {  //RADIATION
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was blown away by a {red}NUCLEAR EXPLOSION{white}!", client);
-      weapon = "Nuclear Explosion";
-    }
-    case 524288: {  //DROWNRECOVER
-      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N experienced {red}TACO BELL{white}!", client);
-      weapon = "Taco Bell";
-    }
-    case 1048576: {  //ACID
-      CPrintToChatAll(isGoobbue ? "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been crushed by a {forestgreen}FALLING GOOBBUE FROM OUTER SPACE{white}!" : "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was deleted by {orange}AN AREA OF EFFECT{white}!", client);
-      weapon = isGoobbue ? "Falling Goobbue" : "AREA_EFFECT";
+    } else {
+      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N fell to a {red}CLUMSY PAINFUL DEATH{white}!", client);
+      strcopy(weapon, sizeof(weapon), "Tripped on a LEGO");
     }
   }
+  if (damagebits & DMG_BLAST) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N went {red} KABOOM{white}!", client);
+    strcopy(weapon, sizeof(weapon), "Gone Kaboom!");
+  }
+  if (damagebits & DMG_CLUB) {
+    if (core.canHindenburg) {
+      CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N is {red}CRASHING THE HINDENBURG{white}!!!", client);
+      strcopy(weapon, sizeof(weapon), "Crashing the Hindenburg");
+      if (SCR_IsAvailable()) SCR_SendEvent("OH GOD", "CLIENT %N IS **CRASHING THE HINDENBURG**!!!", client);
+    }
+  }
+  if (damagebits & DMG_SHOCK) {
+    if (core.CodeEntry > 0) {
+      CPrintToChatAll("{darkviolet}[{red}EXTERMINATUS{darkviolet}] {white}Client %N has humliated themselves with an {red}incorrect {white}key entry!", client);
+      strcopy(weapon, sizeof(weapon), "Failed FB Code Entry");
+      int i = GetRandomInt(1, 16);
+      switch (i) {
+        case 1, 3, 10: {
+          FastFire2("BG.Meteorites1", "ForceSpawn");
+          CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {white}Uh oh, a {red}METEOR{white}has been spotted coming towards Dovah's Ass!!!");
+          FastFire2("bg.meteorite1", "StartForward", "", 0.1);
+        }
+        case 2, 5, 16: {
+          CreateTimer(0.5, TimedOperator, 71);
+          FastFire2("FB.TankTrain", "TeleportToPathTrack", "Tank01");
+          FastFire2("FB.TankTrain", "StartForward", "", 0.25);
+          FastFire2("FB.TankTrain", "SetSpeed", "1", 0.35);
+          FastFire2("FB.Tank", "Enable", "", 1.0);
+        }
+        case 4, 8, 14: {
+          CustomSoundEmitter("ambient/alarms/train_horn_distant1.wav", 65, false, 0, 1.0, 100);
+          FastFire2("TrainSND", "PlaySound");
+          FastFire2("TrainDamage", "Enable");
+          FastFire2("Train01", "Enable");
+          CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {orange}KISSONE'S TRAIN{white}is {red}INCOMING{white}. Look out!");
+          FastFire2("TrainTrain", "TeleportToPathTrack", "TrainTrack01");
+          FastFire2("TrainTrain", "StartForward", "", 0.1);
+        }
+        case 6, 9: {
+          WeatherManager.canTornado = true;
+          CreateTimer(1.0, TimedOperator, 41);
+        }
+        case 7, 13: {
+          CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {white}Uh oh, it appears to have started raining a {red}METEOR SHOWER{white}!!!");
+          core.canSENTMeteors = true;
+          CreateTimer(1.0, SENTMeteorTimer);
+          CreateTimer(30.0, TimedOperator, 12);
+        }
+        case 11: {
+          FastFire2("FB.Slice", "Enable");
+          CustomSoundEmitter("ambient/sawblade_impact1.wav", 65, false, 0, 1.0, 100);
+          FastFire2("FB.Slice", "Disable", "", 1.0);
+        }
+      }
+      if (SCR_IsAvailable()) SCR_SendEvent("Incorrect Code Entry!", "Client %N has sacrificed themselves with an **INCORRECT KEY ENTRY**!", client);
+    }
+  }
+  if (damagebits & DMG_SONIC) {
+    CPrintToChatAll("{darkviolet}[{red}EXTERMINATUS{darkviolet}] {white}Client %N has sacrificed themselves with a {forestgreen}correct {white}key entry! Prepare your anus!", client);
+    sudo(1006);
+    strcopy(weapon, sizeof(weapon), "Correct FB Code Entry");
+    if (SCR_IsAvailable()) SCR_SendEvent("Correct Code Entry!", "Client %N has sacrificed themselves with a **CORRECT KEY ENTRY**! Bringing in the **EXTERMINATUS**!", client);
+  }
+  if (damagebits & DMG_ENERGYBEAM) {
+    strcopy(weapon, sizeof(weapon), crusader ? "THE EXTERMINATUS" : core.waveFlags == 1 ? "ONSLAUGHTER" : "Lightning");
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been %s by {red}%s{white}!", client, (crusader ? "nuked" : core.waveFlags == 1 ? "deleted" : "struck"), weapon);
+    if (SCR_IsAvailable() && (crusader || core.waveFlags == 1)) SCR_SendEvent("Exterminated", "Client %N has been **%s** by **%s**!", client, crusader ? "nuked" : "deleted", weapon);
+  }
+  if (damagebits & DMG_DROWN) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N {red}DROWNED{white}.", client);
+    strcopy(weapon, sizeof(weapon), "Darwin Award for Drowning");
+  }
+  if (damagebits & DMG_PARALYZE) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been crushed by a {darkviolet}MYSTERIOUS BLUE BALL{white}!", client);
+    strcopy(weapon, sizeof(weapon), "Mysterious Blue Ball");
+  }
+  if (damagebits & DMG_NERVEGAS) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been {red}SLICED TO RIBBONS{white}!", client);
+    strcopy(weapon, sizeof(weapon), "FB Code Entry Failed");
+  }
+  if (damagebits & DMG_POISON) {
+    CPrintToChat(client, "{darkviolet}[{red}CORE{darkviolet}] {white}Please don't sit {red}IDLE {white}in the FC Tavern.");
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was killed for standing in the Tavern instead of helping their team!", client);
+    strcopy(weapon, sizeof(weapon), "Idle in FC Tavern..?");
+  }
+  if (damagebits & DMG_RADIATION) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was blown away by a {red}NUCLEAR EXPLOSION{white}!", client);
+    strcopy(weapon, sizeof(weapon), "Nuclear Explosion");
+  }
+  if (damagebits & DMG_DROWNRECOVER) {
+    CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N experienced {red}TACO BELL{white}!", client);
+    strcopy(weapon, sizeof(weapon), "Taco Bell");
+  }
+  if (damagebits & DMG_ACID) {
+    CPrintToChatAll(isGoobbue ? "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been crushed by a {forestgreen}FALLING GOOBBUE FROM OUTER SPACE{white}!" : "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was deleted by {orange}AN AREA OF EFFECT{white}!", client);
+    strcopy(weapon, sizeof(weapon), isGoobbue ? "Falling Goobbue" : "AREA_EFFECT");
+  }
+
   //Log if a player killed someone or was killed by a robot
   if (attacker != client && Ass_Database) {
     char query[256];
