@@ -102,6 +102,7 @@ public int MenuHandlerFartsysAss(Menu menu, MenuAction action, int client, int i
     }
     else sudo(ass[item].purchase);
     AssLogger(LOGLVL_INFO, "%N opted for %s via the A.S.S.", client, ass[item].name);
+    SCR_SendEvent("SacPoints Item Purchased", "%N opted for %s via the A.S.S.", client, ass[item].name);
   } else if (action == MenuAction_End) CloseHandle(menu);
   return 0;
 }

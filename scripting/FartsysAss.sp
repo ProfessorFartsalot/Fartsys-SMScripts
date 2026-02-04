@@ -7,12 +7,13 @@
  *        IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
 
-public char PLUGIN_VERSION[8] = "9.4.0";
+public char PLUGIN_VERSION[8] = "9.4.2";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
 #include <fartsy/newcolors>
 #include <fartsy/fastfire2>
+#include <fartsy/ass_discord>
 #include <fartsy/ass_database>
 #include <fartsy/ass_serverutils>
 #include <fartsy/ass_enhancer>

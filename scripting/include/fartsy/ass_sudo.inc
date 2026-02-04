@@ -32,58 +32,10 @@ void sudo(int task) {
           return;
         }
         case 1: {
-          BossHandler.bossID = 0;
-          BossHandler.isAlive = true;
-          BossHandler.shouldTick = true;
-          FastFire2("FB.OnslaughterBase", "SetModelScale", "0.19", 0.0);
-          FastFire2("FB.BruteJusticeTrain", "TeleportToPathTrack", "tank_path_a_10", 0.0);
-          FastFire2("FB.BruteJustice", "Enable", "", 3.0);
-          FastFire2("FB.BruteJusticeTrain", "StartForward", "", 3.0);
-          FastFire2("FB.BruteJusticeParticles", "Start", "", 3.0);
-          CreateTimer(5.0, OnslaughterATK);
-          FastFire2("tank_boss", "AddOutput", "rendermode 10", 3.0);
-          FastFire2("tank_boss", "AddOutput", "rendermode 10", 7.0);
-          CreateTimer(10.0, BossHPTimer);
+          BossHandler.OnSpawned(0);
         }
         case 2: {
-          FastFire2("FB.Sephiroth", "Enable", "", 0.0);
-          FastFire2("SephMeteor", "SetParent", "FB.Sephiroth", 0.0);
-          FastFire2("SephTrain", "SetSpeedReal", "12", 0.0);
-          FastFire2("SephTrain", "TeleportToPathTrack", "Seph01", 0.0);
-          FastFire2("SephTrain", "StartForward", "", 0.1);
-          FastFire2("SephTrain", "SetSpeedReal", "12", 20.5);
-          FastFire2("FB.SephParticles", "Start", "", 3.0);
-          FastFire2("tank_boss", "AddOutput", "rendermode 10", 3.0);
-          FastFire2("tank_boss", "AddOutput", "rendermode 10", 7.0);
-          FastFire2("FB.BruteJusticeDMGRelay", "Kill", "", 0.0);
-          switch (GetClientCount(true)) {
-            case 1: {
-              FastFire2("SephTrain", "SetSpeedReal", "40", 23.0);
-              FastFire2("tank_boss", "SetHealth", "409600", 1.0);
-              FastFire2("FB.SephDMGRelay", "SetHealth", "32768000", 1.0);
-            }
-            case 2: {
-              FastFire2("SephTrain", "SetSpeedReal", "35", 23.0);
-              FastFire2("tank_boss", "SetHealth", "614400", 1.0);
-              FastFire2("FB.SephDMGRelay", "SetHealth", "32768000", 1.0);
-            }
-            case 3: {
-              FastFire2("SephTrain", "SetSpeedReal", "35", 23.0);
-              FastFire2("tank_boss", "SetHealth", "614400", 1.0);
-              FastFire2("FB.SephDMGRelay", "SetHealth", "131072000", 1.0);
-            }
-            case 4: {
-              FastFire2("SephTrain", "SetSpeedReal", "30", 23.0);
-              FastFire2("tank_boss", "SetHealth", "819200", 1.0);
-              FastFire2("FB.SephDMGRelay", "SetHealth", "262144000", 1.0);
-            }
-            case 5, 6, 7, 8, 9, 10: {
-              FastFire2("SephTrain", "SetSpeedReal", "25", 23.0);
-              FastFire2("tank_boss", "SetHealth", "819200", 1.0);
-              FastFire2("FB.SephDMGRelay", "SetHealth", "655360000", 1.0);
-            }
-          }
-          CreateTimer(30.0, BossHPTimer);
+          BossHandler.OnSpawned(1);
         }
       }
     }
@@ -548,7 +500,7 @@ void sudo(int task) {
     }
   //Spawn metal face
     case 135: {
-      BossHandler.TriggerSpawn(2);
+      BossHandler.OnSpawned(2);
     }
   //Metal Face dead
     case 136: {
@@ -570,7 +522,7 @@ void sudo(int task) {
       FastFire2("FB.MetalFace.GigaBuster.Explosion", "Kill");
       FastFire2("FB.MetalFace.GigaBusterMDL", "Kill");
       FastFire2("FB.MetalFace.GigaBusterSND", "Kill");
-      BossHandler.TriggerDeath();
+      BossHandler.OnKilled();
     }
   //Debug, somethingsomething aoe blah blah blah
     case 200: {

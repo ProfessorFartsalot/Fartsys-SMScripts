@@ -72,15 +72,19 @@ public void EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Br
   Spawn_Event.GetString("weapon", weapon, sizeof(weapon));
   // Set up damagebits
   int damagebits = Spawn_Event.GetInt("damagebits");
-  if (!attacker) { SendDeathLog(attacker, client, damagebits, weapon); }
+  SendDeathLog(attacker, client, damagebits, weapon);
 }
 
 // When a wave starts. Defeats the need for operator 2 in most cases.
 public void OnWaveBegin(Event bgEvent, const char[] bgName, bool bgBroadcast) {
+  CreateTimer(3.0, OnWaveBegin_Post);
   WaveSystem().run();
   return;
 }
-
+// When a wave starts. Delayed by 3 seconds so vars have time to update.
+public Action OnWaveBegin_Post(Handle timer) {
+  SCR_SendEvent("Wave Started", "[CORE] Wave %i started! \n[AudioManager] Now playing %s", WaveSystem().GetWave(), BGMArray[g_indexBGM].songName); return Plugin_Stop;
+}
 //When we win
 public Action EventWaveComplete(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   sudo(300);
@@ -92,7 +96,10 @@ public Action EventWaveComplete(Event Spawn_Event, const char[] Spawn_Name, bool
 public Action EventWarning(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Broadcast) {
   if (core.doFailsafe) {
     core.failsafeCount++;
-    CPrintToChatAll("%s Counter: %i", failsafe[GetRandomInt(0, sizeof(failsafe) - 1)], core.failsafeCount);
+    char fs[256];
+    strcopy(fs, 256, failsafe[GetRandomInt(0, sizeof(failsafe) - 1)]);
+    CPrintToChatAll("%s Counter: %i", fs, core.failsafeCount);
+    SCR_SendEvent("FAILSAFE TRIGGERED", fs);
     EmitSoundToAll(SFXArray[55].realPath);
     PerformWaveFailsafe(GetRandomInt(0, 1));
     core.doFailsafe = false;
@@ -152,7 +159,7 @@ void SendDeathLog(int attacker, int client, int damagebits, const char[] wep) {
   Format(name, sizeof(name), attacker == 0 ? "[INTENTIONAL GAME DESIGN]" : "%N", IsValidClient(attacker) ? client : attacker);
   char weapon[32];
   strcopy(weapon, sizeof(weapon), wep);
-  if (IsValidClient(attacker) && core.sacrificedByClient) SacrificeClient(client, attacker, core.bombReset);
+  if (IsValidClient(attacker) && core.sacrificedByClient) SacrificeClient(client, attacker, core.bombReset); else if (IsFakeClient(attacker) && WaveSystem().IsWaveNull() && core.sacrificedByClient) { CPrintToChatAll("Oh dear, {red} %N has sacrificed %N!", attacker, client); }
   switch (damagebits) {
     case 1: {  //CRUSH
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was crushed by a {red}FALLING ROCK FROM OUTER SPACE{white}!", client);
