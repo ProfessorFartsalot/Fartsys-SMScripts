@@ -72,7 +72,7 @@ public void EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_Br
   Spawn_Event.GetString("weapon", weapon, sizeof(weapon));
   // Set up damagebits
   int damagebits = Spawn_Event.GetInt("damagebits");
-  if (!attacker) { SendDeathLog(attacker, client, damagebits, weapon); }
+  SendDeathLog(attacker, client, damagebits, weapon);
 }
 
 // When a wave starts. Defeats the need for operator 2 in most cases.
