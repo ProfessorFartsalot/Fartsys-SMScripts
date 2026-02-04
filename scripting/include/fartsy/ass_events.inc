@@ -94,7 +94,7 @@ public Action EventWarning(Event Spawn_Event, const char[] Spawn_Name, bool Spaw
     core.failsafeCount++;
     CPrintToChatAll("%s Counter: %i", failsafe[GetRandomInt(0, sizeof(failsafe) - 1)], core.failsafeCount);
     EmitSoundToAll(SFXArray[55].realPath);
-    PerformWaveFailsafe(GetRandomInt(0,1));
+    PerformWaveFailsafe(GetRandomInt(0, 1));
     core.doFailsafe = false;
   } else CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {darkred}PROFESSOR'S ASS IS ABOUT TO BE DEPLOYED!!!");
   return Plugin_Handled;
@@ -136,7 +136,7 @@ public void OnClientPostAdminCheck(int client) {
       CreateTimer(1.0, TickClientHealth);
       core.tickingClientHealth = true;
     }
-    if(!IsFakeClient(client)) AudioManager.OnClientConnected(client);
+    if (!IsFakeClient(client)) AudioManager.OnClientConnected(client);
     char query[1024];
     Format(query, sizeof(query), "INSERT INTO ass_activity (name, steamid, date, damagedealtsession, killssession, deathssession, bombsresetsession, sacrificessession) VALUES ('%N', %d, CURRENT_DATE, 0, 0, 0, 0, 0) ON DUPLICATE KEY UPDATE name = '%N', date = CURRENT_DATE, damagedealtsession = 0, killssession = 0, deathssession = 0, bombsresetsession = 0, sacrificessession = 0;", client, steamID, client);
     Ass_Database.Query(Database_FastQuery, query);
@@ -154,19 +154,19 @@ void SendDeathLog(int attacker, int client, int damagebits, const char[] wep) {
   strcopy(weapon, sizeof(weapon), wep);
   if (IsValidClient(attacker) && core.sacrificedByClient) SacrificeClient(client, attacker, core.bombReset);
   switch (damagebits) {
-    case 1: { //CRUSH
+    case 1: {  //CRUSH
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was crushed by a {red}FALLING ROCK FROM OUTER SPACE{white}!", client);
       weapon = "Meteor to the Face";
     }
-    case 8: { //BURN
+    case 8: {  //BURN
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was {red}MELTED{white}.", client);
       weapon = "Melted by Sharts or Ass Gas";
     }
-    case 16: { //FREEZE
+    case 16: {  //FREEZE
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was flattened out by a {red}TRAIN{white}!", client);
       weapon = "Attempted Train Robbery";
     }
-    case 32: { //FALL
+    case 32: {  //FALL
       if (WeatherManager.hasTornado) {
         switch (GetClientTeam(client)) {
           case 2: {
@@ -184,42 +184,42 @@ void SendDeathLog(int attacker, int client, int damagebits, const char[] wep) {
         weapon = "Tripped on a LEGO";
       }
     }
-    case 64: { //BLAST
+    case 64: {  //BLAST
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N went {red} KABOOM{white}!", client);
       weapon = "Gone Kaboom!";
     }
-    case 128: { //CLUB
+    case 128: {  //CLUB
       if (core.canHindenburg) {
         CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N is {red}CRASHING THE HINDENBURG{white}!!!", client);
         weapon = "Crashing the Hindenburg";
       }
     }
-    case 256: { //SHOCK
-      if(core.CodeEntry > 0) {
+    case 256: {  //SHOCK
+      if (core.CodeEntry > 0) {
         CPrintToChatAll("{darkviolet}[{red}EXTERMINATUS{darkviolet}] {white}Client %N has humliated themselves with an {red}incorrect {white}key entry!", client);
         weapon = "Failed FB Code Entry";
         int i = GetRandomInt(1, 16);
         switch (i) {
           case 1, 3, 10: {
-            FastFire2("BG.Meteorites1", "ForceSpawn", "", 0.0, false);
+            FastFire2("BG.Meteorites1", "ForceSpawn");
             CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {white}Uh oh, a {red}METEOR{white}has been spotted coming towards Dovah's Ass!!!");
-            FastFire2("bg.meteorite1", "StartForward", "", 0.1, false);
+            FastFire2("bg.meteorite1", "StartForward", "", 0.1);
           }
           case 2, 5, 16: {
             CreateTimer(0.5, TimedOperator, 71);
-            FastFire2("FB.TankTrain", "TeleportToPathTrack", "Tank01", 0.0, false);
-            FastFire2("FB.TankTrain", "StartForward", "", 0.25, false);
-            FastFire2("FB.TankTrain", "SetSpeed", "1", 0.35, false);
-            FastFire2("FB.Tank", "Enable", "", 1.0, false);
+            FastFire2("FB.TankTrain", "TeleportToPathTrack", "Tank01");
+            FastFire2("FB.TankTrain", "StartForward", "", 0.25);
+            FastFire2("FB.TankTrain", "SetSpeed", "1", 0.35);
+            FastFire2("FB.Tank", "Enable", "", 1.0);
           }
           case 4, 8, 14: {
             CustomSoundEmitter("ambient/alarms/train_horn_distant1.wav", 65, false, 0, 1.0, 100);
-            FastFire2("TrainSND","PlaySound", "", 0.0, false);
-            FastFire2("TrainDamage", "Enable", "", 0.0, false);
-            FastFire2("Train01", "Enable", "", 0.0, false);
+            FastFire2("TrainSND", "PlaySound");
+            FastFire2("TrainDamage", "Enable");
+            FastFire2("Train01", "Enable");
             CPrintToChatAll("{darkviolet}[{red}WARN{darkviolet}] {orange}KISSONE'S TRAIN{white}is {red}INCOMING{white}. Look out!");
-            FastFire2("TrainTrain", "TeleportToPathTrack", "TrainTrack01", 0.0, false);
-            FastFire2("TrainTrain", "StartForward", "", 0.1, false);
+            FastFire2("TrainTrain", "TeleportToPathTrack", "TrainTrack01");
+            FastFire2("TrainTrain", "StartForward", "", 0.1);
           }
           case 6, 9: {
             WeatherManager.canTornado = true;
@@ -232,51 +232,51 @@ void SendDeathLog(int attacker, int client, int damagebits, const char[] wep) {
             CreateTimer(30.0, TimedOperator, 12);
           }
           case 11: {
-            FastFire2("FB.Slice", "Enable", "", 0.0, false);
+            FastFire2("FB.Slice", "Enable");
             CustomSoundEmitter("ambient/sawblade_impact1.wav", 65, false, 0, 1.0, 100);
-            FastFire2("FB.Slice", "Disable", "", 1.0, false);
+            FastFire2("FB.Slice", "Disable", "", 1.0);
           }
         }
       }
     }
-    case 512: { //SONIC
+    case 512: {  //SONIC
       CPrintToChatAll("{darkviolet}[{red}EXTERMINATUS{darkviolet}] {white}Client %N has sacrificed themselves with a {forestgreen}correct {white}key entry! Prepare your anus!", client);
       sudo(1006);
       weapon = "Correct FB Code Entry";
     }
-    case 1024: { //ENERGYBEAM
+    case 1024: {  //ENERGYBEAM
       char EnergyDeath[32];
       Format(EnergyDeath, sizeof(EnergyDeath), (crusader ? "THE CRUSADER" : core.waveFlags == 1 ? "ONSLAUGHTER" : "LIGHTNING"));
       weapon = (crusader ? "Crusader" : core.waveFlags == 1 ? "Onslaughter" : "Lightning");
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been %s by {red}%s{white}!", client, (crusader ? "nuked" : core.waveFlags == 1 ? "deleted" : "struck"), EnergyDeath);
     }
-    case 16384: { //DROWN
+    case 16384: {  //DROWN
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N {red}DROWNED{white}.", client);
       weapon = "Darwin Award for Drowning";
     }
-    case 32768: { //PARALYZE
+    case 32768: {  //PARALYZE
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been crushed by a {darkviolet}MYSTERIOUS BLUE BALL{white}!", client);
       weapon = "Mysterious Blue Ball";
     }
-    case 65536: { //NERVEGAS
+    case 65536: {  //NERVEGAS
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been {red}SLICED TO RIBBONS{white}!", client);
       weapon = "FB Code Entry Failed";
     }
-    case 131072: { //POISON
+    case 131072: {  //POISON
       CPrintToChat(client, "{darkviolet}[{red}CORE{darkviolet}] {white}Please don't sit {red}IDLE {white}in the FC Tavern.");
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was killed for standing in the Tavern instead of helping their team!", client);
       weapon = "Idle in FC Tavern..?";
     }
-    case 262144: { //RADIATION
+    case 262144: {  //RADIATION
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was blown away by a {red}NUCLEAR EXPLOSION{white}!", client);
       weapon = "Nuclear Explosion";
     }
-    case 524288: { //DROWNRECOVER
+    case 524288: {  //DROWNRECOVER
       CPrintToChatAll("{darkviolet}[{red}CORE{darkviolet}] {white}Client %N experienced {red}TACO BELL{white}!", client);
       weapon = "Taco Bell";
     }
-    case 1048576: { //ACID
-      CPrintToChatAll( isGoobbue ? "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been crushed by a {forestgreen}FALLING GOOBBUE FROM OUTER SPACE{white}!" : "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was deleted by {orange}AN AREA OF EFFECT{white}!", client);
+    case 1048576: {  //ACID
+      CPrintToChatAll(isGoobbue ? "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N has been crushed by a {forestgreen}FALLING GOOBBUE FROM OUTER SPACE{white}!" : "{darkviolet}[{red}CORE{darkviolet}] {white}Client %N was deleted by {orange}AN AREA OF EFFECT{white}!", client);
       weapon = isGoobbue ? "Falling Goobbue" : "AREA_EFFECT";
     }
   }

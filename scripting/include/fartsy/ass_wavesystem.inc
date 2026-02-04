@@ -1,4 +1,4 @@
-char WaveSystem_Version[8] = "1.1.0";
+char WaveSystem_Version[8] = "1.2.0";
 const int WaveTypes_NORMAL = 0;
 const int WaveTypes_TACOBELL = 1;
 const int WaveTypes_WAVENULL = 2;
@@ -9,7 +9,7 @@ enum struct WAVESYSTEMDATA {
   int wave;
 }
 WAVESYSTEMDATA WSData;
-methodmap WAVESYSTEM { 
+methodmap WAVESYSTEM {
   public int GetType() {
     return WSData.type;
   }
@@ -41,7 +41,7 @@ methodmap WAVESYSTEM {
     core.tacobell = false;
     ServerCommand("fb_startmoney 50000");
     CPrintToChatAll("{darkviolet}[{yellow}INFO{darkviolet}] {red}%s {white} (Core v%s, System v%s). Prepare yourself for the unpredictable... [{limegreen}by TTV/ProfessorFartsalot{white}]", "mvm_rottenburg_fartsys_ass-r22", PLUGIN_VERSION, WaveSystem_Version);
-    FastFire2("rain", "Alpha", "0", 0.0, false);
+    FastFire2("rain", "Alpha", "0", 0.0);
     PrintToChatAll("WaveSystem type %i", this.GetType());
     if (this.IsWaveNull()) {
       PrintToChatAll("UH OH");
@@ -51,8 +51,8 @@ methodmap WAVESYSTEM {
   public void run() {
     this.update();
     WSData.IsActive = true;
-    bombState[0].state = DefaultsArray[WSData.wave].defBombStatus;
-    bombState[0].stateMax = DefaultsArray[WSData.wave].defBombStatusMax;
+    g_BombIndex = DefaultsArray[WSData.wave].defBombStatus;
+    BombRegistry[0].stateMax = DefaultsArray[WSData.wave].defBombStatusMax;
     core.canHWBoss = DefaultsArray[WSData.wave].defCanHWBoss;
     WeatherManager.canTornado = DefaultsArray[WSData.wave].defCanTornado;
     ass_sacPointsMax = DefaultsArray[WSData.wave].defSacPointsMax;
@@ -65,7 +65,7 @@ methodmap WAVESYSTEM {
     CreateTimer(1.0, RobotLaunchTimer); // Activate robot launch timer
     CreateTimer(1.0, SacrificePointsTimer); // Activate sacrifice points add timer
     CreateTimer(1.0, SacrificePointsUpdater); // Activate sacrifice points updater
-    for (int i = 0; i < sizeof(WaveSetup) - 4; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
+    for (int i = 0; i < sizeof(WaveSetup) - 4; i++) FastFire2(WaveSetup[i]);
     sudo(1002);
     sudo(1007);
     switch (WSData.type) {
@@ -95,43 +95,43 @@ methodmap WAVESYSTEM {
       }
       case 3, 10, 17: {
         core.HWNMax = 360.0;
-        for (int i = 8; i < sizeof(WaveSetup) - 3; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
+        for (int i = 8; i < sizeof(WaveSetup) - 3; i++) FastFire2(WaveSetup[i]);
         float f = GetRandomFloat(60.0, 180.0);
         CreateTimer(f, TimedOperator, 70);
       }
       case 4, 11, 18: {
         core.HWNMax = 360.0;
-        for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
+        for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i]);
       }
       case 5, 12, 19: {
         Get_Boss_Handler().bossID = 0;
         Get_Boss_Handler().shouldTick = true;
         core.HWNMax = 260.0;
         core.HWNMin = 140.0;
-        for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-        FastFire2("w5_engie_hints", "Trigger", "", 3.0, false);
+        for (int i = 8; i < sizeof(WaveSetup) - 2; i++) FastFire2(WaveSetup[i]);
+        FastFire2("w5_engie_hints", "Trigger", "", 3.0);
         char onsHP[32];
         Format(onsHP, 32, "%i", GetBossHealthModifier(640000));
-        FastFire2("FB.OnslaughterBase", "SetHealth", onsHP, 0.0, false);
-        FastFire2("FB.OnslaughterBase", "SetHealth", onsHP, 1.0, false);
+        FastFire2("FB.OnslaughterBase", "SetHealth", onsHP, 0.0);
+        FastFire2("FB.OnslaughterBase", "SetHealth", onsHP, 1.0);
         float f = GetRandomFloat(60.0, 180.0);
         CreateTimer(f, TimedOperator, 70);
       }
       case 6, 13, 20: {
         core.HWNMax = 260.0;
         core.HWNMin = 140.0;
-        for (int i = 8; i < sizeof(WaveSetup) - 1; i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
+        for (int i = 8; i < sizeof(WaveSetup) - 1; i++) FastFire2(WaveSetup[i]);
       }
       case 7, 14, 21: {
         core.HWNMax = 240.0;
         core.HWNMin = 120.0;
-        for (int i = 8; i < sizeof(WaveSetup); i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
-        FastFire2("w5_engie_hints", "Trigger", "", 3.0, false);
+        for (int i = 8; i < sizeof(WaveSetup); i++) FastFire2(WaveSetup[i]);
+        FastFire2("w5_engie_hints", "Trigger", "", 3.0);
       }
       case 8, 15: {
         core.HWNMax = 240.0;
         core.HWNMin = 120.0;
-        for (int i = 8; i < sizeof(WaveSetup); i++) FastFire2(WaveSetup[i], "", "", 0.0, true);
+        for (int i = 8; i < sizeof(WaveSetup); i++) FastFire2(WaveSetup[i]);
       }
     }
     if (core.canHWBoss) {
@@ -152,10 +152,10 @@ methodmap WAVESYSTEM {
         CPrintToChatAll("{fartsyred} [WARNING]: YOU HAVE CHOSEN TO LAUNCH WAVE NULL.");
         CPrintToChatAll("{fartsyred} [WARNING]: SHOULD YOU FAIL THIS WAVE, YOU *WILL* BE RESTARTING FROM THE VERY BEGINNING WITH NO UPGRADES.");
         CPrintToChatAll("{fartsyred} [WARNING]: THE FATE OF THIS SERVER IS IN YOUR HANDS. DO. NOT. FAIL.");
-        FastFire2("Weather.Sky", "Skin", "3", 0.0, false);
+        FastFire2("Weather.Sky", "Skin", "3");
         WeatherManager.fogDensity = 0.1;
         PrintToChatAll("playing sound\\fartsy\\music\\wavenull_intro.mp3, waves should be timed so that the music changes right at the end of this intro.");
-        FastFire2("weather.sky", "Skin", "2", 0.0, false);
+        FastFire2("weather.sky", "Skin", "2");
         sudo(1001);
         EmitSoundToAll("sound/fartsy/music/wavenull_intro.mp3");
         WeatherManager.fogColorRTarget = 95.0;
@@ -170,8 +170,8 @@ methodmap WAVESYSTEM {
     int alive = 0;
     for (int i = 1; i <= MaxClients; i++) if (IsValidClient(i)) if(IsPlayerAlive(i) && GetClientTeam(i) == 2) alive++;
     if (alive == 0) {
-        CPrintToChatAll("{red}You've all died! Are you happy?");
-        FastFire2("bots_win", "roundwin", "", 0.0, false);
+      CPrintToChatAll("{red}You've all died! Are you happy?");
+      FastFire2("bots_win", "RoundWin");
     }
   }
   //Update internal gamemode identifier, reload configs if needed.
@@ -182,10 +182,10 @@ methodmap WAVESYSTEM {
     GetEntPropString(ent, Prop_Send, "m_iszMvMPopfileName", popfile, sizeof(popfile));
     int target = (StrContains(popfile, "tacobell") != -1 ? 1 : (StrContains(popfile, "wavenull") != -1) ? 2 : 0);
     if (WSData.type != target) {
-        Format(logdata, sizeof(logdata), "Current type %i does not match detected type %i! Someone must have changed the gamemode! Setting up core data immediately!!!", this.GetType(), target);
-        AssLogger(LOGLVL_DEBUG, logdata);
-        WSData.type = target;
-        core.init_post();
+      Format(logdata, sizeof(logdata), "Current type %i does not match detected type %i! Someone must have changed the gamemode! Setting up core data immediately!!!", this.GetType(), target);
+      AssLogger(LOGLVL_DEBUG, logdata);
+      WSData.type = target;
+      core.init_post();
     }
     WSData.wave = this.IsWaveNull() ? WSData.wave : GetEntData(ent, FindSendPropInfo("CTFObjectiveResource", "m_nMannVsMachineWaveCount"))
   }
@@ -195,7 +195,7 @@ WAVESYSTEM WaveSystem() { return WS; }
 
 //Wave failsafe system - To be implemented better by making an enum struct and doing failSafe[x].execute(); in FartsysAss.sp
 void PerformWaveFailsafe(int x){
-  switch(x){
+  switch(x) {
     case 0:{
       ServerCommand("sm_freeze @blue; wait 180; sm_smash @blue;sm_evilrocket @blue");
     }
