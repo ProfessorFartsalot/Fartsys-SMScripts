@@ -78,6 +78,11 @@ methodmap AUDIOMANAGER {
     return GetEngineTime() + AudioState[client].introSeconds;
   }
 
+  // Gets the default BGM
+  public int GetDefaultBGM() {
+    return WaveSystem().IsActive() ? (GetCoreData().sephiroth ? 16 : GetDefaultsManager().GetDefaults(WaveSystem().GetWave()).defBGMIndex) : GetRandomInt(1, 4);
+  }
+
   // Initialise all AudioStates
   public void init() {
     AssLogger(LOGLVL_INFO, "Initializing Audio System...");
@@ -155,7 +160,7 @@ methodmap AUDIOMANAGER {
 
   /* Sets the VIP's chosen song for all clients */
   public void setBGM_VIP(int bgm) {
-    bgm = bgm <= 0 ? GetDefaultBGM() : bgm;
+    bgm = bgm <= 0 ? this.GetDefaultBGM() : bgm;
     for (int i = 0; i < MaxClients; ++i)  if (IsValidClient(i) && !this.isClientInEventMode(i)) { AudioState[i].VIPBGM = bgm; }
   }
 
@@ -444,7 +449,7 @@ enum struct MAPLIGHTING {
     }
   }
 }
-MAPLIGHTING MapLighting[15];
+MAPLIGHTING MapLighting[13];
 
 //Weather Manager
 BULKFIRE lightningStrike[16];
@@ -855,22 +860,13 @@ enum struct WEATHERMANAGER {
 WEATHERMANAGER WeatherManager;
 
 //Ghosties
-enum struct GHOSTHANDLER {
-  bool placeholder;
-  void SpawnRandom() {
+methodmap GHOSTHANDLER {
+  public void SpawnRandom() {
     switch (GetRandomInt(0, 3)) {
-      case 0: {
-        FastFire2("gTrain", "TeleportToPathTrack", "gPath00_0");
-      }
-      case 1: {
-        FastFire2("gTrain", "TeleportToPathTrack", "gPath01_0");
-      }
-      case 2: {
-        FastFire2("gTrain", "TeleportToPathTrack", "gPath02_0");
-      }
-      case 3: {
-        FastFire2("gTrain", "TeleportToPathTrack", "gPath03_0");
-      }
+      case 0: { FastFire2("gTrain", "TeleportToPathTrack", "gPath00_0"); }
+      case 1: { FastFire2("gTrain", "TeleportToPathTrack", "gPath01_0"); }
+      case 2: { FastFire2("gTrain", "TeleportToPathTrack", "gPath02_0"); }
+      case 3: { FastFire2("gTrain", "TeleportToPathTrack", "gPath03_0"); }
     }
   }
 }
@@ -885,7 +881,7 @@ public Action GetRandomWeather(Handle timer) {
         if (WeatherManager.intensity > 0 && (WeatherManager.intensity - 1 > WeatherManager.mIntensity)) WeatherManager.intensity--;
       }
       case 1, 2, 3, 5, 6, 7, 9, 10: {
-        if (WeatherManager.intensity < 15)WeatherManager.intensity++;
+        if (WeatherManager.intensity < 15) WeatherManager.intensity++;
       }
     }
     WeatherManager.PerformRandomWeather();
@@ -943,7 +939,7 @@ public Action RestorePower(Handle timer, int surge) {
   if (surge == 1) {
     CreateTimer(1.0, SurgePower);
   }
-  for (int i = 0; i < sizeof(MapLighting); i++)MapLighting[i].RestorePower();
+  for (int i = 0; i < sizeof(MapLighting); i++) MapLighting[i].RestorePower();
   FastFire2("MapLighting.Indoor*", "TurnOn");
   FastFire2("MapLighting.Indoor*", "LightOn");
   return Plugin_Stop;
