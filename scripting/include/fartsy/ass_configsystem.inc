@@ -1,5 +1,6 @@
  //ASS_CONFIGSYSTEM - Contains the config loaders and all the plugin core data entries.
 #include <smjansson> // Needed for JSON parsing
+
 //Default values per wave
 enum struct DEFAULTS {
   bool defCanHWBoss;
@@ -10,6 +11,54 @@ enum struct DEFAULTS {
   int defSacPointsMax;
 }
 DEFAULTS DefaultsArray[9];
+
+methodmap DEFAULTSMANAGER {
+  // Gets defaults for a specified wave
+  public DEFAULTS GetDefaults(int wave) { return DefaultsArray[wave]; }
+  // Only called during plugin startup
+  public void SetupDefaults(Handle confCoreData) {
+    AssLogger(1, "[CORE] Setting up Wave Defaults...");
+    char bufCoreData[256];
+    PrintToServer("confCoreData returned %s", OVERRIDE_AND_GET_COREDATA());
+    confCoreData = OpenFile(OVERRIDE_AND_GET_COREDATA(), "rt", false);
+    int defIndexHW, defIndexTornado, defIndexBGM, defIndexBS, defIndexBSM, defIndexSPM; // Start at 0 because we don't have a wave 0
+    if (confCoreData == INVALID_HANDLE) return;
+    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))) {
+      TrimString(bufCoreData);
+      if (!StrContains(bufCoreData, "Wave.defCanHWBoss:")) {
+        defIndexHW++;
+        DefaultsArray[defIndexHW].defCanHWBoss = CharToBool(bufCoreData);
+      }
+      else if (!StrContains(bufCoreData, "Wave.defCanTornado:")) {
+        defIndexTornado++;
+        DefaultsArray[defIndexTornado].defCanTornado = CharToBool(bufCoreData);
+      }
+      else if (!StrContains(bufCoreData, "Wave.defBGMIndex:")) {
+        defIndexBGM++;
+        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBGMIndex:", "", true);
+        DefaultsArray[defIndexBGM].defBGMIndex = StringToInt(bufCoreData);
+      }
+      else if (!StrContains(bufCoreData, "Wave.defBombStatus:")) {
+        defIndexBS++;
+        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBombStatus:", "", true);
+        DefaultsArray[defIndexBS].defBombStatus = StringToInt(bufCoreData);
+      }
+      else if (!StrContains(bufCoreData, "Wave.defBombStatusMax:")) {
+        defIndexBSM++;
+        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBombStatusMax:", "", true);
+        DefaultsArray[defIndexBSM].defBombStatusMax = StringToInt(bufCoreData);
+      }
+      else if (!StrContains(bufCoreData, "Wave.defSacPointsMax:")) {
+        defIndexSPM++;
+        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defSacPointsMax:", "", true);
+        DefaultsArray[defIndexSPM].defSacPointsMax = StringToInt(bufCoreData);
+      }
+    }
+    CloseHandle(confCoreData);
+  }
+}
+DEFAULTSMANAGER DefaultsManager;
+DEFAULTSMANAGER GetDefaultsManager() { return DefaultsManager; }
 
 //Core values
 enum struct COREDATA {
@@ -130,43 +179,7 @@ enum struct COREDATA {
       }
       if (IsEndOfFile(confCoreData)) break;
     }
-    AssLogger(1, "[CORE] Setting up Wave Defaults...");
-    PrintToServer("confCoreData returned %s", OVERRIDE_AND_GET_COREDATA());
-    confCoreData = OpenFile(OVERRIDE_AND_GET_COREDATA(), "rt", false);
-    int defIndexHW, defIndexTornado, defIndexBGM, defIndexBS, defIndexBSM, defIndexSPM; // Start at 0 because we don't have a wave 0
-    if (confCoreData == INVALID_HANDLE) return;
-    while (ReadFileLine(confCoreData, bufCoreData, sizeof(bufCoreData))) {
-      TrimString(bufCoreData);
-      if (!StrContains(bufCoreData, "Wave.defCanHWBoss:")) {
-        defIndexHW++;
-        DefaultsArray[defIndexHW].defCanHWBoss = CharToBool(bufCoreData);
-      }
-      else if (!StrContains(bufCoreData, "Wave.defCanTornado:")) {
-        defIndexTornado++;
-        DefaultsArray[defIndexTornado].defCanTornado = CharToBool(bufCoreData);
-      }
-      else if (!StrContains(bufCoreData, "Wave.defBGMIndex:")) {
-        defIndexBGM++;
-        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBGMIndex:", "", true);
-        DefaultsArray[defIndexBGM].defBGMIndex = StringToInt(bufCoreData);
-      }
-      else if (!StrContains(bufCoreData, "Wave.defBombStatus:")) {
-        defIndexBS++;
-        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBombStatus:", "", true);
-        DefaultsArray[defIndexBS].defBombStatus = StringToInt(bufCoreData);
-      }
-      else if (!StrContains(bufCoreData, "Wave.defBombStatusMax:")) {
-        defIndexBSM++;
-        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defBombStatusMax:", "", true);
-        DefaultsArray[defIndexBSM].defBombStatusMax = StringToInt(bufCoreData);
-      }
-      else if (!StrContains(bufCoreData, "Wave.defSacPointsMax:")) {
-        defIndexSPM++;
-        ReplaceString(bufCoreData, sizeof(bufCoreData), "Wave.defSacPointsMax:", "", true);
-        DefaultsArray[defIndexSPM].defSacPointsMax = StringToInt(bufCoreData);
-      }
-    }
-    CloseHandle(confCoreData);
+    DefaultsManager.SetupDefaults(confCoreData);
     AssLogger(1, "Core data setup complete!");
   }
   void Reset() {
@@ -179,6 +192,7 @@ enum struct COREDATA {
   }
 }
 COREDATA core;
+COREDATA GetCoreData() { return core; }
 
 //Messages to be printed when the fail safe has been triggered.
 char failsafe[][256] =  {
@@ -374,6 +388,9 @@ void RegisterAndPrecacheAllFiles() {
     }
   }
   AssLogger(LOGLVL_INFO, "Done! BGM Count: %i, SFX Count: %i, Total: %i files loaded to RAM.", bgmIndex, sfxIndex, bgmIndex + sfxIndex);
+  AssLogger(LOGLVL_DEBUG, "Loading WeatherManager...");
+  LoadConfig(2);
+  AssLogger(LOGLVL_INFO, "All configs loaded! Check above for errors.");
 }
 
 //Wave Setup
@@ -449,11 +466,22 @@ public bool GenerateDefaultConfig(const int type, const char[] path)
     // Weather
     case 2: {
       WriteFileLine(file, "  \"WeatherManager\": {");
-      WriteFileLine(file, "    \"defFogStartDist\": \"300\"");
-      WriteFileLine(file, "    \"defFogEndDist\": \"3000\"");
-      WriteFileLine(file, "    \"defFogDensity\": \"0.55\"");
-      WriteFileLine(file, "    \"fogChangeRate\": \"0.001\"");
-      WriteFileLine(file, "    \"fogChangeRateRGB\": \"0.25\"");
+      WriteFileLine(file, "    \"defFogStartDist\": \"300\",");
+      WriteFileLine(file, "    \"defFogEndDist\": \"3000\",");
+      WriteFileLine(file, "    \"defFogDensity\": \"0.55\",");
+      WriteFileLine(file, "    \"fogChangeRate\": \"0.001\",");
+      WriteFileLine(file, "    \"fogChangeRateRGB\": \"0.25\",");
+      char out[40];
+      for (int i = 0; i < sizeof(MapLighting); i++) {
+        Format(out, sizeof(out), "    \"MapLighting%iArcs\": \" \",", i); WriteFileLine(file, out);
+        Format(out, sizeof(out), "    \"MapLighting%iBeam\": \" \",", i); WriteFileLine(file, out);
+        Format(out, sizeof(out), "    \"MapLighting%iBuzz\": \" \",", i); WriteFileLine(file, out);
+        Format(out, sizeof(out), "    \"MapLighting%iExplosion\": \" \",", i); WriteFileLine(file, out);
+        Format(out, sizeof(out), "    \"MapLighting%iLight\": \" \",", i); WriteFileLine(file, out);
+        Format(out, sizeof(out), "    \"MapLighting%iStatus\": \" \",", i); WriteFileLine(file, out);
+        Format(out, sizeof(out), "    \"MapLighting%iStun\": \" \",", i); WriteFileLine(file, out);
+        Format(out, sizeof(out), i != sizeof(MapLighting) - 1 ? "    \"MapLighting%iZap\": \" \"," : "    \"MapLighting%iZap\": \" \"", i); WriteFileLine(file, out);
+      }
       WriteFileLine(file, "  }");
     }
   }
@@ -509,11 +537,30 @@ void LoadConfig(int type)
       }
     }
     else if (type == 2) {  // Weather
-      json_object_get_string(_jsKey, "defFogStartDist", WeatherManager.defFogStartDist, sizeof(WeatherManager.defFogStartDist));
-      json_object_get_string(_jsKey, "defFogEndDist", WeatherManager.defFogEndDist, sizeof(WeatherManager.defFogEndDist));
-      WeatherManager.defFogDensity = json_object_get_float(_jsKey, "defFogDensity");
-      WeatherManager.fogChangeRate = json_object_get_float(_jsKey, "fogChangeRate");
-      WeatherManager.fogChangeRateRGB = json_object_get_float(_jsKey, "fogChangeRateRGB");
+      json_object_get_string(jsHeader, "defFogStartDist", WeatherManager.defFogStartDist, sizeof(WeatherManager.defFogStartDist));
+      json_object_get_string(jsHeader, "defFogEndDist", WeatherManager.defFogEndDist, sizeof(WeatherManager.defFogEndDist));
+      WeatherManager.defFogDensity = json_object_get_float(jsHeader, "defFogDensity");
+      WeatherManager.fogChangeRate = json_object_get_float(jsHeader, "fogChangeRate");
+      WeatherManager.fogChangeRateRGB = json_object_get_float(jsHeader, "fogChangeRateRGB");
+      for (int i = 0; i < sizeof(MapLighting); i++) {
+        char key[40];
+        Format(key, sizeof(key), "MapLighting%iArcs", i); json_object_get_string(jsHeader, key, MapLighting[i].arcs, sizeof(MapLighting[i].arcs));
+        Format(key, sizeof(key), "MapLighting%iBeam", i); json_object_get_string(jsHeader, key, MapLighting[i].beam, sizeof(MapLighting[i].beam));
+        Format(key, sizeof(key), "MapLighting%iBuzz", i); json_object_get_string(jsHeader, key, MapLighting[i].buzz, sizeof(MapLighting[i].buzz));
+        Format(key, sizeof(key), "MapLighting%iExplosion", i); json_object_get_string(jsHeader, key, MapLighting[i].explosion, sizeof(MapLighting[i].explosion));
+        Format(key, sizeof(key), "MapLighting%iLight", i); json_object_get_string(jsHeader, key, MapLighting[i].light, sizeof(MapLighting[i].light));
+        Format(key, sizeof(key), "MapLighting%iStatus", i); json_object_get_string(jsHeader, key, MapLighting[i].status, sizeof(MapLighting[i].status));
+        Format(key, sizeof(key), "MapLighting%iStun", i); json_object_get_string(jsHeader, key, MapLighting[i].stun, sizeof(MapLighting[i].stun));
+        Format(key, sizeof(key), "MapLighting%iZap", i); json_object_get_string(jsHeader, key, MapLighting[i].zap, sizeof(MapLighting[i].zap));
+        if (StrContains(MapLighting[i].arcs, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Arcs can not be null!", i);
+        if (StrContains(MapLighting[i].beam, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Beam can not be null!", i);
+        if (StrContains(MapLighting[i].buzz, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Buzz can not be null!", i);
+        if (StrContains(MapLighting[i].explosion, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Explosion can not be null!", i);
+        if (StrContains(MapLighting[i].light, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Light can not be null!", i);
+        if (StrContains(MapLighting[i].status, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Status can not be null!", i);
+        if (StrContains(MapLighting[i].stun, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Stun can not be null!, i");
+        if (StrContains(MapLighting[i].zap, " ", false) != -1) ThrowError("WeatherManager MapLighting %i Zap can not be null!, i");
+      }
       break;
     }
     else { SetFailState("Iterator %i not implemented.", type); } // Unimplemented
@@ -556,110 +603,6 @@ void SetVarDefaults() {
   core.waveFlags = 0;
   core.HWNMin = 210.0;
   core.HWNMax = 380.0;
-  MapLighting[0].arcs = "MapLighting.StreetLamp00.arcs";
-  MapLighting[1].arcs = "MapLighting.StreetLamp01.arcs";
-  MapLighting[2].arcs = "MapLighting.StreetLamp02.arcs";
-  MapLighting[3].arcs = "MapLighting.StreetLamp03.arcs";
-  MapLighting[4].arcs = "MapLighting.StreetLamp04.arcs";
-  MapLighting[5].arcs = "MapLighting.StreetLamp05.arcs";
-  MapLighting[6].arcs = "MapLighting.StreetLamp06.arcs";
-  MapLighting[7].arcs = "MapLighting.StreetLamp07.arcs";
-  MapLighting[8].arcs = "MapLighting.StreetLamp08.arcs";
-  MapLighting[9].arcs = "MapLighting.StreetLamp09.arcs";
-  MapLighting[10].arcs = "MapLighting.StreetLamp0A.arcs";
-  MapLighting[11].arcs = "MapLighting.StreetLamp0B.arcs";
-  MapLighting[12].arcs = "MapLighting.StreetLamp0C.arcs";
-  MapLighting[0].beam = "MapLighting.StreetLamp00.beam";
-  MapLighting[1].beam = "MapLighting.StreetLamp01.beam";
-  MapLighting[2].beam = "MapLighting.StreetLamp02.beam";
-  MapLighting[3].beam = "MapLighting.StreetLamp03.beam";
-  MapLighting[4].beam = "MapLighting.StreetLamp04.beam";
-  MapLighting[5].beam = "MapLighting.StreetLamp05.beam";
-  MapLighting[6].beam = "MapLighting.StreetLamp06.beam";
-  MapLighting[7].beam = "MapLighting.StreetLamp07.beam";
-  MapLighting[8].beam = "MapLighting.StreetLamp08.beam";
-  MapLighting[9].beam = "MapLighting.StreetLamp09.beam";
-  MapLighting[10].beam = "MapLighting.StreetLamp0A.beam";
-  MapLighting[11].beam = "MapLighting.StreetLamp0B.beam";
-  MapLighting[12].beam = "MapLighting.StreetLamp0C.beam";
-  MapLighting[0].buzz = "MapLighting.StreetLamp00.buzz";
-  MapLighting[1].buzz = "MapLighting.StreetLamp01.buzz";
-  MapLighting[2].buzz = "MapLighting.StreetLamp02.buzz";
-  MapLighting[3].buzz = "MapLighting.StreetLamp03.buzz";
-  MapLighting[4].buzz = "MapLighting.StreetLamp04.buzz";
-  MapLighting[5].buzz = "MapLighting.StreetLamp05.buzz";
-  MapLighting[6].buzz = "MapLighting.StreetLamp06.buzz";
-  MapLighting[7].buzz = "MapLighting.StreetLamp07.buzz";
-  MapLighting[8].buzz = "MapLighting.StreetLamp08.buzz";
-  MapLighting[9].buzz = "MapLighting.StreetLamp09.buzz";
-  MapLighting[10].buzz = "MapLighting.StreetLamp0A.buzz";
-  MapLighting[11].buzz = "MapLighting.StreetLamp0B.buzz";
-  MapLighting[12].buzz = "MapLighting.StreetLamp0C.buzz";
-  MapLighting[0].explosion = "MapLighting.StreetLamp00.explosion";
-  MapLighting[1].explosion = "MapLighting.StreetLamp01.explosion";
-  MapLighting[2].explosion = "MapLighting.StreetLamp02.explosion";
-  MapLighting[3].explosion = "MapLighting.StreetLamp03.explosion";
-  MapLighting[4].explosion = "MapLighting.StreetLamp04.explosion";
-  MapLighting[5].explosion = "MapLighting.StreetLamp05.explosion";
-  MapLighting[6].explosion = "MapLighting.StreetLamp06.explosion";
-  MapLighting[7].explosion = "MapLighting.StreetLamp07.explosion";
-  MapLighting[8].explosion = "MapLighting.StreetLamp08.explosion";
-  MapLighting[9].explosion = "MapLighting.StreetLamp09.explosion";
-  MapLighting[10].explosion = "MapLighting.StreetLamp0A.explosion";
-  MapLighting[11].explosion = "MapLighting.StreetLamp0B.explosion";
-  MapLighting[12].explosion = "MapLighting.StreetLamp0C.explosion";
-  MapLighting[0].light = "MapLighting.StreetLamp00.light";
-  MapLighting[1].light = "MapLighting.StreetLamp01.light";
-  MapLighting[2].light = "MapLighting.StreetLamp02.light";
-  MapLighting[3].light = "MapLighting.StreetLamp03.light";
-  MapLighting[4].light = "MapLighting.StreetLamp04.light";
-  MapLighting[5].light = "MapLighting.StreetLamp05.light";
-  MapLighting[6].light = "MapLighting.StreetLamp06.light";
-  MapLighting[7].light = "MapLighting.StreetLamp07.light";
-  MapLighting[8].light = "MapLighting.StreetLamp08.light";
-  MapLighting[9].light = "MapLighting.StreetLamp09.light";
-  MapLighting[10].light = "MapLighting.StreetLamp0A.light";
-  MapLighting[11].light = "MapLighting.StreetLamp0B.light";
-  MapLighting[12].light = "MapLighting.StreetLamp0C.light";
-  MapLighting[0].status = "MapLighting.StreetLamp00.status";
-  MapLighting[1].status = "MapLighting.StreetLamp01.status";
-  MapLighting[2].status = "MapLighting.StreetLamp02.status";
-  MapLighting[3].status = "MapLighting.StreetLamp03.status";
-  MapLighting[4].status = "MapLighting.StreetLamp04.status";
-  MapLighting[5].status = "MapLighting.StreetLamp05.status";
-  MapLighting[6].status = "MapLighting.StreetLamp06.status";
-  MapLighting[7].status = "MapLighting.StreetLamp07.status";
-  MapLighting[8].status = "MapLighting.StreetLamp08.status";
-  MapLighting[9].status = "MapLighting.StreetLamp09.status";
-  MapLighting[10].status = "MapLighting.StreetLamp0A.status";
-  MapLighting[11].status = "MapLighting.StreetLamp0B.status";
-  MapLighting[12].status = "MapLighting.StreetLamp0C.status";
-  MapLighting[0].stun = "MapLighting.StreetLamp00.stun";
-  MapLighting[1].stun = "MapLighting.StreetLamp01.stun";
-  MapLighting[2].stun = "MapLighting.StreetLamp02.stun";
-  MapLighting[3].stun = "MapLighting.StreetLamp03.stun";
-  MapLighting[4].stun = "MapLighting.StreetLamp04.stun";
-  MapLighting[5].stun = "MapLighting.StreetLamp05.stun";
-  MapLighting[6].stun = "MapLighting.StreetLamp06.stun";
-  MapLighting[7].stun = "MapLighting.StreetLamp07.stun";
-  MapLighting[8].stun = "MapLighting.StreetLamp08.stun";
-  MapLighting[9].stun = "MapLighting.StreetLamp09.stun";
-  MapLighting[10].stun = "MapLighting.StreetLamp0A.stun";
-  MapLighting[11].stun = "MapLighting.StreetLamp0B.stun";
-  MapLighting[12].stun = "MapLighting.StreetLamp0C.stun";
-  MapLighting[0].zap = "MapLighting.StreetLamp00.zap";
-  MapLighting[1].zap = "MapLighting.StreetLamp01.zap";
-  MapLighting[2].zap = "MapLighting.StreetLamp02.zap";
-  MapLighting[3].zap = "MapLighting.StreetLamp03.zap";
-  MapLighting[4].zap = "MapLighting.StreetLamp04.zap";
-  MapLighting[5].zap = "MapLighting.StreetLamp05.zap";
-  MapLighting[6].zap = "MapLighting.StreetLamp06.zap";
-  MapLighting[7].zap = "MapLighting.StreetLamp07.zap";
-  MapLighting[8].zap = "MapLighting.StreetLamp08.zap";
-  MapLighting[9].zap = "MapLighting.StreetLamp09.zap";
-  MapLighting[10].zap = "MapLighting.StreetLamp0A.zap";
-  MapLighting[11].zap = "MapLighting.StreetLamp0B.zap";
-  MapLighting[12].zap = "MapLighting.StreetLamp0C.zap";
   HWBoss[0].index = 0;
   HWBoss[0].fireCount = 2;
   HWBoss[0].fireString = "OnUser1 hhh_maker,ForceSpawn,,0.0,1";

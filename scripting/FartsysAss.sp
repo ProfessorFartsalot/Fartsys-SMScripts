@@ -7,7 +7,7 @@
  *        IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
 
-public char PLUGIN_VERSION[8] = "9.4.3";
+public char PLUGIN_VERSION[8] = "9.4.4";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
@@ -56,12 +56,12 @@ public void OnFastFire2Ready() {
   if (WaveSystem().IsDefault()) core.init_post();
   CPrintToChatAll("{fartsyred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
   cvarSNDDefault = CreateConVar("sm_fartsysass_sound", "3", "Default sound for new users, 3 = Everything, 2 = Sounds Only, 1 = Music Only, 0 = Nothing");
-  AssLogger(LOGLVL_INFO, "####### STARTUP COMPLETE (v%s) #######", PLUGIN_VERSION);
   CreateTimer(15.0, StatsTracker);
   AudioManager.Reset(true);
   WeatherManager.Reset();
   CreateTimer(1.0, SelectAdminTimer);
   sudo(1002);
+  AssLogger(LOGLVL_INFO, "####### STARTUP COMPLETE (v%s) #######", PLUGIN_VERSION);
 }
 
 //Process ticks and requests in real time

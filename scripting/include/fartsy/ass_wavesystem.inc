@@ -9,6 +9,7 @@ enum struct WAVESYSTEMDATA {
   int wave;
 }
 WAVESYSTEMDATA WSData;
+
 methodmap WAVESYSTEM {
   public int GetType() {
     return WSData.type;

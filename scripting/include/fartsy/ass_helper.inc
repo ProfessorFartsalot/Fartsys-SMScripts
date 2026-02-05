@@ -6,9 +6,7 @@ enum {
   LOGLVL_WARN = 2,
   LOGLVL_ERROR = 3
 };
-int GetDefaultBGM() {
-  return WaveSystem().IsActive() ? (core.sephiroth ? 16 : DefaultsArray[WaveSystem().GetWave()].defBGMIndex) : GetRandomInt(1, 4);
-}
+
 //Idle system
 bool _serverActive = false;
 public void OnClientDisconnect_Post() {
@@ -23,10 +21,6 @@ public Action ServerIdleThread(Handle timer) {
   return Plugin_Stop;
 }
 
-enum struct PLAYERDATA {
-  char classname;
-  char name;
-}
 void AssLogger(int logLevel, const char[] logData, any...) {
   char buffer[256];
   VFormat(buffer, sizeof(buffer), logData, 3);
@@ -68,43 +62,6 @@ public int GetHealerOfClient(int client){
   }
   return -1;
 }
-/*
-public Action UpdateMedicHealing(Handle timer){
-  int CurHealVal[MAXPLAYERS+1];
-  for (int i = 1; i <= MaxClients; ++i){
-    if(!IsValidClient(i) || GetClientTeam(i) == 3) continue;
-    if (TF2_GetPlayerClass(i) == TFClass_Medic){
-      int medigun = GetPlayerWeaponSlot(i, TFWeaponSlot_Secondary);
-      if (!IsValidEdict(medigun) || !IsValidEntity(medigun)){
-        PrintToServer("medigun returned null");
-        return Plugin_Stop;
-      }
-      CurHealVal[i] = GetEntProp(i, Prop_Send, "m_iHealPoints");
-      char s[32];
-      GetEdictClassname(medigun, s, sizeof(s));
-      if (!strcmp(s, "tf_weapon_medigun", false)) {
-        if (GetEntProp(medigun, Prop_Send, "m_bHealing") && WaveSystem().IsActive()){
-          int hOffset = (CurHealVal[i] - EmnityManager[i].InitHealingValue);
-          PrintToServer("%N is healing %N with %i HP since last check", i, GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget"), hOffset);
-          EmnityManager[i].iHealing += hOffset;
-          iDmgHealingTotal += hOffset;
-        }
-      }
-      EmnityManager[i].InitHealingValue = CurHealVal[i];
-    }
-  }
-  CreateTimer(1.0, UpdateMedicHealing);
-  return Plugin_Stop;
-}
-
-public void UpdateAllHealers() {
-  for (int i = 1; i <= MaxClients; ++i){
-    if(!IsValidClient(i) || GetClientTeam(i) == 3) continue;
-    if (TF2_GetPlayerClass(i) == TFClass_Medic){
-      EmnityManager[i].InitHealingValue = ((TF2_GetPlayerClass(i) == TFClass_Medic)) ? GetEntProp(i, Prop_Send, "m_iHealPoints") : 0;
-    }
-  }
-}*/
 
 //Check if the client is valid
 stock bool IsValidClient(int client) {
@@ -128,7 +85,6 @@ int FindEntityByTargetname(char[] targetname, char[] classname)
 
   while(strcmp(namebuf, targetname) != 0 && (index = FindEntityByClassname(index, classname)) != -1){
     GetEntPropString(index, Prop_Data, "m_iName", namebuf, sizeof(namebuf));
-    //PrintToServer("Found %s, index %i", namebuf, index);
   }
   return(index);
 }
