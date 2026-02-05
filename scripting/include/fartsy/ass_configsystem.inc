@@ -468,9 +468,9 @@ public bool GenerateDefaultConfig(const int type, const char[] path)
       WriteFileLine(file, "  \"WeatherManager\": {");
       WriteFileLine(file, "    \"defFogStartDist\": \"300\",");
       WriteFileLine(file, "    \"defFogEndDist\": \"3000\",");
-      WriteFileLine(file, "    \"defFogDensity\": \"0.55\",");
-      WriteFileLine(file, "    \"fogChangeRate\": \"0.001\",");
-      WriteFileLine(file, "    \"fogChangeRateRGB\": \"0.25\",");
+      WriteFileLine(file, "    \"defFogDensity\": 0.55,");
+      WriteFileLine(file, "    \"fogChangeRate\": 0.001,");
+      WriteFileLine(file, "    \"fogChangeRateRGB\": 0.25,");
       char out[40];
       for (int i = 0; i < sizeof(MapLighting); i++) {
         Format(out, sizeof(out), "    \"MapLighting%iArcs\": \" \",", i); WriteFileLine(file, out);
