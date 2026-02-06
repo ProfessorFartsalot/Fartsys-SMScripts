@@ -150,7 +150,7 @@ methodmap AUDIOMANAGER {
   */
   public void setBGM(int client, int bgm, bool instant) {
     g_indexBGM = bgm == 0 ? GetRandomInt(1, 4) : bgm;
-    if (IsValidClient(client)) PrintToChat(client, "Your BGM was changed. %i = %i > 0 ? %i : %i == 0 ? %i : %i, playing at sndlvl %i volume %f", AudioState[client].indexBGM, AudioState[client].VIPBGM, AudioState[client].VIPBGM, bgm, g_indexBGM, bgm, GetSNDLVL(client, bgm, BGMArray[AudioState[client].indexBGM].SNDLVL), GetVolume(client, bgm, 1.0));
+    if (IsValidClient(client)) PrintToChat(client, "Your BGM was changed. %i = %i > 0 ? %i : %i == 0 ? %i : %i, playing at sndlvl %i volume %f", AudioState[client].indexBGM, AudioState[client].VIPBGM, AudioState[client].VIPBGM, bgm, g_indexBGM, bgm, GetSNDLVL(client, true, BGMArray[AudioState[client].indexBGM].SNDLVL), GetVolume(client, true, 1.0));
     AudioState[client].indexBGM = AudioState[client].VIPBGM > 0 ? AudioState[client].VIPBGM : bgm == 0 ? g_indexBGM : bgm;
     PrintToServer("Set %i for %N", AudioState[client].indexBGM, client);
     if (instant) {
@@ -309,7 +309,7 @@ methodmap AUDIOMANAGER {
   public void SetVolumeSFX(int client, int vol) { AudioState[client].volume_sfx = vol; PrintToChat(client, "Set your volume to %i", AudioState[client].volume_sfx); }
 
   /* This should be obvious by now */
-  public void SetVolumeReal(int client, float vol) { AudioState[client].volume_real = vol; PrintToChat(client, "Set your volume to %f", AudioState[client].volume_real * 100); }
+  public void SetVolumeReal(int client, float vol) { AudioState[client].volume_real = vol; PrintToChat(client, "Set your volume to %f%", AudioState[client].volume_real * 100); }
 
   /* This should be obvious by now */
   public void SetVolumeRealSFX(int client, float vol) { AudioState[client].volume_real_sfx = vol; PrintToChat(client, "Set your volume to %f%%", AudioState[client].volume_real_sfx * 100); }
@@ -321,7 +321,7 @@ public Action EnableAudio(Handle timer) {
   return Plugin_Stop;
 }
 
-//Custom sound emitter, I don't know how many fucking times I've rewritten this! +1! See potato.sp
+//Custom sound emitter, I don't know how many fucking times I've rewritten this! +2! See potato.sp
 //int flags:
 //  SND_NOFLAGS= 0,             /**< Nothing */
 //  SND_CHANGEVOL = 1,          /**< Change sound volume */
@@ -354,7 +354,7 @@ void CSEClientEx(int client, char[] sndName, int entity = -2, int channel, int T
 //Gets the client's preferred sound level - see the Valve Developer Wiki for valid SNDLVL indexes.
 public int GetSNDLVL(int client, bool isBGM, int _default) { return isBGM ? (AudioState[client].volume != 0 ? AudioState[client].volume : _default) : !isBGM ? (AudioState[client].volume_sfx != 0 ? AudioState[client].volume_sfx : _default) : _default; }
 
-//Gets the client's preferred REAL sound level - see the Valve Developer Wiki for valid SNDLVL indexes.
+//Gets the client's preferred REAL sound level - between 0.0 and 1.0;
 public float GetVolume(int client, bool isBGM, float _default) { return isBGM ? (AudioState[client].volume_real != 0.0 ? AudioState[client].volume_real : _default) : !isBGM ? (AudioState[client].volume_real_sfx != 0.0 ? AudioState[client].volume_real_sfx : _default) : _default; }
 
 //VIP Music Menu
@@ -665,9 +665,9 @@ enum struct WEATHERMANAGER {
         flStormMin = 9.0;
         flStormMax = 26.5;
         FastFire2("rain", "Alpha", "75");
-        CustomSoundEmitter(SFXArray[108].realPath, 65, false, 1, 1.0, 100); //Rain, no wind, increased volume
+        CustomSoundEmitter(SFXArray[108].realPath, 45, false, 1, 1.0, 100); //Rain, no wind, increased volume
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.1, 100); //Rain, wind, decreased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.01, 100); //Extra wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.01, 100); //Extra wind
       }
       case 5: {
         this.SetFogStartQueued("500");
@@ -679,8 +679,8 @@ enum struct WEATHERMANAGER {
         this.fogTarget = 0.75;
         FastFire2("rain", "Alpha", "95");
         CustomSoundEmitter(SFXArray[108].realPath, 65, false, 1, 0.1, 100); //Rain, no wind, decreased volume
-        CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.15, 100); //Rain, wind
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.05, 100); //Extra wind
+        CustomSoundEmitter(SFXArray[107].realPath, 45, false, 1, 0.15, 100); //Rain, wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.05, 100); //Extra wind
       }
       case 6: {
         this.mIntensity = 4;
@@ -689,7 +689,7 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "125");
         CustomSoundEmitter(SFXArray[108].realPath, 65, false, 1, 0.05, 100); //Rain, no wind, decreased volume
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.21, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.125, 100); //Extra wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.125, 100); //Extra wind
       }
       case 7: {
         this.SetFogStartQueued("500");
@@ -702,7 +702,7 @@ enum struct WEATHERMANAGER {
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 0);
         CustomSoundEmitter(SFXArray[108].realPath, 65, false, 1, 0.05, 100); //Rain, no wind, decreased volume
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.26, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.25, 100); //Extra wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.25, 100); //Extra wind
       }
       case 8: {
         this.mIntensity = 6;
@@ -715,7 +715,7 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "175");
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 1);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.37, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.35, 100); //Extra wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.35, 100); //Extra wind
       }
       case 9: {
         this.SetFogStartQueued("425");
@@ -727,7 +727,7 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "200");
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 2);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.41, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.42, 100); //Extra wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.42, 100); //Extra wind
       }
       case 10: {
         this.SetFogStartQueued("375");
@@ -739,7 +739,7 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "215", 0.0);
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 3);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.45, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.56, 100); //Extra wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.56, 100); //Extra wind
       }
       case 11: {
         this.mIntensity = 9;
@@ -748,7 +748,7 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "235");
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 4);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.63, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.69, 100); //Extra wind
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.69, 100); //Extra wind
       }
       case 12: {
         this.mIntensity = 10;
@@ -761,8 +761,8 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "255");
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 5);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.72, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.76, 100); //Extra wind
-        if (!this.TornadoTimerActive)sudo(1004);
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.76, 100); //Extra wind
+        if (!this.TornadoTimerActive) sudo(1004);
       }
       case 13: {
         this.SetFogStartQueued("200");
@@ -775,8 +775,8 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "255");
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 6);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.85, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.83, 100); //Extra wind
-        if (!this.TornadoTimerActive)sudo(1004);
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.83, 100); //Extra wind
+        if (!this.TornadoTimerActive) sudo(1004);
       }
       case 14: {
         this.mIntensity = 13;
@@ -789,8 +789,8 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "255");
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 7);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 0.9, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 0.92, 100); //Extra wind
-        if (!this.TornadoTimerActive)sudo(1004);
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 0.92, 100); //Extra wind
+        if (!this.TornadoTimerActive) sudo(1004);
       }
       case 15: {
         this.mIntensity = 14;
@@ -803,8 +803,8 @@ enum struct WEATHERMANAGER {
         FastFire2("rain", "Alpha", "255");
         CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 7);
         CustomSoundEmitter(SFXArray[107].realPath, 65, false, 1, 1.0, 100); //Rain, wind, increased volume
-        CustomSoundEmitter(SFXArray[109].realPath, 65, false, 1, 1.0, 100); //Extra wind
-        if (!this.TornadoTimerActive)sudo(1004);
+        //CustomSoundEmitter(SFXArray[109].realPath, 45, false, 1, 1.0, 100); //Extra wind
+        if (!this.TornadoTimerActive) sudo(1004);
       }
       default: {
       }
@@ -1120,7 +1120,7 @@ public Action Command_SetVolumeReal(int client, int args) {
   GetCmdArg(2, arg2, sizeof(arg2));
   PrintToChat(client, "%s, %s", arg1, arg2);
   if (StringToInt(arg2) > 100 | StringToInt(arg2) < 0) { ReplyToCommand(client, "ERROR: Value must be between 0 and 100."); return Plugin_Handled; }
-  if (StrContains(arg1, "music", false)) { AudioManager.SetVolumeReal(client, (StringToInt(arg2) * 1.0) / 100.0); return Plugin_Handled; }
-  if (StrContains(arg1, "sfx", false)) { AudioManager.SetVolumeRealSFX(client, (StringToInt(arg2) * 1.0) / 100.0); return Plugin_Handled; }
+  if (StrContains(arg1, "music", false) > -1) { AudioManager.SetVolumeReal(client, (StringToInt(arg2) * 1.0) / 100.0); return Plugin_Handled; }
+  if (StrContains(arg1, "sfx", false)> -1) { AudioManager.SetVolumeRealSFX(client, (StringToInt(arg2) * 1.0) / 100.0); return Plugin_Handled; }
   ReplyToCommand(client, "Usage: sm_setvolumereal <sfx / music> <int 0-100>"); return Plugin_Handled;
 }
