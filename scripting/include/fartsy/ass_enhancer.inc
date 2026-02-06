@@ -70,6 +70,10 @@ enum struct AUDIOSTATE {
   int savedLoops;
   int VIPBGM;
   int VIPIndex;
+  int volume;
+  int volume_sfx;
+  float volume_real;
+  float volume_real_sfx;
 }
 AUDIOSTATE AudioState[MAXPLAYERS+1];
 
@@ -146,7 +150,7 @@ methodmap AUDIOMANAGER {
   */
   public void setBGM(int client, int bgm, bool instant) {
     g_indexBGM = bgm == 0 ? GetRandomInt(1, 4) : bgm;
-    if (IsValidClient(client))PrintToChat(client, "Your BGM was changed. %i = %i > 0 ? %i : %i == 0 ? %i : %i", AudioState[client].indexBGM, AudioState[client].VIPBGM, AudioState[client].VIPBGM, bgm, g_indexBGM, bgm);
+    if (IsValidClient(client)) PrintToChat(client, "Your BGM was changed. %i = %i > 0 ? %i : %i == 0 ? %i : %i, playing at sndlvl %i volume %f", AudioState[client].indexBGM, AudioState[client].VIPBGM, AudioState[client].VIPBGM, bgm, g_indexBGM, bgm, GetSNDLVL(client, bgm, BGMArray[AudioState[client].indexBGM].SNDLVL), GetVolume(client, bgm, 1.0));
     AudioState[client].indexBGM = AudioState[client].VIPBGM > 0 ? AudioState[client].VIPBGM : bgm == 0 ? g_indexBGM : bgm;
     PrintToServer("Set %i for %N", AudioState[client].indexBGM, client);
     if (instant) {
@@ -184,7 +188,7 @@ methodmap AUDIOMANAGER {
       AudioState[client].savedIntroSeconds = AudioState[client].introSeconds;
       AudioState[client].savedLoops = AudioState[client].loops;
       AudioState[client].eventMode = true;
-      CSEClient(client, BGMArray[curBGM].realPath, BGMArray[curBGM].SNDLVL, true, 1, 0.05, 100); // Set old bgm to low volume
+      CSEClientEx(client, BGMArray[curBGM].realPath, -2, g_chanBGM, BGMArray[curBGM].SNDLVL, true, 1, 0.05, 100); // Set old bgm to low volume
       PrintToServer("[AudioState] Entering event mode with song %s", BGMArray[bgm].songName);
       this.setBGM(client, bgm, true);
     }
@@ -196,7 +200,7 @@ methodmap AUDIOMANAGER {
       AudioState[client].loopSeconds = AudioState[client].savedLoopSeconds;
       AudioState[client].timeSeconds = AudioState[client].savedTimeSeconds;
       int new_bgm = AudioState[client].indexBGM;
-      CSEClient(client, BGMArray[new_bgm].realPath, BGMArray[new_bgm].SNDLVL, true, 1, 1.0, 100);
+      CSEClientEx(client, BGMArray[new_bgm].realPath, -2, g_chanBGM, BGMArray[new_bgm].SNDLVL, true, 1, 1.0, 100);
       AudioState[client].eventMode = false;
       CreateTimer(1.0, SyncMusic, client);
       PrintToServer("[AudioState] Exiting event mode with song %s", BGMArray[new_bgm].songName);
@@ -244,7 +248,7 @@ methodmap AUDIOMANAGER {
         AudioState[client].loops = 0;
       }
       AudioState[client].stopBGM = StrContains(BGMArray[AudioState[client].indexBGM].realPath, "mp3", false) != -1;
-      CSEClient(client, BGMArray[AudioState[client].indexBGM].realPath, BGMArray[AudioState[client].indexBGM].SNDLVL, true, 1, 1.0, 100);
+      CSEClientEx(client, BGMArray[AudioState[client].indexBGM].realPath, -2, g_chanBGM, BGMArray[AudioState[client].indexBGM].SNDLVL, true, 1, 1.0, 100);
       strcopy(AudioState[client].songName, sizeof(AudioState[client].songName), BGMArray[AudioState[client].indexBGM].songName);
       AudioState[client].introSeconds = AudioState[client].loops >= 1 ? BGMArray[AudioState[client].indexBGM].introSeconds : 0.0;
       AudioState[client].loopSeconds = BGMArray[AudioState[client].indexBGM].loopSeconds;
@@ -297,6 +301,18 @@ methodmap AUDIOMANAGER {
   public void OnTornadoWarning(bool issued) {
     for (int i = 0; i < MaxClients; i++) if (IsValidClient(i) && g_SirenEnabled[i] && g_SirenMutesMusic[i]) issued ? this.Stop(i) : this.setBGM(i, g_indexBGM, true);
   }
+
+  /* When a client sets the volume */
+  public void SetVolume(int client, int vol) { AudioState[client].volume = vol; PrintToChat(client, "Set your volume to %i", AudioState[client].volume); }
+
+  /* When a client sets the volume */
+  public void SetVolumeSFX(int client, int vol) { AudioState[client].volume_sfx = vol; PrintToChat(client, "Set your volume to %i", AudioState[client].volume_sfx); }
+
+  /* This should be obvious by now */
+  public void SetVolumeReal(int client, float vol) { AudioState[client].volume_real = vol; PrintToChat(client, "Set your volume to %f", AudioState[client].volume_real * 100); }
+
+  /* This should be obvious by now */
+  public void SetVolumeRealSFX(int client, float vol) { AudioState[client].volume_real_sfx = vol; PrintToChat(client, "Set your volume to %f%%", AudioState[client].volume_real_sfx * 100); }
 }
 AUDIOMANAGER AudioManager;
 
@@ -319,21 +335,27 @@ public Action EnableAudio(Handle timer) {
 void CustomSoundEmitter(char[] sndName, int TSNDLVL, bool isBGM, int flags, float vol, int pitch) {
   for (int i = 1; i <= MaxClients; i++) {
     if (!IsValidClient(i)) continue;
-    if (isBGM && (soundPreference[i] == 1 || soundPreference[i] == 3) || !isBGM && soundPreference[i] >= 2) EmitSoundToClient(i, sndName, _, isBGM ? g_chanBGM : 0, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
+    if (isBGM && (soundPreference[i] == 1 || soundPreference[i] == 3) || !isBGM && soundPreference[i] >= 2) EmitSoundToClient(i, sndName, _, isBGM ? g_chanBGM : 0, GetSNDLVL(i, isBGM, TSNDLVL), flags, GetVolume(i, isBGM, vol), pitch, _, _, _, _, _);
   }
 }
 
 //Play sound to client. Ripped straight from potato. Allows us to play sounds directly to people when they join.
 void CSEClient(int client, char[] sndName, int TSNDLVL, bool isBGM, int flags, float vol, int pitch) {
   if (!IsValidClient(client)) return;
-  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, _, isBGM ? g_chanBGM : 0, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
+  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, _, isBGM ? g_chanBGM : 0, GetSNDLVL(client, isBGM, TSNDLVL), flags, GetVolume(client, isBGM, vol), pitch, _, _, _, _, _);
 }
 
 //Play sound to client. Now supports source entities, channels, and positions.
-void CSEClientEx(int client, char[] sndName, int entity = -2, int channel, int TSNDLVL, bool isBGM, int flags, float vol, int pitch, const float pos[3] = NULL_VECTOR) {
+void CSEClientEx(int client, char[] sndName, int entity = -2, int channel, int TSNDLVL, bool isBGM, int flags, float vol, int pitch, float pos[3] = NULL_VECTOR) {
   if (!IsValidClient(client)) return;
-  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, entity, channel, TSNDLVL, flags, vol, pitch, _, pos, _, _, _);
+  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, entity, channel, GetSNDLVL(client, isBGM, TSNDLVL), flags, GetVolume(client, isBGM, vol), pitch, _, pos, _, _, _);
 }
+
+//Gets the client's preferred sound level - see the Valve Developer Wiki for valid SNDLVL indexes.
+public int GetSNDLVL(int client, bool isBGM, int _default) { return isBGM ? (AudioState[client].volume != 0 ? AudioState[client].volume : _default) : !isBGM ? (AudioState[client].volume_sfx != 0 ? AudioState[client].volume_sfx : _default) : _default; }
+
+//Gets the client's preferred REAL sound level - see the Valve Developer Wiki for valid SNDLVL indexes.
+public float GetVolume(int client, bool isBGM, float _default) { return isBGM ? (AudioState[client].volume_real != 0.0 ? AudioState[client].volume_real : _default) : !isBGM ? (AudioState[client].volume_real_sfx != 0.0 ? AudioState[client].volume_real_sfx : _default) : _default; }
 
 //VIP Music Menu
 public Action Command_Music(int client, int args) {
@@ -1065,4 +1087,40 @@ public Action SyncMusic(Handle timer, int client) {
   strcopy(AudioState[client].songName, sizeof(AudioState[client].songName), BGMArray[index].songName);
   AssLogger(LOGLVL_INFO, "[AudioState for %N]: We are on wave %i, now playing: %s (from %s) for %f seconds. It will start looping at %f seconds after the first cycle.", client, WaveSystem().GetWave(), AudioState[client].songName, AudioState[client].cachedPath, AudioState[client].loopSeconds, BGMArray[index].introSeconds);
   return Plugin_Stop;
+}
+
+public Action Command_SetVolume(int client, int args) {
+  char arg1[4];
+  GetCmdArg(1, arg1, sizeof(arg1));
+  int steamID = GetSteamAccountID(client);
+  if (!Ass_Database || !steamID || steamID <= 10000) return Plugin_Stop;
+  //char query[256];
+  //Format(query, sizeof(query), "SELECT * from ass_activity WHERE steamid = %i;", steamID);
+  //Ass_Database.Query(SetVolume, query, client);
+  AudioManager.SetVolume(client, StringToInt(arg1));
+  return Plugin_Continue;
+}
+
+public Action Command_SetVolumeSFX(int client, int args) {
+  char arg1[4];
+  GetCmdArg(1, arg1, sizeof(arg1));
+  int steamID = GetSteamAccountID(client);
+  if (!Ass_Database || !steamID || steamID <= 10000) return Plugin_Stop;
+  //char query[256];
+  //Format(query, sizeof(query), "SELECT * from ass_activity WHERE steamid = %i;", steamID);
+  //Ass_Database.Query(SetVolume, query, client);
+  AudioManager.SetVolumeSFX(client, StringToInt(arg1));
+  return Plugin_Continue;
+}
+
+public Action Command_SetVolumeReal(int client, int args) {
+  char arg1[8];
+  char arg2[4];
+  GetCmdArg(1, arg1, sizeof(arg1));
+  GetCmdArg(2, arg2, sizeof(arg2));
+  PrintToChat(client, "%s, %s", arg1, arg2);
+  if (StringToInt(arg2) > 100 | StringToInt(arg2) < 0) { ReplyToCommand(client, "ERROR: Value must be between 0 and 100."); return Plugin_Handled; }
+  if (StrContains(arg1, "music", false)) { AudioManager.SetVolumeReal(client, (StringToInt(arg2) * 1.0) / 100.0); return Plugin_Handled; }
+  if (StrContains(arg1, "sfx", false)) { AudioManager.SetVolumeRealSFX(client, (StringToInt(arg2) * 1.0) / 100.0); return Plugin_Handled; }
+  ReplyToCommand(client, "Usage: sm_setvolumereal <sfx / music> <int 0-100>"); return Plugin_Handled;
 }

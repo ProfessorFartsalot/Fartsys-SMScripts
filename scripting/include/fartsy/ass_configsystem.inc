@@ -357,6 +357,9 @@ void RegisterAllCommands() {
   RegConsoleCmd("sm_aoe", Command_AOE, "[TESTING] Dispatch AOE Effect");
   RegConsoleCmd("sm_fogsetdensity", Command_SetFogDensity, "[TESTING] Set fog density");
   RegConsoleCmd("sm_fogstartendupdate", Command_SetFogSEU, "[TESTING] Set fog start end with optional flag");
+  RegConsoleCmd("sm_volume", Command_SetVolume, "Set the music SNDLVL to whatever you want (up to 130)");
+  RegConsoleCmd("sm_volume_sfx", Command_SetVolumeSFX, "Set the sfx SNDLVL to whatever you want (up to 130)");
+  RegConsoleCmd("sm_setvolumereal", Command_SetVolumeReal, "Set the real volume for sfx/music. Ex: sm_setvolumereal sfx 100, sm_setvolumereal music 100");
   cvarSNDDefault = CreateConVar("sm_fartsysass_sound", "3", "Default sound for new users, 3 = Everything, 2 = Sounds Only, 1 = Music Only, 0 = Nothing");
   cvarSirenEnabledDefault = CreateConVar("sm_fartsysass_sirenenabled", "1", "Enables the tornado siren for clients to hear it by default (they can still opt in/out of it via !sounds). 1/0");
   cvarSirenMutesMusicDefault = CreateConVar("sm_fartsysass_sirenmutemusic", "1", "Allows the tornado siren to mute music for clients by default (they can still opt in/out of it via !sounds). 1/0");

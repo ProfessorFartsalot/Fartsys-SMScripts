@@ -15,6 +15,7 @@ public Action Command_SetFogDensity(int client, int args){
   PrintToChatAll("Changing fog density to %s", arg1);
   return Plugin_Handled;
 }
+
 public Action Command_SetFogSEU(int client, int args){
   char arg01[5];
   char arg02[5];
