@@ -6,8 +6,7 @@
  *   FIVE..... TIPS AND TRICKS MAY BE ADDED TO THE TIMER, SEE PerformAdverts(Handle timer);
  *        IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
-
-public char PLUGIN_VERSION[8] = "9.4.5";
+public char PLUGIN_VERSION[8] = "9.4.7a";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
@@ -31,7 +30,6 @@ public char PLUGIN_VERSION[8] = "9.4.5";
 #include <tf2attributes>
 #pragma newdecls required
 #pragma semicolon 1
-
 public Plugin myinfo = {
   name = "Fartsy's Ass - Framework",
   author = "Fartsy",
@@ -55,12 +53,8 @@ public void OnFastFire2Ready() {
   WaveSystem().update();
   if (WaveSystem().IsDefault()) core.init_post();
   CPrintToChatAll("{fartsyred}Plugin Reloaded. If you do not hear music, please do !sounds and configure your preferences.");
-  cvarSNDDefault = CreateConVar("sm_fartsysass_sound", "3", "Default sound for new users, 3 = Everything, 2 = Sounds Only, 1 = Music Only, 0 = Nothing");
-  CreateTimer(15.0, StatsTracker);
   AudioManager.Reset(true);
   WeatherManager.Reset();
-  CreateTimer(1.0, SelectAdminTimer);
-  sudo(1002);
   AssLogger(LOGLVL_INFO, "####### STARTUP COMPLETE (v%s) #######", PLUGIN_VERSION);
 }
 
