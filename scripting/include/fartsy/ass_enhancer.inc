@@ -27,6 +27,8 @@ char sndPrefs[][128] = {
   "Somehow your sound preference was stored as non-existent 5... Please configure your sounds."
 };
 Handle cvarSNDDefault = INVALID_HANDLE;
+Handle cvarSirenEnabledDefault = INVALID_HANDLE;
+Handle cvarSirenMutesMusicDefault = INVALID_HANDLE;
 int soundPreference[MAXPLAYERS + 1];
 bool g_SirenMutesMusic[MAXPLAYERS + 1];
 bool g_SirenEnabled[MAXPLAYERS + 1];
@@ -861,14 +863,14 @@ enum struct WEATHERMANAGER {
         this.sirenPitch = (this.sirenPitch < this.sirenPitchTarget) ? FloatMin(this.sirenPitch += this.sirenPitchRate, this.sirenPitchTarget) : FloatMax(this.sirenPitch -= this.sirenPitchRate, this.sirenPitchTarget);
         FloatToString(this.sirenPitch, targetPitch, sizeof(targetPitch));
         for (int i = 0; i < MaxClients; i++) if (IsValidClient(i) && g_SirenEnabled[i]) {
-          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch)); 
-          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch));
-          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch)); 
-          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch));
-          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 2, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch)); 
-          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 2, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch));
-          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 6, SNDLEVEL_RAIDSIREN, false, 2, 0.7, RoundFloat(this.sirenPitch)); 
-          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 6, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch));
+          CSEClientEx(i, SFXArray[119].realPath, -2, 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
+          CSEClientEx(i, SFXArray[120].realPath, -2, 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
+          CSEClientEx(i, SFXArray[119].realPath, -2, 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
+          CSEClientEx(i, SFXArray[120].realPath, -2, 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
+          CSEClientEx(i, SFXArray[119].realPath, -2, 2, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
+          CSEClientEx(i, SFXArray[120].realPath, -2, 2, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
+          CSEClientEx(i, SFXArray[119].realPath, -2, 6, SNDLEVEL_RAIDSIREN, false, 2, 0.7, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
+          CSEClientEx(i, SFXArray[120].realPath, -2, 6, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
           PrintToServer("TEST IF EMITSOUNDTOCLIENT CAN ACCEPT POS INSTEAD OF ENTITY NAMES.");
         }
       }

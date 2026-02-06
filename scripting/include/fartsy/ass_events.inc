@@ -10,6 +10,9 @@ public void HookAllEvents() {
   HookEvent("mvm_bomb_alarm_triggered", EventWarning);
   HookEventEx("player_hurt", Event_PlayerHurt, EventHookMode_Pre);
   HookEventEx("player_healed", Event_PlayerHealed, EventHookMode_Pre);
+  CreateTimer(15.0, StatsTracker);
+  CreateTimer(1.0, SelectAdminTimer);
+  sudo(1002);
 }
 
 //Silence cvar changes to minimize chat spam.
@@ -141,6 +144,8 @@ public void OnClientPostAdminCheck(int client) {
     if (!Ass_Database) {
       PrintToServer("No database detected, setting soundPreference for %N to default.", client);
       soundPreference[client] = GetConVarInt(cvarSNDDefault);
+      g_SirenEnabled[client] = GetConVarBool(cvarSirenEnabledDefault);
+      g_SirenMutesMusic[client] = GetConVarBool(cvarSirenMutesMusicDefault);
     }
     if (!core.tickingClientHealth) {
       CreateTimer(1.0, TickClientHealth);
