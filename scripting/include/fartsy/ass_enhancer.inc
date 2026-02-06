@@ -28,12 +28,14 @@ char sndPrefs[][128] = {
 };
 Handle cvarSNDDefault = INVALID_HANDLE;
 int soundPreference[MAXPLAYERS + 1];
+bool g_SirenMutesMusic[MAXPLAYERS + 1];
+bool g_SirenEnabled[MAXPLAYERS + 1];
 
 //Get client sound prefs
 public void SQL_SNDPrefs(Database db, DBResultSet results, const char[] error, int client) {
   if (!results) { LogError("Failed to query database: %s", error); return; }
   if (!IsValidClient(client)) return;
-  if (results.FetchRow()) soundPreference[client] = results.FetchInt(0);
+  if (results.FetchRow()) { soundPreference[client] = results.FetchInt(0); g_SirenEnabled[client] = results.FetchInt(1) == 1 ? true : false; g_SirenMutesMusic[client] = results.FetchInt(2) == 1 ? true : false; }
 }
 
 //Music system rewrite for the 9th time.
@@ -205,12 +207,13 @@ methodmap AUDIOMANAGER {
   // Stops for a client
   public void Stop(int client) {
     StopSound(client, g_chanBGM, BGMArray[AudioState[client].indexBGM].realPath);
+    StopSound(client, g_chanBGM, AudioState[client].cachedPath);
+    AudioState[client].shouldTick = false;
     AudioState[client].bgmPlaying = false;
     AudioState[client].indexBGM = 0;
     AudioState[client].loops = 0;
     AudioState[client].stopBGM = true;
     AudioState[client].timeSeconds = 0.0;
-    AudioState[client].shouldTick = false;
   }
 
   // Tick audio if a client should be ticking
@@ -218,7 +221,7 @@ methodmap AUDIOMANAGER {
 
   // Tick audio for a client
   public void TickClient(int client) {
-    if (!IsValidClient(client)) { this.Stop(client); return; }
+    if (!IsValidClient(client) || !AudioState[client].shouldTick) { this.Stop(client); return; }
     if (this.isClientInEventMode(client)) {
       if (AudioState[client].savedIndexBGM != g_indexBGM && AudioState[client].VIPBGM <= 0) AudioState[client].savedIndexBGM = g_indexBGM;
       if (this.engineSecondsAdjusted(client) > AudioState[client].savedTimeSeconds + AudioState[client].savedLoopSeconds) {
@@ -256,7 +259,7 @@ methodmap AUDIOMANAGER {
           continue;
         }
         this.setBGM(i, AudioState[i].VIPBGM > 0 && !this.isClientInEventMode(i) ? AudioState[i].VIPBGM : AudioState[i].indexBGM == 0 ? g_indexBGM : AudioState[i].indexBGM, true);
-        AudioState[i].shouldTick = true;
+        AudioState[i].shouldTick = GetWeatherManager().TornadoWarning && g_SirenMutesMusic[i] ? false : true;
       }
     }
   }
@@ -287,6 +290,11 @@ methodmap AUDIOMANAGER {
       AudioState[client].clientIsFresh = false;
     }
   }
+
+  /* When a tornado warning is issued */
+  public void OnTornadoWarning(bool issued) {
+    for (int i = 0; i < MaxClients; i++) if (IsValidClient(i) && g_SirenEnabled[i] && g_SirenMutesMusic[i]) issued ? this.Stop(i) : this.setBGM(i, g_indexBGM, true);
+  }
 }
 AUDIOMANAGER AudioManager;
 
@@ -295,7 +303,7 @@ public Action EnableAudio(Handle timer) {
   return Plugin_Stop;
 }
 
-//Custom sound emitter, I don't know how many fucking times I've rewritten this! See potato.sp
+//Custom sound emitter, I don't know how many fucking times I've rewritten this! +1! See potato.sp
 //int flags:
 //  SND_NOFLAGS= 0,             /**< Nothing */
 //  SND_CHANGEVOL = 1,          /**< Change sound volume */
@@ -309,14 +317,20 @@ public Action EnableAudio(Handle timer) {
 void CustomSoundEmitter(char[] sndName, int TSNDLVL, bool isBGM, int flags, float vol, int pitch) {
   for (int i = 1; i <= MaxClients; i++) {
     if (!IsValidClient(i)) continue;
-    if (isBGM && (soundPreference[i] == 1 || soundPreference[i] == 3) || !isBGM && soundPreference[i] >= 2) EmitSoundToClient(i, sndName, _, g_chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
+    if (isBGM && (soundPreference[i] == 1 || soundPreference[i] == 3) || !isBGM && soundPreference[i] >= 2) EmitSoundToClient(i, sndName, _, isBGM ? g_chanBGM : 0, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
   }
 }
 
 //Play sound to client. Ripped straight from potato. Allows us to play sounds directly to people when they join.
 void CSEClient(int client, char[] sndName, int TSNDLVL, bool isBGM, int flags, float vol, int pitch) {
   if (!IsValidClient(client)) return;
-  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, _, g_chanBGM, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
+  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, _, isBGM ? g_chanBGM : 0, TSNDLVL, flags, vol, pitch, _, _, _, _, _);
+}
+
+//Play sound to client. Now supports source entities, channels, and positions.
+void CSEClientEx(int client, char[] sndName, int entity = -2, int channel, int TSNDLVL, bool isBGM, int flags, float vol, int pitch, const float pos[3] = NULL_VECTOR) {
+  if (!IsValidClient(client)) return;
+  if (isBGM && (soundPreference[client] == 1 || soundPreference[client] == 3) || !isBGM && soundPreference[client] >= 2) EmitSoundToClient(client, sndName, entity, channel, TSNDLVL, flags, vol, pitch, _, pos, _, _, _);
 }
 
 //VIP Music Menu
@@ -359,7 +373,7 @@ public Action Command_Sounds(int client, int args) {
   if (!steamID || steamID <= 10000) return Plugin_Handled;
   else {
     char queryID[256];
-    Format(queryID, sizeof(queryID), "SELECT soundprefs from ass_activity WHERE steamid = '%d';", steamID);
+    Format(queryID, sizeof(queryID), "SELECT soundprefs,sirenenabled,sirenmutesmusic from ass_activity WHERE steamid = '%d';", steamID);
     Ass_Database.Query(SQL_SNDPrefs, queryID, client);
     ShowFartsyMenu(client);
     PrintToChat(client, sndPrefs[soundPreference[client]]);
@@ -376,6 +390,8 @@ public void ShowFartsyMenu(int client) {
   menu.AddItem(buffer, "Music Only");
   menu.AddItem(buffer, "Sound Effects Only");
   menu.AddItem(buffer, "Enable ALL");
+  menu.AddItem(buffer, g_SirenEnabled[client] ? "Disable Tornado Siren" : "Enable Tornado Siren")
+  menu.AddItem(buffer, g_SirenMutesMusic[client] ? "Siren Mutes Music" : "Siren Does NOT Mute Music");
   menu.Display(client, 20);
   menu.ExitButton = true;
 }
@@ -386,13 +402,16 @@ public int MenuHandlerFartsy(Menu menu, MenuAction action, int param1, int param
     char query[256];
     int steamID = GetSteamAccountID(param1);
     if (!Ass_Database || !steamID) return 0;
-    else {
+    if (param2 < 4) {
       Format(query, sizeof(query), "UPDATE ass_activity SET soundprefs = '%i' WHERE steamid = '%d';", param2, steamID);
-      Ass_Database.Query(Database_FastQuery, query);
       soundPreference[param1] = param2;
-      Command_Sounds(param1, 0);
     }
-  } else if (action == MenuAction_End) CloseHandle(menu);
+    if (param2 == 4) { Format(query, sizeof(query), "UPDATE ass_activity SET sirenenabled = CASE sirenenabled WHEN 0 THEN 1 ELSE 0 END WHERE steamid = '%d';", steamID); g_SirenEnabled[param1] = !g_SirenEnabled[param1] ? true : false; }
+    if (param2 == 5) { Format(query, sizeof(query), "UPDATE ass_activity SET sirenmutesmusic = CASE sirenmutesmusic WHEN 0 THEN 1 ELSE 0 END WHERE steamid = '%d';", steamID); g_SirenMutesMusic[param1] = !g_SirenMutesMusic[param1] ? true : false; }
+    Ass_Database.Query(Database_FastQuery, query);
+    Command_Sounds(param1, 0);
+  }
+  else if (action == MenuAction_End) CloseHandle(menu);
   return 0;
 }
 
@@ -556,6 +575,7 @@ enum struct WEATHERMANAGER {
     FastFire2("Weather.EASScreen", "Disable");
     FastFire2("Weather.Siren.ExplodeParticle", "Stop");
     FastFire2("Weather.Siren", "StopSound", "", 5.0);
+    AudioManager.OnTornadoWarning(false);
   }
   void IssueTornadoWarning() {
     if (WaveSystem().IsActive() && this.canTornado && !this.sirenExploded) {
@@ -565,6 +585,7 @@ enum struct WEATHERMANAGER {
       FastFire2("Weather.EASScreen", "Enable");
       FastFire2("Weather.EAS", "PlaySound");
       CreateTimer(GetRandomFloat(1.0, 3.0), ModulateSiren);
+      AudioManager.OnTornadoWarning(true);
     }
   }
   void PerformRandomWeather() {
@@ -819,15 +840,18 @@ enum struct WEATHERMANAGER {
   void TickSiren() {
     if (this.TornadoWarning) {
       if (!this.sirenExploded && (this.sirenPitch > 165.0)) {
-        FastFire2("Weather.Siren", "Pitch", "50");
-        FastFire2("Weather.Siren", "Pitch", "40", 0.1);
-        FastFire2("Weather.Siren", "Pitch", "30", 0.2);
-        FastFire2("Weather.Siren", "Pitch", "20", 0.3);
-        FastFire2("Weather.Siren", "Pitch", "10", 0.4);
-        FastFire2("Weather.Siren", "Pitch", "0", 0.5);
         FastFire2("Weather.Siren.ExplodeParticle", "Start");
-        FastFire2("Weather.Siren.ExplodeSND", "PlaySound");
-        FastFire2("Weather.Siren", "StopSound", "", 5.0);
+        CustomSoundEmitter(SFXArray[121].realPath, SFXArray[121].SNDLVL, false, 0, 1.0, 100);
+        for (int i = 0; i < MaxClients; i++) if (IsValidClient(i) && g_SirenEnabled[i]) {
+          StopSound(i, 10, SFXArray[119].realPath);
+          StopSound(i, 10, SFXArray[120].realPath);
+          StopSound(i, 3, SFXArray[119].realPath);
+          StopSound(i, 3, SFXArray[120].realPath);
+          StopSound(i, 2, SFXArray[119].realPath);
+          StopSound(i, 2, SFXArray[120].realPath);
+          StopSound(i, 6, SFXArray[119].realPath);
+          StopSound(i, 6, SFXArray[120].realPath);
+        }
         FastFire2("Weather.Siren.ExplodeParticle", "Stop", "", 5.0);
         FastFire2("Weather.Siren.ExplodeParticle", "Start", "", 5.1);
         this.sirenExploded = true;
@@ -836,7 +860,17 @@ enum struct WEATHERMANAGER {
         char targetPitch[24];
         this.sirenPitch = (this.sirenPitch < this.sirenPitchTarget) ? FloatMin(this.sirenPitch += this.sirenPitchRate, this.sirenPitchTarget) : FloatMax(this.sirenPitch -= this.sirenPitchRate, this.sirenPitchTarget);
         FloatToString(this.sirenPitch, targetPitch, sizeof(targetPitch));
-        FastFire2("Weather.Siren", "Pitch", targetPitch);
+        for (int i = 0; i < MaxClients; i++) if (IsValidClient(i) && g_SirenEnabled[i]) {
+          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch)); 
+          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch));
+          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch)); 
+          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch));
+          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 2, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch)); 
+          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 2, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch));
+          CSEClientEx(i, SFXArray[119].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 6, SNDLEVEL_RAIDSIREN, false, 2, 0.7, RoundFloat(this.sirenPitch)); 
+          CSEClientEx(i, SFXArray[120].realPath, FindEntityByTargetname("Weather.Siren.ExplodeSND", "ambient_generic"), 6, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch));
+          PrintToServer("TEST IF EMITSOUNDTOCLIENT CAN ACCEPT POS INSTEAD OF ENTITY NAMES.");
+        }
       }
     }
   }
@@ -858,6 +892,7 @@ enum struct WEATHERMANAGER {
   }
 }
 WEATHERMANAGER WeatherManager;
+WEATHERMANAGER GetWeatherManager() { return WeatherManager; }
 
 //Ghosties
 methodmap GHOSTHANDLER {
@@ -920,8 +955,8 @@ public Action GetRandomWind(Handle timer, int intensity) {
 }
 public Action ModulateSiren(Handle timer) {
   if (WeatherManager.TornadoWarning && !WeatherManager.sirenExplode) {
-    WeatherManager.sirenPitchTarget = WeatherManager.powerSurging ? GetRandomFloat(95.0, 210.0) : GetRandomFloat(85.0, 125.0);
-    WeatherManager.sirenPitchRate = WeatherManager.powerSurging ? GetRandomFloat(0.0525, 0.20) : GetRandomFloat(0.01, 0.125);
+    WeatherManager.sirenPitchTarget = WeatherManager.powerSurging ? GetRandomFloat(115.0, 210.0) : GetRandomFloat(65.0, 105.0);
+    WeatherManager.sirenPitchRate = WeatherManager.powerSurging ? GetRandomFloat(0.0525, 0.25) : GetRandomFloat(0.01, 0.125);
     CreateTimer(GetRandomFloat(1.0, 3.0), ModulateSiren);
   }
   return Plugin_Stop;

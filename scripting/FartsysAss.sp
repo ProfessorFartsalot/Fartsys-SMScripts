@@ -7,7 +7,7 @@
  *        IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
 
-public char PLUGIN_VERSION[8] = "9.4.5";
+public char PLUGIN_VERSION[8] = "9.4.6";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
@@ -31,7 +31,6 @@ public char PLUGIN_VERSION[8] = "9.4.5";
 #include <tf2attributes>
 #pragma newdecls required
 #pragma semicolon 1
-
 public Plugin myinfo = {
   name = "Fartsy's Ass - Framework",
   author = "Fartsy",

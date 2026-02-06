@@ -213,3 +213,30 @@ public int GetCurWave() {
   AssLogger(LOGLVL_ERROR, "tf_objective_resource not found");
   return -1;
 }
+
+//Adverts for wave information
+public Action PerformWaveAdverts(Handle timer) {
+  if (WaveSystem().IsActive()) {
+    char buffer[16];
+    int emnity;
+    char tbuffer[16];
+    char HintText[320];
+    //int sPos = RoundToFloor((AudioState.timeSeconds() / (GetEngineTime() + AudioState.loopSeconds)) * AudioState.loopSeconds);
+    for (int i = 0; i <= MaxClients; ++i) { //might need to be i++??
+      if (IsValidClient(i)) {
+        int sPos = RoundToFloor(AudioManager.engineSecondsAdjusted(i) - AudioState[i].timeSeconds);
+        int tPos = RoundToFloor(AudioState[i].loopSeconds);
+        Format(buffer, 16, "%02d:%02d", sPos / 60, sPos % 60);
+        Format(tbuffer, 16, "%02d:%02d", tPos / 60, tPos % 60);
+        char music[128];
+        Format(music, sizeof(music), AudioState[i].bgmPlaying ? "\n Music: %s (%s/%s)" : "", AudioState[i].songName, buffer, tbuffer);
+        Format(HintText, sizeof(HintText), (BombRegistry[0].isMoving ? "Payload: MOVING (%i/%i) | !sacpoints: %i/%i %s" : BombRegistry[0].isReady ? "Payload: READY (%i/%i) | !sacpoints: %i/%i %s" : "Payload: PREPARING (%i/%i) | !sacpoints: %i/%i %s"), g_BombIndex, BombRegistry[0].stateMax, ass_sacPoints, ass_sacPointsMax, music);
+        emnity = EmnityManager[i].getClientEmnity();
+        PrintHintText(i, (WeatherManager.TornadoWarning ? "%s \n\n[TORNADO WARNING]" : "%s\n\nEmnity: %i٪"), HintText, emnity >= 0 ? emnity : 0);
+        StopSound(i, SNDCHAN_STATIC, "UI/hint.wav");
+      }
+    }
+    CreateTimer(2.5, PerformWaveAdverts);
+  }
+  return Plugin_Stop;
+}
