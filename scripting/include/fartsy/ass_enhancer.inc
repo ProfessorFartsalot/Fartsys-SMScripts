@@ -20,10 +20,10 @@ SFXARRAY SFXArray[128];
 
 //Sound preference menu
 char sndPrefs[][128] = {
-  "Sounds are currently DISABLED.",
-  "Sounds are currently MUSIC ONLY.",
-  "Sounds are currently SOUND EFFECTS ONLY.",
-  "Sounds are currently ALL ON.",
+  "Sounds are currently DISABLED",
+  "Sounds are currently MUSIC ONLY",
+  "Sounds are currently SOUND EFFECTS ONLY",
+  "Sounds are currently ALL ON",
   "Somehow your sound preference was stored as non-existent 5... Please configure your sounds."
 };
 Handle cvarSNDDefault = INVALID_HANDLE;
@@ -375,10 +375,10 @@ public Action Command_Sounds(int client, int args) {
   if (!steamID || steamID <= 10000) return Plugin_Handled;
   else {
     char queryID[256];
-    Format(queryID, sizeof(queryID), "SELECT soundprefs,sirenenabled,sirenmutesmusic from ass_activity WHERE steamid = '%d';", steamID);
+    Format(queryID, sizeof(queryID), "SELECT soundprefs, sirenenabled, sirenmutesmusic FROM ass_activity WHERE steamid = '%d';", steamID);
     Ass_Database.Query(SQL_SNDPrefs, queryID, client);
     ShowFartsyMenu(client);
-    PrintToChat(client, sndPrefs[soundPreference[client]]);
+    PrintToChat(client, "%s | Tornado Siren Enabled: %s | Tornado Siren Mutes Music: %s.", sndPrefs[soundPreference[client]], g_SirenEnabled[client] ? "True" : "False", g_SirenMutesMusic[client] ? "True" : "False");
     return Plugin_Handled;
   }
 }
@@ -473,6 +473,7 @@ enum struct MAPLIGHTING {
 MAPLIGHTING MapLighting[13];
 
 //Weather Manager
+int sirenRef;
 BULKFIRE lightningStrike[16];
 BULKFIRE lightningFlash[17];
 enum struct WEATHERMANAGER {
@@ -503,6 +504,7 @@ enum struct WEATHERMANAGER {
   float fogColorRTarget;
   float fogColorGTarget;
   float fogColorBTarget;
+  float sirenPos[3];
   int intensity;
   int mIntensity;
   bool CanFormTornado() {
@@ -801,6 +803,18 @@ enum struct WEATHERMANAGER {
     FastFire2("Weather.Sky", "Skin", "0");
     FastFire2("Weather.FogSky", "Enable", "", 2.0);
     for (int i = 0; i < sizeof(MapLighting); i++)MapLighting[i].Repair();
+    this.sirenPos = {-2305.0, 2095.0, 1102.0};
+    int siren = FindEntityByTargetname("WeatherSiren", "info_target");
+    if (!IsValidEntity(siren)) {
+      siren = CreateEntityByName("info_target");
+      if (!IsValidEdict(siren)) SetFailState("Could not inject Siren Entity, aborting!!!");
+      DispatchSpawn(siren);
+      DispatchKeyValue(siren, "targetname", "WeatherSiren");
+      ActivateEntity(siren);
+      TeleportEntity(siren, this.sirenPos, NULL_VECTOR, NULL_VECTOR);
+      AssLogger(LOGLVL_INFO, "Injected info_target WeatherSiren to map!")
+    }
+    sirenRef = EntIndexToEntRef(siren);
   }
   void SetFogStartQueued(const char[] fsq) {
     FastFire2("Weather.FogOutdoor", "SetStartDistLerpTo", fsq);
@@ -862,16 +876,16 @@ enum struct WEATHERMANAGER {
         char targetPitch[24];
         this.sirenPitch = (this.sirenPitch < this.sirenPitchTarget) ? FloatMin(this.sirenPitch += this.sirenPitchRate, this.sirenPitchTarget) : FloatMax(this.sirenPitch -= this.sirenPitchRate, this.sirenPitchTarget);
         FloatToString(this.sirenPitch, targetPitch, sizeof(targetPitch));
+        int siren = EntRefToEntIndex(sirenRef);
         for (int i = 0; i < MaxClients; i++) if (IsValidClient(i) && g_SirenEnabled[i]) {
-          CSEClientEx(i, SFXArray[119].realPath, -2, 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
-          CSEClientEx(i, SFXArray[120].realPath, -2, 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
-          CSEClientEx(i, SFXArray[119].realPath, -2, 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
-          CSEClientEx(i, SFXArray[120].realPath, -2, 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
-          CSEClientEx(i, SFXArray[119].realPath, -2, 2, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
-          CSEClientEx(i, SFXArray[120].realPath, -2, 2, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
-          CSEClientEx(i, SFXArray[119].realPath, -2, 6, SNDLEVEL_RAIDSIREN, false, 2, 0.7, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0}); 
-          CSEClientEx(i, SFXArray[120].realPath, -2, 6, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch), {-2305.0, 2095.0, 1102.0});
-          PrintToServer("TEST IF EMITSOUNDTOCLIENT CAN ACCEPT POS INSTEAD OF ENTITY NAMES.");
+          CSEClientEx(i, SFXArray[119].realPath, siren, 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), this.sirenPos); 
+          CSEClientEx(i, SFXArray[120].realPath, siren, 10, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), this.sirenPos);
+          CSEClientEx(i, SFXArray[119].realPath, siren, 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), this.sirenPos); 
+          CSEClientEx(i, SFXArray[120].realPath, siren, 3, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), this.sirenPos);
+          CSEClientEx(i, SFXArray[119].realPath, siren, 2, SNDLEVEL_RAIDSIREN, false, 1026, 1.0, RoundFloat(this.sirenPitch), this.sirenPos); 
+          CSEClientEx(i, SFXArray[120].realPath, siren, 2, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch), this.sirenPos);
+          CSEClientEx(i, SFXArray[119].realPath, siren, 6, SNDLEVEL_RAIDSIREN, false, 2, 0.7, RoundFloat(this.sirenPitch), this.sirenPos); 
+          CSEClientEx(i, SFXArray[120].realPath, siren, 6, SNDLEVEL_RAIDSIREN, false, 2, 1.0, RoundFloat(this.sirenPitch), this.sirenPos);
         }
       }
     }
