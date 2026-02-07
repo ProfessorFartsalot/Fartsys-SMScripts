@@ -1,18 +1,28 @@
 //Fartsy's FastFire2
+char FF2_VER[7] = "1.2.0";
 int ff2Ref;
+
+/* Create Entities with optional data
+* @param classname - The entity class name to be created
+* @param targetname - The name of the created entity
+*/
+int CreateCustomEntity(const char[] classname, const char[] targetname) {
+  int cne = FindEntityByClassname(-1, classname);
+  if (!IsValidEntity(cne)) {
+    cne = CreateEntityByName(classname);
+    if (!IsValidEdict(cne)) { AssLogger(LOGLVL_ERROR, "Could not create %s, aborting!", classname); return -2; }
+    DispatchSpawn(cne);
+    DispatchKeyValue(cne, "targetname", targetname);
+    ActivateEntity(cne);
+  }
+  return cne;
+}
 
 //Inject entity IO logic
 public void OnMapStart() {
-  AssLogger(LOGLVL_INFO, "OnMapStart Received: Injecting FastFire2!");
-  int ff2 = FindEntityByTargetname("FastFire2", "info_target");
-  if (!IsValidEntity(ff2)) {
-    ff2 = CreateEntityByName("info_target");
-    if (!IsValidEdict(ff2)) SetFailState("Could not inject FastFire2, aborting!!!");
-    DispatchSpawn(ff2);
-    DispatchKeyValue(ff2, "targetname", "FastFire2");
-    ActivateEntity(ff2);
-    AssLogger(LOGLVL_INFO, "Injected info_target FastFire2 to map!")
-  }
+  AssLogger(LOGLVL_INFO, "OnMapStart Received: Injecting FastFire2! (v%s)", FF2_VER);
+  int ff2 = CreateCustomEntity("info_target", "FastFire2")
+  if (!IsValidEntity(ff2)) { SetFailState("Could not inject FastFire2, aborting!!!"); }
   ff2Ref = EntIndexToEntRef(ff2);
   OnFastFire2Ready();
 }

@@ -6,7 +6,7 @@
  *   FIVE..... TIPS AND TRICKS MAY BE ADDED TO THE TIMER, SEE PerformAdverts(Handle timer);
  *        IF IT'S WAR THAT YOU WANT, THEN I'M READY TO PLAY. GLHF!
  */
-public char PLUGIN_VERSION[8] = "9.4.7b";
+public char PLUGIN_VERSION[8] = "9.4.7c";
 #include <sourcemod>
 #include <sdktools>
 #include <tf2_stocks>
