@@ -113,7 +113,7 @@ public Action EventDeath(Event Spawn_Event, const char[] Spawn_Name, bool Spawn_
   }
   if (steamid && client != attacker && IsValidClient(attacker)){
     PD[attacker].killcount++;
-    for (int i = 5; i <= 50; i = i+5){
+    for (int i = 5; i <= 5000; i = i+5){
       if(i == PD[attacker].killcount){
         CPrintToChatAll("{limegreen}%N{white} has a {darkred}%i{white} killstreak!", attacker, PD[attacker].killcount);
         char query[1024];
