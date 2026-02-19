@@ -17,6 +17,7 @@ methodmap DEFAULTSMANAGER {
   public DEFAULTS GetDefaults(int wave) { return DefaultsArray[wave]; }
   // Only called during plugin startup
   public void SetupDefaults(Handle confCoreData) {
+    g_LaserSystem = true;
     AssLogger(1, "[CORE] Setting up Wave Defaults...");
     char bufCoreData[256];
     PrintToServer("confCoreData returned %s", OVERRIDE_AND_GET_COREDATA());
@@ -396,9 +397,120 @@ void RegisterAndPrecacheAllFiles() {
   AssLogger(LOGLVL_INFO, "Done! BGM Count: %i, SFX Count: %i, Total: %i files loaded to RAM.", bgmIndex, sfxIndex, bgmIndex + sfxIndex);
   AssLogger(LOGLVL_DEBUG, "Loading WeatherManager...");
   LoadConfig(2);
-  AssLogger(LOGLVL_INFO, "All configs loaded! Check above for errors.");
-}
+  AssLogger(LOGLVL_DEBUG, "Setting up Lasers...");
+  //LoadConfig(3); -- Not implemented yet!!!
+  // Left edge
+  WBLasers[2][0].sPos = {5328.0,-3042.0,22.0};
+  WBLasers[2][0].ePos = {5328.0,-2050.0,22.0};
 
+  // Left Top
+  WBLasers[2][1].sPos = {5592.0,-2050.0,22.0};
+  WBLasers[2][1].ePos = {5328.0,-2050.0,22.0};
+
+  // Left Top-Right
+  WBLasers[2][2].sPos = {5592.0,-2508.0,22.0};
+  WBLasers[2][2].ePos = {5592.0,-2050.0,22.0};
+
+  // Left Top Bridge-Top
+  WBLasers[2][3].sPos = {5792.0,-2508.0,22.0};
+  WBLasers[2][3].ePos = {5592.0,-2508.0,22.0};
+
+  // Left Top Bridge-Bottom
+  WBLasers[2][4].sPos = {5792.0,-2640.0,22.0};
+  WBLasers[2][4].ePos = {5592.0,-2640.0,22.0};
+
+  // Left Middle-Right
+  WBLasers[2][5].sPos = {5592.0,-2640.0,22.0};
+  WBLasers[2][5].ePos = {5592.0,-2774.0,22.0};
+
+  // Left Bottom Bridge-Top
+  WBLasers[2][6].sPos = {5792.0,-2774.0,22.0};
+  WBLasers[2][6].ePos = {5592.0,-2774.0,22.0};
+
+  // Left Bottom Bridge-Bottom
+  WBLasers[2][7].sPos = {5792.0,-2906.0,22.0};
+  WBLasers[2][7].ePos = {5592.0,-2906.0,22.0};
+
+  // Left Bottom-Right
+  WBLasers[2][8].sPos = {5592.0,-2906.0,22.0};
+  WBLasers[2][8].ePos = {5592.0,-3042.0,22.0};
+
+  // Left Bottom
+  WBLasers[2][9].sPos = {5592.0,-3042.0,22.0};
+  WBLasers[2][9].ePos = {5328.0,-3042.0,22.0};
+
+  // Center Bottom-Left
+  WBLasers[2][10].sPos = {5792.0,-3042.0,22.0};
+  WBLasers[2][10].ePos = {5792.0,-2906.0,22.0};
+
+  // Center Middle-Left
+  WBLasers[2][11].sPos = {5792.0,-2774.0,22.0};
+  WBLasers[2][11].ePos = {5792.0,-2640.0,22.0};
+
+  // Center Top-Left
+  WBLasers[2][12].sPos = {5792.0,-2508.0,22.0};
+  WBLasers[2][12].ePos = {5792.0,-2374.0,22.0};
+
+  // Center Top
+  WBLasers[2][13].sPos = {5792.0,-2374.0,22.0};
+  WBLasers[2][13].ePos = {5928.0,-2374.0,22.0};
+
+  // Center Top-Right
+  WBLasers[2][14].sPos = {5792.0,-2374.0,22.0};
+  WBLasers[2][14].ePos = {5792.0,-2377.0,22.0};
+
+  // Center Middle-Right
+  WBLasers[2][15].sPos = {5928.0,-2640.0,22.0};
+  WBLasers[2][15].ePos = {5928.0,-2774.0,22.0};
+
+  // Center Bottom-Right
+  WBLasers[2][16].sPos = {5928.0,-2906.0,22.0};
+  WBLasers[2][16].ePos = {5928.0,-3042.0,22.0};
+
+  // Center Bottom
+  WBLasers[2][17].sPos = {5928.0,-3042.0,22.0};
+  WBLasers[2][17].ePos = {5792.0,-3042.0,22.0};
+
+  // Right Bottom-Left
+  WBLasers[2][18].sPos = {6128.0,-3042.0,22.0};
+  WBLasers[2][18].ePos = {6128.0,-2906.0,22.0};
+
+  // Right Bottom Bridge-Bottom
+  WBLasers[2][19].sPos = {6128.0,-2906.0, 22.0};
+  WBLasers[2][19].ePos = {5928.0, -2906.0, 22.0};
+
+  // Right Top Bridge-Top
+  WBLasers[2][20].sPos = {6128.0,-2774.0, 22.0};
+  WBLasers[2][20].ePos = {5928.0, -2774.0, 22.0};
+
+  // Right Middle-Left
+  WBLasers[2][21].sPos = {6128.0,-2774.0, 22.0};
+  WBLasers[2][21].ePos = {6128.0,-2640.0, 22.0};
+
+  // Right Top Bridge-Bottom
+  WBLasers[2][22].sPos = {6128.0,-2640.0, 22.0};
+  WBLasers[2][22].ePos = {5928.0,-2640.0, 22.0};
+
+  // Right Bottom Bridge-Top
+  WBLasers[2][23].sPos = {6128.0,-2508.0, 22.0};
+  WBLasers[2][23].ePos = {5928.0,-2508.0, 22.0};
+
+  // Right Top-Left
+  WBLasers[2][24].sPos = {6128.0,-2508.0, 22.0};
+  WBLasers[2][24].ePos = {6128.0,-2050.0, 22.0};
+
+  // Right Top
+  WBLasers[2][25].sPos = {6128.0,-2050.0, 22.0};
+  WBLasers[2][25].ePos = {6392.0,-2050.0, 22.0};
+
+  // Right Right
+  WBLasers[2][26].sPos = {6392.0,-2050.0, 22.0};
+  WBLasers[2][26].ePos = {6392.0,-3042.0, 22.0};
+
+  // Right Bottom
+  WBLasers[2][27].sPos = {6392.0,-3042.0, 22.0};
+  WBLasers[2][27].ePos = {6128.0,-3042.0, 22.0};
+}
 //Wave Setup
 char WaveSetup[][] = {
   "OnUser1 bombpath_right_arrows,Disable,,0.1,1", //Disable right arrows
@@ -502,7 +614,7 @@ void LoadConfig(int type)
 {
   // Attempt to load json config file
   char path[PLATFORM_MAX_PATH];
-  BuildPath(Path_SM, path, sizeof(path), type == 0 ? "configs/FartsysAss/Files/Music.json" : type == 1 ? "configs/FartsysAss/Files/SFX.json" : "configs/FartsysAss/Weather/WeatherManager.json");
+  BuildPath(Path_SM, path, sizeof(path), type == 0 ? "configs/FartsysAss/Files/Music.json" : type == 1 ? "configs/FartsysAss/Files/SFX.json" : type == 2 ? "configs/FartsysAss/Weather/WeatherManager.json" : "configs/FartsysAss/Lasers/WB.json");
   Handle jsHandle = json_load_file(path);
   if (jsHandle == INVALID_HANDLE) SetFailState("Failed to load json %s", path);
 

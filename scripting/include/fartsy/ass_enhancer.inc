@@ -1124,3 +1124,15 @@ public Action Command_SetVolumeReal(int client, int args) {
   if (StrContains(arg1, "sfx", false)> -1) { AudioManager.SetVolumeRealSFX(client, (StringToInt(arg2) * 1.0) / 100.0); return Plugin_Handled; }
   ReplyToCommand(client, "Usage: sm_setvolumereal <sfx / music> <int 0-100>"); return Plugin_Handled;
 }
+
+bool g_LaserSystem;
+enum struct LaserData {
+  float sPos[3];
+  float ePos[3];
+}
+LaserData WBLasers[3][28];
+
+enum struct LaserColors {
+  int iRGB[3];
+}
+LaserColors WBLaserColors[3];
