@@ -422,8 +422,8 @@ void RegisterAndPrecacheAllFiles() {
   WBLasers[0][8].sPos = {6276.0,-2210.0,22.0}
   WBLasers[0][8].ePos = {6226.0,-2210.0,22.0}
   WBLasers[0][9].sPos = {6226.0,-2210.0,22.0};
-  WBLasers[0][9].ePos = {5978.0,-2460.0,22.0};
-  WBLasers[0][10].sPos = {5978.0,-2460.0,22.0};
+  WBLasers[0][9].ePos = {5974.0,-2458.0,22.0};
+  WBLasers[0][10].sPos = {5974.0,-2458.0,22.0};
   WBLasers[0][10].ePos = {6228.0,-2710.0,22.0};
   WBLasers[0][11].sPos = {6228.0,-2710.0,22.0};
   WBLasers[0][11].ePos = {6276.0,-2710.0,22.0};
