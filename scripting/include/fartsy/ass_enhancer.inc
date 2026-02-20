@@ -1127,6 +1127,7 @@ public Action Command_SetVolumeReal(int client, int args) {
 
 bool g_LaserSystem;
 enum struct LaserData {
+  char tName[16];
   float sPos[3];
   float ePos[3];
 }

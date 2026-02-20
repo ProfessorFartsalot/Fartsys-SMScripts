@@ -399,6 +399,68 @@ void RegisterAndPrecacheAllFiles() {
   LoadConfig(2);
   AssLogger(LOGLVL_DEBUG, "Setting up Lasers...");
   //LoadConfig(3); -- Not implemented yet!!!
+  char LsrName[16];
+  for (int g = 0; g < 3; g++) { for (int i = 0; i < sizeof(WBLasers[g]); i++) { Format(LsrName, sizeof(LsrName), g == 0 ? "LaserEntWind%i" : g == 1 ? "LaserEntEarth%i" : g == 2 ? "LaserEntIce%i" : "LaserEnt%i", i); strcopy(WBLasers[g][i].tName, 16, LsrName); } }
+
+  // Wind
+  WBLasers[0][0].sPos = {5446.0,-2876.0,22.0};
+  WBLasers[0][0].ePos = {5446.0,-2710.0,22.0};
+  WBLasers[0][1].sPos = {5446.0,-2710.0,22.0};
+  WBLasers[0][1].ePos = {5496.0,-2710.0,22.0};
+  WBLasers[0][2].sPos = {5496.0,-2710.0,22.0};
+  WBLasers[0][2].ePos = {5746.0,-2458.0,22.0};
+  WBLasers[0][3].sPos = {5746.0,-2458.0,22.0};
+  WBLasers[0][3].ePos = {5496.0,-2210.0,22.0};
+  WBLasers[0][4].sPos = {5496.0,-2210.0,22.0};
+  WBLasers[0][4].ePos = {5446.0,-2210.0,22.0};
+  WBLasers[0][5].sPos = {5446.0,-2210.0,22.0};
+  WBLasers[0][5].ePos = {5446.0,-2050.0,22.0};
+  WBLasers[0][6].sPos = {5446.0,-2050.0,22.0};
+  WBLasers[0][6].ePos = {6276.0,-2050.0,22.0};
+  WBLasers[0][7].sPos = {6276.0,-2050.0,22.0};
+  WBLasers[0][7].ePos = {6276.0,-2210.0,22.0};
+  WBLasers[0][8].sPos = {6276.0,-2210.0,22.0}
+  WBLasers[0][8].ePos = {6226.0,-2210.0,22.0}
+  WBLasers[0][9].sPos = {6226.0,-2210.0,22.0};
+  WBLasers[0][9].ePos = {5978.0,-2460.0,22.0};
+  WBLasers[0][10].sPos = {5978.0,-2460.0,22.0};
+  WBLasers[0][10].ePos = {6228.0,-2710.0,22.0};
+  WBLasers[0][11].sPos = {6228.0,-2710.0,22.0};
+  WBLasers[0][11].ePos = {6276.0,-2710.0,22.0};
+  WBLasers[0][12].sPos = {6276.0,-2710.0,22.0};
+  WBLasers[0][12].ePos = {6276.0,-2876.0,22.0};
+  WBLasers[0][13].sPos = {6276.0,-2876.0,22.0};
+  WBLasers[0][13].ePos = {5446.0,-2876.0,22.0};
+  WBLasers[0][14].sPos = {5724.0,-2710.0,22.0};
+  WBLasers[0][14].ePos = {5860.0,-2576.0,22.0};
+  WBLasers[0][15].sPos = {5860.0,-2576.0,22.0};
+  WBLasers[0][15].ePos = {6000.0,-2710.0,22.0};
+  WBLasers[0][16].sPos = {6000.0,-2710.0,22.0};
+  WBLasers[0][16].ePos = {5724.0,-2710.0,22.0};
+  WBLasers[0][17].sPos = {5860.0,-2344.0,22.0};
+  WBLasers[0][17].ePos = {5724.0,-2210.0,22.0};
+  WBLasers[0][18].sPos = {5724.0,-2210.0,22.0};
+  WBLasers[0][18].ePos = {5994.0,-2210.0,22.0};
+  WBLasers[0][19].sPos = {5994.0,-2210.0,22.0};
+  WBLasers[0][19].ePos = {5860.0,-2344.0,22.0};
+  // Earth
+  WBLasers[1][0].sPos = {5462.0,-2774.0,22.0};
+  WBLasers[1][0].ePos = {5462.0,-2244.0,22.0};
+  WBLasers[1][1].sPos = {5462.0,-2244.0,22.0};
+  WBLasers[1][1].ePos = {5728.0,-2244.0,22.0};
+  WBLasers[1][2].sPos = {5728.0,-2244.0,22.0};
+  WBLasers[1][2].ePos = {5728.0,-2774.0,22.0};
+  WBLasers[1][3].sPos = {5728.0,-2774.0,22.0};
+  WBLasers[1][3].ePos = {5462.0,-2774.0,22.0}
+  WBLasers[1][4].sPos = {5994.0,-2774.0,22.0};
+  WBLasers[1][4].ePos = {5994.0,-2244.0,22.0};
+  WBLasers[1][5].sPos = {5994.0,-2244.0,22.0};
+  WBLasers[1][5].ePos = {6260.0,-2244.0,22.0};
+  WBLasers[1][6].sPos = {6260.0,-2244.0,22.0};
+  WBLasers[1][6].ePos = {6260.0,-2774.0,22.0};
+  WBLasers[1][7].sPos = {6260.0,-2774.0,22.0};
+  WBLasers[1][7].ePos = {5994.0,-2774.0,22.0};
+  // Ice
   // Left edge
   WBLasers[2][0].sPos = {5328.0,-3042.0,22.0};
   WBLasers[2][0].ePos = {5328.0,-2050.0,22.0};
