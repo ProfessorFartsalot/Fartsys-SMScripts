@@ -1,5 +1,5 @@
 // Hikari's Scene Enhancer (Inspired by Mrbt0907/Weather2Remastered)
-char HSE_VER[8] = "2.8.0";
+char HSE_VER[8] = "2.8.1";
 
 // Used to make lasers
 enum struct LaserData {
@@ -29,7 +29,7 @@ enum struct SFXARRAY {
   char realPath[64];
   int SNDLVL;
 }
-SFXARRAY SFXArray[128];
+SFXARRAY SFXArray[132];
 
 // Sound preference menu
 char sndPrefs[][128] = {
@@ -897,7 +897,7 @@ methodmap WEATHERMANAGER {
     Photon.Fire("Weather.FogSky", "Enable", "", 2.0);
     for (int i = 0; i < sizeof(MapLighting); i++) { MapLighting[i].Repair(); SetZoneActive(g_Lights[i], false); }
     WDATA.sirenPos = {-2305.0, 2095.0, 1102.0};
-    int siren = Photon.Create("WeatherSiren", "info_target");
+    int siren = Photon.Create("info_target", "WeatherSiren");
     if (!IsValidEntity(siren)) SetFailState("Could not inject Siren Entity, aborting!!!");
     TeleportEntity(siren, WDATA.sirenPos, NULL_VECTOR, NULL_VECTOR);
     sirenRef = EntIndexToEntRef(siren);
