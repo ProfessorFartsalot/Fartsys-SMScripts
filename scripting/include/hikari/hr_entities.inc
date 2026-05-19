@@ -1,7 +1,4 @@
-// Hikari's Entity Hooks / Outputs v1.1.0 
-
-// Hook entities for the map / plugin
-public void HookAllEntities() { HookSingleEntityOutput(Photon.Find("SlotMachine", "func_door_rotating"), "OnOpen", OnSlotMachine_Start); }
+// Hikari's Entity Hooks / Outputs v1.2.0 
 
 // Hook all spawned entities, automatically unhooking them when they poof.
 public void OnEntityCreated(int ent, const char[] classname) { SDKHookEx(ent, SDKHook_SpawnPost, OnEntitySpawned); }
@@ -55,7 +52,21 @@ public void OnMeteoriteImpact() {
   SetupAttackZone(50000.0, DMG_CRUSH, g_FrontRottenburg, _, 3, _, 0.5);
 }
 
-// Someone's gambling!
-public void OnSlotMachine_Start(const char[] output, int caller, int activator, float delay) {
-  CustomSoundEmitterEX("", Photon.Find("SlotMachine.Display02", "func_brush"), _, 75, false, 0, 1.0, 100, {-3418.0, -89.0, -220.0});
+Zone g_SlotMachine;
+methodmap SLOTMACHINE {
+  public void Init() { SetZoneExtents(g_SlotMachine, -3450.0, -56.0, -206.0, -3465.0, -120.0, -280.0); }
+  public void Tick() {
+    if (g_SlotMachine.canTick()) {
+      for (int i = 1; i <= MaxClients; i++) {
+        if (IsClientInvalidForTrigger(i)) continue;
+        float dest[3]; GetClientAbsOrigin(i, dest);
+        if (g_SlotMachine.isTriggeredByEntityAt(dest)) { this.OnStart(); }
+      }
+    }
+  }
+  // Someone's gambling!
+  public void OnStart() {
+    CustomSoundEmitterEX(SFXArray[125].realPath, Photon.Find("SlotMachine.Display02", "func_brush"), _, 75, false, 0, 1.0, 100, {-3418.0, -89.0, -220.0});
+  }
 }
+SLOTMACHINE SlotMachine;

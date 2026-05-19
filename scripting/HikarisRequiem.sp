@@ -4,7 +4,7 @@
  *   THREE..... THE DURATION OF MUSIC TIMERS SHOULD BE SET DEPENDING WHAT SONG IS USED. SET THIS USING THE CONFIG FILES. SONG DUR IN SECONDS / 0.0151515151515 = REFIRE TIME.
  *   FOUR.... TIPS AND TRICKS MAY BE ADDED TO THE TIMER, SEE PerformAdverts(Handle timer);
 */
-public char PLUGIN_VERSION[8] = "10.1.0";
+public char PLUGIN_VERSION[8] = "10.2.0";
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
@@ -50,7 +50,6 @@ public void OnPhotonReady() {
   core.init_pre();
   RegisterAndPrecacheAllFiles();
   RegisterMiscCommands();
-  HookAllEntities();
   HookAllEvents();
   WaveSystem().update();
   if (WaveSystem().IsDefault()) core.init_post();
@@ -66,4 +65,5 @@ public void OnGameFrame() {
   WaveSystem().Tick();
   WeatherManager.Tick();
   TickAllTriggers();
+  SlotMachine.Tick();
 }
