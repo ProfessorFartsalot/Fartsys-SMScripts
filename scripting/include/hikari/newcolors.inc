@@ -1,4 +1,4 @@
-// Fartsy Colors
+// Hikari Colors
 // A remix of More Colors by Dr. McKay
 #if defined _colors_included
  #endinput
