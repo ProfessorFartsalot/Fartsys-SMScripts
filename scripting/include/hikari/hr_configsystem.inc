@@ -1,6 +1,6 @@
  //ASS_CONFIGSYSTEM - Contains the config loaders and all the plugin core data entries.
 #include <smjansson> // Needed for JSON parsing
-char HRCFG_VERSION[8] = "2.2.0";
+char HRCFG_VERSION[8] = "2.2.1";
 
 //Default values per wave
 enum struct DEFAULTS {
@@ -127,6 +127,7 @@ enum struct COREDATA {
     WaveSystem().SetActive(false);
     WaveSystem().SetWave(0);
     SetupASShop();
+    SlotMachine.Init();
     for (int i = 0; i < sizeof(ass); i++) ass[i].price = 10 + (10 * i);
     for (int i = 0; i < sizeof(ass); i++) ass[i].purchase = 30 + i;
     LightLogger(1, "[ConfigSystem @ v%s] Setting up Crusader...", HRCFG_VERSION);

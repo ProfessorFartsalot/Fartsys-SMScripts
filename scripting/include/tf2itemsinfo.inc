@@ -9,15 +9,15 @@
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#define TF2_ATTRIBUTES_PER_ITEM			255
+#define TF2_ATTRIBUTES_PER_ITEM			16
 
-#define TF2II_ITEMNAME_LENGTH			255
-#define TF2II_ITEMCLASS_LENGTH			255
-#define TF2II_ITEMSLOT_LENGTH			255
-#define TF2II_ITEMTOOL_LENGTH			255
-#define TF2II_ITEMQUALITY_LENGTH		255
-#define TF2II_ATTRIBNAME_LENGTH			255
-#define TF2II_ATTRIBCLASS_LENGTH		255
+#define TF2II_ITEMNAME_LENGTH			64
+#define TF2II_ITEMCLASS_LENGTH			64
+#define TF2II_ITEMSLOT_LENGTH			16
+#define TF2II_ITEMTOOL_LENGTH			16
+#define TF2II_ITEMQUALITY_LENGTH		16
+#define TF2II_ATTRIBNAME_LENGTH			96
+#define TF2II_ATTRIBCLASS_LENGTH		32
 
 #define TF2II_PROP_INVALID				0 // invalid property, not item
 // Items only
@@ -622,7 +622,7 @@ native bool:TF2II_GetAttributeNameByID( iAttributeID, String:strAttributeName[],
  * @return						Array of results
  **/
 #pragma deprecated Use TF2II_FindItems instead.
-native Handle:TF2II_FindItemsIDsByCond( const String:strItemClass[] = "", iItemSlot = -1, const String:strItemSlot[] = "", bool:bFilterClass = false, bool:bUsedByClasses[10] = { false, ... }, const String:strTool[] = "" );
+native Handle:TF2II_FindItemsIDsByCond( const String:strItemClass[] = "", iItemSlot = -1, const String:strItemSlot[] = "", bool:bFilterClass = false, bool:bUsedByClasses[TFClassType] = { false, ... }, const String:strTool[] = "" );
 
 /**
  * @brief Note: all arguments are optional. Set them to detail your search query.
@@ -699,7 +699,7 @@ native bool:TF2II_IsFestiveStockWeapon( iItemDefinitionIndex );
 stock _:TF2II_GetItemLevelByID( iItemDefinitionIndex )
 {
 	new iLevel = 1;
-	new iSlot = TF2II_GetItemSlotByID( iItemDefinitionIndex );
+	new iSlot = TF2II_GetItemSlot( iItemDefinitionIndex );
 	if( iSlot >= TF2ItemSlot_Hat && iSlot <= TF2ItemSlot_Misc )
 		iLevel = GetRandomInt( 1, 100 );
 	switch( iItemDefinitionIndex )

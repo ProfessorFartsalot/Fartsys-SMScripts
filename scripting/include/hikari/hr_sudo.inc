@@ -1,4 +1,4 @@
-char SUDO_VER[8] = "1.4.0";
+char SUDO_VER[8] = "1.4.1";
 void OnSudoStartup() { LightLogger(LOGLVL_INFO, "[Sudo @ v%s] Module is starting up!", SUDO_VER); RegServerCmd("hr_send", Command_Operator, "Serverside only. Does nothing when executed as client."); }
 
 /** Interfaces our command to the actual netcode */
@@ -17,6 +17,7 @@ void sudo(int task) {
       CPrintToChatAll(core.tacobell ? "WOW, YOU DID IT! The server will restart in 30 seconds, prepare to do it again! LULW" : "{darkviolet}[{forestgreen}CORE{darkviolet}] {white}YOU HAVE SUCCESSFULLY COMPLETED PROF'S ASS ! THE SERVER WILL RESTART IN 10 SECONDS.");
       CreateTimer(10.0, TimedOperator, 100);
     }
+    case 10100: { WDATA.tickWeather = true; }
     case 1111: { WaveSystem().run(); }
     case 2222: { WeatherManager.doLightning(); }
     case 3333: { Photon.Fire("hr_cannon_template", "ForceSpawn"); Photon.Fire("hr_cannon*_yaw", "SetPosition", "0.5", 0.1); }
@@ -268,16 +269,16 @@ void sudo(int task) {
   //Tank deployed its bomb or boss reached hatch
     case 16: {
       sudo(18);
-      CPrintToChatAll("{darkviolet}[{fartsyred}CORE{darkviolet}] {white}A tank has deployed its bomb!");
+      CPrintToChatAll("{darkviolet}[{hikarired}CORE{darkviolet}] {white}A tank has deployed its bomb!");
       return;
     }
     case 17 : {
       sudo(18);
-      CPrintToChatAll("{darkviolet}[{fartsyred}CORE{darkviolet}] {white}A robot has deployed its bomb!");
+      CPrintToChatAll("{darkviolet}[{hikarired}CORE{darkviolet}] {white}A robot has deployed its bomb!");
       return;
     }
     case 18: {
-      if(!WaveSystem().IsActive()) { CPrintToChatAll("{fartsyred} PLEASE DO NOT ATTEMPT TO USE OPCODE 18 WITHOUT A WAVE."); return; }
+      if(!WaveSystem().IsActive()) { CPrintToChatAll("{hikarired} PLEASE DO NOT ATTEMPT TO USE OPCODE 18 WITHOUT A WAVE."); return; }
       SetupAttackZone(9000000.0, DMG_BLAST, g_HatchExplode, _, _, 1.0, 4.0);
       Photon.Fire("bots_win", "RoundWin", "", 1.0);
       Photon.Fire("hatch_magnet_pit", "Enable", "", 1.0);

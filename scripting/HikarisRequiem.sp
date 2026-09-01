@@ -4,7 +4,7 @@
  *   THREE..... THE DURATION OF MUSIC TIMERS SHOULD BE SET DEPENDING WHAT SONG IS USED. SET THIS USING THE CONFIG FILES. SONG DUR IN SECONDS / 0.0151515151515 = REFIRE TIME.
  *   FOUR.... TIPS AND TRICKS MAY BE ADDED TO THE TIMER, SEE PerformAdverts(Handle timer);
 */
-public char PLUGIN_VERSION[8] = "10.1.0";
+public char PLUGIN_VERSION[8] = "10.3.0";
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
@@ -22,10 +22,10 @@ public char PLUGIN_VERSION[8] = "10.1.0";
 #include <hikari/hr_bombstate>
 #include <hikari/hr_bosshandler>
 #include <hikari/hr_emergency>
+#include <hikari/hr_entities>
 #include <hikari/hr_configsystem>
 #include <hikari/hr_helper>
 #include <hikari/hr_commands>
-#include <hikari/hr_entities>
 #include <hikari/hr_events>
 #include <hikari/hr_sudo>
 #include <hikari/hr_wavesystem>
@@ -46,11 +46,10 @@ public void OnPluginStart() {
 }
 // Begin executing IO when ready
 public void OnPhotonReady() {
-  LightLogger(LOGLVL_INFO, "####### FASTFIRE2 IS READY! INITIATE STARTUP SEQUENCE... PREPARE FOR THE END TIMES #######");
+  InitLightLogger("####### PHOTON IS READY! INITIATE STARTUP SEQUENCE... PREPARE FOR THE END TIMES #######");
   core.init_pre();
   RegisterAndPrecacheAllFiles();
   RegisterMiscCommands();
-  HookAllEntities();
   HookAllEvents();
   WaveSystem().update();
   if (WaveSystem().IsDefault()) core.init_post();
@@ -66,4 +65,5 @@ public void OnGameFrame() {
   WaveSystem().Tick();
   WeatherManager.Tick();
   TickAllTriggers();
+  SlotMachine.Tick();
 }
