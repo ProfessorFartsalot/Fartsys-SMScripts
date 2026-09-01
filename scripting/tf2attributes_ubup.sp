@@ -9,7 +9,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define UU_VERSION "0.9.7-fartsy-psy"
+#define UU_VERSION "0.9.8-hikari-psy"
 
 #define RED 0
 #define BLUE 1
@@ -65,7 +65,7 @@ int current_w_c_list_id[MAXPLAYERS + 1];
 int current_class[MAXPLAYERS + 1];
 
 
-char current_slot_name[5][32];
+char current_slot_name[6][32];
 int current_slot_used[MAXPLAYERS + 1];
 int currentupgrades_idx[MAXPLAYERS + 1][5][MAX_ATTRIBUTES_ITEM];
 float currentupgrades_val[MAXPLAYERS + 1][5][MAX_ATTRIBUTES_ITEM];
@@ -210,6 +210,7 @@ void UberShopDefineUpgradeTabs(){
 	current_slot_name[2] = "Melee Weapon";
 	current_slot_name[3] = "Special Weapon";
 	current_slot_name[4] = "Body";
+	current_slot_name[5] = "Reset all";
 	upgradesNames[0] = "";
 	CreateTimer(0.2, Timer_WaitForTF2II, _, TIMER_FLAG_NO_MAPCHANGE);
 }
@@ -427,7 +428,6 @@ public void Event_PlayerChangeClass(Handle event, const char[] name, bool dontBr
 		//ResetClientUpgrades(client);
 		//TF2Attrib_RemoveAll(client);
 		//RespawnEffect(client);
-		CurrencyOwned[client] = RealStartMoney;
 		PrintToChat(client, "client changeclass");
 		if (!client_respawn_handled[client])
 		{
@@ -459,6 +459,7 @@ public void Event_PlayerreSpawn(Handle event, const char[] name, bool dontBroadc
 	FakeClientCommand(client,"menuselect 0");
 	RespawnEffect(client);
 }
+
 public Action Timer_GetConVars(Handle timer)//Reload con_vars into vars
 {
 	int entityP = FindEntityByClassname(-1, "func_upgradestation");
@@ -659,22 +660,12 @@ public void OnClientPutInServer(int client)
 		CurrencyOwned[client] = RealStartMoney;
 	}
 }
-public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon)//Every single server tick.  GetTickInterval() for the seconds per tick.
-{
-	if ((buttons & IN_SCORE) && (buttons & IN_RELOAD))
-	{
-		Menu_BuyUpgrade(client, 0);
-	}
-	if(CurrencyOwned[client] >= 300000000000.0)
-	{
-		CurrencyOwned[client] = 300000000000.0;
-	}
-	if(CurrencyOwned[client] < 0.0)
-	{
-		CurrencyOwned[client] = 0.0;
-	}
-	if (IsValidClient(client))
-	{
+// Every single server tick.  GetTickInterval() for the seconds per tick.
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon) {
+	if (IsValidClient(client)) {
+		if ((buttons & IN_SCORE) && (buttons & IN_RELOAD)) Menu_BuyUpgrade(client, 0);
+		if (CurrencyOwned[client] >= 300000000.0) CurrencyOwned[client] = 300000000.0;
+		if (CurrencyOwned[client] < 0.0) CurrencyOwned[client] = 0.0;
 		TF2_AddCondition(client, TFCond_SpeedBuffAlly, 0.0);
 		SetEntProp(client, Prop_Send, "m_nCurrency", RoundFloat(CurrencyOwned[client]));
 	}
@@ -692,7 +683,6 @@ public Action Event_PlayerCollectMoney(Handle event, const char[] name, bool don
 		} 
 	}
 	SetEventInt(event, "currency", 0);
-	return Plugin_Continue;
 }
 public Action TF2_CalcIsAttackCritical(int client, int weapon, char[] weaponname, bool &result) // Called whenever you shoot. 
 {
@@ -920,7 +910,7 @@ public Action mvm_CheckPointAdjustCash(Handle timer, int userid)
 
 	if (IsValidClient(client) && client_respawn_checkpoint[client])
 	{
-		int iCash = GetEntProp(client, Prop_Send, "m_nCurrency");
+		int iCash; iCash = GetEntProp(client, Prop_Send, "m_nCurrency", iCash);
 		SetEntProp(client, Prop_Send, "m_nCurrency", iCash - (client_spent_money_mvm_chkp[client][0] + client_spent_money_mvm_chkp[client][1] + client_spent_money_mvm_chkp[client][2] + client_spent_money_mvm_chkp[client][3]) );
 		client_respawn_checkpoint[client] = 0;
 		CreateTimer(0.1, WeaponReGiveUpgrades, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
@@ -1197,6 +1187,12 @@ public Action Menu_QuickBuyUpgrade(int client, int args)
 								CurrencyOwned[client] -= t_up_cost;
 								check_apply_maxvalue(client, arg1_, inum, upgrade_choice);
 								client_spent_money[client][arg1_] += t_up_cost;
+								int totalmoney = 0;
+							
+								for (int s = 0; s < 5; s++)
+								{
+									totalmoney += client_spent_money[client][s];
+								}
 								GiveNewUpgradedWeapon_(client, arg1_);
 							}
 							else
@@ -1206,6 +1202,12 @@ public Action Menu_QuickBuyUpgrade(int client, int args)
 								currentupgrades_val[client][arg1_][inum] = upgrades_val;
 								check_apply_maxvalue(client, arg1_, inum, upgrade_choice);
 								client_spent_money[client][arg1_] += t_up_cost;
+								int totalmoney = 0;
+							
+								for (int s = 0; s < 5; s++)
+								{
+									totalmoney += client_spent_money[client][s];
+								}
 								GiveNewUpgradedWeapon_(client, arg1_);
 								PrintToChat(client, "You have successfully upgraded %i times!", idx);
 							}
@@ -1543,8 +1545,8 @@ stock bool IsValidClient(int client)
 stock bool TF2_IsPlayerCritBuffed(int client)
 {
 	return (TF2_IsPlayerInCondition(client, TFCond_Kritzkrieged) || TF2_IsPlayerInCondition(client, TFCond_HalloweenCritCandy) || TF2_IsPlayerInCondition(client, TFCond_CritCanteen)
-	 || TF2_IsPlayerInCondition(client, TFCond_CritDemoCharge) || TF2_IsPlayerInCondition(client, TFCond_CritOnFirstBlood) || TF2_IsPlayerInCondition(client, TFCond_CritOnWin)
-	 || TF2_IsPlayerInCondition(client, TFCond_CritOnFlagCapture) || TF2_IsPlayerInCondition(client, TFCond_CritOnKill) || TF2_IsPlayerInCondition(client, TFCond_CritMmmph));
+	|| TF2_IsPlayerInCondition(client, TFCond_CritDemoCharge) || TF2_IsPlayerInCondition(client, TFCond_CritOnFirstBlood) || TF2_IsPlayerInCondition(client, TFCond_CritOnWin)
+	|| TF2_IsPlayerInCondition(client, TFCond_CritOnFlagCapture) || TF2_IsPlayerInCondition(client, TFCond_CritOnKill) || TF2_IsPlayerInCondition(client, TFCond_CritMmmph));
 }
 
 //Initialize New Weapon menu
@@ -1600,7 +1602,6 @@ void UberShopinitMenusHandlers()
 	HookEventEx("player_hurt", Event_Playerhurt, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 	HookEvent("player_changeclass", Event_PlayerChangeClass);
-	HookEvent("player_class", Event_PlayerChangeClass);
 	HookEvent("player_team", Event_PlayerChangeTeam);
 	//MVM
 	HookEvent("mvm_pickup_currency", Event_PlayerCollectMoney, EventHookMode_Pre);
@@ -1668,7 +1669,6 @@ int GetUpgrade_CatList(const char[] WCName)
 
 public Action Command_MyMoney(int client, int args){
 	PrintToChat(client, "You have %f", CurrencyOwned[client]); // todo, test this
-	return Plugin_Continue;
 }
 
 public Action Command_ResetUpgrades(int client, int args){
@@ -1687,14 +1687,13 @@ public Action Command_ResetUpgrades(int client, int args){
 		FakeClientCommand(client,"menuselect 0");
 		ChangeClassEffect(client);
 	}
-	return Plugin_Continue;
 }
 public void OnPluginStart()
 {
 	RegConsoleCmd("sm_mymoney", Command_MyMoney, "Show my money");
 	RegConsoleCmd("sm_reset", Command_ResetUpgrades, "Force reset upgrades");
 	UberShopinitMenusHandlers();
-	cvarStartMoney = CreateConVar("fb_startmoney", "50000", "Starting money for FartsysAss UbUps. Default = 50000, Taco Bell = 200000, can be anything though.");
+	cvarStartMoney = CreateConVar("sm_uu_startmoney", "50000.0", "Starting money for UberUpgrades.");
 	UberShopDefineUpgradeTabs();
 	SetConVarFloat(FindConVar("sv_maxvelocity"), 10000000.0, true, false); //Up the cap for the speed of projectiles
 	//SetConVarInt(FindConVar("tf_weapon_criticals"), 0, true, false); //Disables random crits
@@ -1716,6 +1715,8 @@ public void OnPluginStart()
 			CurrencyOwned[client] = RealStartMoney;
 		}
 	}
+	UserMsg VotePass = GetUserMessageId("VotePass");
+	if (VotePass != INVALID_MESSAGE_ID) HookUserMessage(VotePass, OnVotePass);
 }
 
 public void OnPluginEnd()
@@ -1790,19 +1791,22 @@ public Action Command_AddCash(int client, int args)
 	char strCash[128];
 	float GivenCash;
 	char target_name[MAX_TARGET_LENGTH];
-	int target_list[MAXPLAYERS];
+	int target_list[MAXPLAYERS + 1];
 	int target_count;
 	bool tn_is_ml;
 	GetCmdArg(1, strTarget, sizeof(strTarget));
 	if((target_count = ProcessTargetString(strTarget, client, target_list, MAXPLAYERS, COMMAND_FILTER_NO_BOTS, target_name, sizeof(target_name), tn_is_ml)) <= 0)
 	{
+		PrintToChatAll("ERROR");
 		ReplyToTargetError(client, target_count);
 		return Plugin_Handled;
 	}
 	GetCmdArg(2, strCash, sizeof(strCash));
+	PrintToChatAll("Cash to give is %s", strCash);
 	GivenCash = StringToFloat(strCash);
 	for(int i = 0; i < target_count; i++)
 	{
+		PrintToChatAll("Giving %f cash to %N", GivenCash, target_list[i]);
 		CurrencyOwned[target_list[i]] += GivenCash;
 	}
 	return Plugin_Handled;
@@ -1919,7 +1923,7 @@ void GiveNewUpgradedWeapon_(int client, int slot)
 
 bool is_client_got_req(int param1, int upgrade_choice, int slot, int inum)
 {
-	int iCash = GetEntProp(param1, Prop_Send, "m_nCurrency");
+	int iCash; iCash = GetEntProp(param1, Prop_Send, "m_nCurrency", iCash);
 	int up_cost = upgrades_costs[upgrade_choice];
 	int max_ups = currentupgrades_number[param1][slot];
 	up_cost /= 2;
@@ -2288,12 +2292,12 @@ public void Menu_SpecialUpgradeChoice(int client, int cat_choice, char TitleStr[
 				tmp_ratio = upgrades_ratio[tmp_up_idx];
 				if (tmp_ratio > 0.0)
 				{
-					Format(plus_sign, 1, "+");
+					strcopy(plus_sign, sizeof(plus_sign), "+");
 				}
 				else
 				{
 					tmp_ratio *= -1.0;
-					Format(plus_sign, 1, "-");
+					strcopy(plus_sign, sizeof(plus_sign), "-");
 				}
 				char buf[64];
 				Format(buf, sizeof(buf), "%T", upgradesNames[tmp_up_idx], client);
@@ -2550,12 +2554,12 @@ public Action Menu_UpgradeChoice(int client, int cat_choice, char TitleStr[100])
 			}
 			if (tmp_ratio > 0.0)
 			{
-				Format(plus_sign, 1, "+");
+				strcopy(plus_sign, sizeof(plus_sign), "+");
 			}
 			else
 			{
 				tmp_ratio *= -1.0;
-				Format(plus_sign, 1, "-");
+				strcopy(plus_sign, sizeof(plus_sign), "-");
 			}
 			char buf[64];
 			Format(buf, sizeof(buf), "%T", upgradesNames[tmp_up_idx], client);
@@ -2615,6 +2619,8 @@ void OpenBuyMenu(int client)
 			AddMenuItem(menuBuy, "upgrade_buyoneweap", buffer);
 		}
 	}
+
+	AddMenuItem(menuBuy, "reset_upgrades", "Reset Upgrades");
 	SetMenuExitButton(menuBuy, true);
 	DisplayMenu(menuBuy, client, MENU_TIME_FOREVER);
 }
@@ -2625,7 +2631,7 @@ public int MenuHandler_BuyNewWeapon(Handle menu, MenuAction action, int param1, 
 {
 	if (action == MenuAction_Select)
 	{
-		int iCash = GetEntProp(param1, Prop_Send, "m_nCurrency");
+		int iCash; iCash = GetEntProp(param1, Prop_Send, "m_nCurrency", iCash);
 		if (iCash > 200)
 		{
 			if (currentitem_idx[param1][3])
@@ -2746,12 +2752,12 @@ public int MenuHandler_UpgradeChoice(Handle menu, MenuAction action, int param1,
 		}
 		if (tmp_ratio > 0.0)
 		{
-			Format(plus_sign, 1, "+");
+			strcopy(plus_sign, sizeof(plus_sign), "+");
 		}
 		else
 		{
 			tmp_ratio *= -1.0;
-			Format(plus_sign, 1, "-");
+			strcopy(plus_sign, sizeof(plus_sign), "-");
 		}
 		char buf[64];
 		Format(buf, sizeof(buf), "%T", upgradesNames[tmp_up_idx], param1);
@@ -2872,7 +2878,7 @@ public int MenuHandler_BuyUpgrade(Handle menu, MenuAction action, int param1, in
 		}
 		else if (param2 == 5)
 		{
-			Menu_BuyNewWeapon(param1);
+			Command_ResetUpgrades(param1, 0);
 		}
 		else if (param2 == 6)
 		{
@@ -2938,13 +2944,6 @@ public Action Timer_GiveHealth(Handle timer)//give health every 0.333 seconds
 	}
 	return Plugin_Continue;
 }
-public void OnClientPostAdminCheck(int client)
-{
-	if(IsValidClient(client))
-	{
-		CurrencyOwned[client] = RealStartMoney;
-	}
-} 
 void RespawnEffect(int client)
 {
 	current_class[client] = view_as<int>(TF2_GetPlayerClass(client));
@@ -2959,9 +2958,36 @@ void ChangeClassEffect(int client)
 {
 	current_class[client] = view_as<int>(TF2_GetPlayerClass(client));
 	TF2_RemoveAllWeapons(client);
-	if(IsPlayerAlive(client))
+	if(IsPlayerAlive(client) && GetClientTeam(client) > 1)
 	{
-		TF2_RespawnPlayer(client);
+		RequestFrame(Frame_RespawnClient, GetClientUserId(client));
 	}
 	TF2Attrib_RemoveAll(client);
+}
+
+public void Frame_RespawnClient(any userid)
+{
+    int client = GetClientOfUserId(userid);
+    if (client > 0 && IsClientInGame(client))
+    {
+        TF2_RespawnPlayer(client);
+    }
+}
+
+public Action OnVotePass(UserMsg msg_id, Handle msg, const int[] players, int playersNum, bool reliable, bool init)
+{
+  Handle bf = CloneHandle(msg); // Copy the handle
+  for (int i = 0; i < 5; i++) BfReadByte(bf); // Skip the 5-byte header/padding
+  char disp_str[64]; BfReadString(bf, disp_str, sizeof(disp_str)); // Get the vote string
+  CloseHandle(bf); // Close our handle, we don't need it anymore.
+  if (StrEqual(disp_str, "#TF_vote_passed_restart_game", false) || StrEqual(disp_str, "#TF_vote_passed_changechallenge", false)) {
+    RequestFrame(OnVoteRestartGamePassed); // If the game restarts, start the callback.
+  }
+  return Plugin_Continue;
+}
+
+public void OnVoteRestartGamePassed() {
+  for (int i = 1; i < MaxClients; i++) {
+	if (IsValidClient(i)) Command_ResetUpgrades(i, 0);
+  }
 }
