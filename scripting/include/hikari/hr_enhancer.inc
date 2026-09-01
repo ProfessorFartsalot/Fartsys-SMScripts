@@ -1,5 +1,5 @@
-// Hikari's Scene Enhancer (Inspired by Mrbt0907/Weather2Remastered)
-char HSE_VER[8] = "2.8.1";
+// Hikari's Scene Enhancer (Inspired by ComsicHikari/Weather2Remastered)
+char HSE_VER[8] = "2.9.0";
 
 // Used to make lasers
 enum struct LaserData {
@@ -250,7 +250,7 @@ methodmap AUDIOMANAGER {
       AudioState[client].timeSeconds = GetEngineTime();
       AudioState[client].loops++;
       if (AudioState[client].stopBGM) {
-        LightLogger(LOGLVL_DEBUG, "[Enhancer @ v%s] Stopping %i for %N", HSE_VER,  AudioState[client].cachedPath);
+        LightLogger(LOGLVL_DEBUG, "[Enhancer @ v%s] Stopping %s for %N", HSE_VER, AudioState[client].cachedPath, client);
         StopSound(client, g_chanBGM, AudioState[client].cachedPath);
         AudioState[client].loops = 0;
       }
@@ -658,6 +658,8 @@ enum struct WEATHERDATA {
   bool powerSurging;
   bool reset;
   bool sirenExploded;
+  bool tickFog;
+  bool tickWind;
   bool tickWeather;
   bool TornadoTimerActive;
   bool TornadoWarning;
@@ -686,16 +688,24 @@ enum struct WEATHERDATA {
   int iStormMin;
   int iStormMax;
   int ticks;
+  int ticksFog;
+  int ticksWind;
 }
 WEATHERDATA WDATA;
 
 methodmap WEATHERMANAGER {
+  // Modulo. Used for delaying weathermanager operations. Returns true if weathersystem % interval == 0.
+  // @param interval The interval to use. Must be non-zero.
+  public bool OnTickInterval(int interval) {
+    return (interval > 0 ? WDATA.ticks % interval == 0 : false);
+  }
   public bool CanFormTornado() { return WaveSystem().IsActive() && WDATA.canTornado && !WDATA.hasTornado; }
   public void Activate() {
     this.Reset();
     if (!WaveSystem().IsWaveNull()) WDATA.tickWeather = true; // Start weather system ONLY IF NOT IN GAMEMODE 2.
   }
   public void doLightning() {
+    this.EmitAmbience(1); // Thunder
     for (int i = 0; i < GetRandomInt(1, 4); i++) {
       int ent = CreateEntityByName("env_beam");
       if (ent != -1) {
@@ -741,7 +751,6 @@ methodmap WEATHERMANAGER {
     sudo(1003);
     //Photon.Fire(lightningStrike[GetRandomInt(0, sizeof(lightningStrike) - 1)].fireStr);
     //Photon.Fire("Weather.LightningHurt*", "Disable", "", 0.07);
-    CustomSoundEmitterEX(SFXArray[GetRandomInt(27, 34)].realPath, _, _, 65, false, 0, 1.0, 100);
     // Affect lights
     int i = GetRandomInt(WDATA.intensity, 15);
     LightLogger(LOGLVL_DEBUG, "Doing light interactions with %i", i);
@@ -797,79 +806,22 @@ methodmap WEATHERMANAGER {
     AudioManager.OnTornadoWarning(false);
   }
   // Emits storm sounds
-  public void EmitStormSounds() {
-    switch (GetRandomInt(WDATA.mIntensity, WDATA.intensity)) {
-        case 0: { CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 65, false, 1, 0.1, 100); } // 0-3: Rain, no wind, reduced volume
-        case 1: { CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 65, false, 1, 0.1, 100); }
-        case 2: { CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 65, false, 1, 0.1, 100); }
-        case 3: { CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 65, false, 1, 0.1, 100); }
-        case 4: {
-          CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 45, false, 1, 1.0, 100); //Rain, no wind, increased volume
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.1, 100); //Rain, wind, decreased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.01, 100); //Extra wind
-        }
-        case 5: {
-          CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 65, false, 1, 0.1, 100); //Rain, no wind, decreased volume
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 45, false, 1, 0.15, 100); //Rain, wind
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.05, 100); //Extra wind
-        }
-        case 6: {
-          CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 65, false, 1, 0.05, 100); //Rain, no wind, decreased volume
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.21, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.125, 100); //Extra wind
-        }
-        case 7: {
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 0);
-          CustomSoundEmitterEX(SFXArray[108].realPath, _, _, 65, false, 1, 0.05, 100); //Rain, no wind, decreased volume
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.26, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.25, 100); //Extra wind
-        }
-        case 8: {
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 1);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.37, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.35, 100); //Extra wind
-        }
-        case 9: {
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 2);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.41, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.42, 100); //Extra wind
-        }
-        case 10: {
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 3);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.45, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.56, 100); //Extra wind
-        }
-        case 11: {
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 4);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.63, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.69, 100); //Extra wind
-        }
-        case 12: {
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 5);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.72, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.76, 100); //Extra wind
-        }
-        case 13: {
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 6);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.85, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.83, 100); //Extra wind
-        }
-        case 14: {
-          Photon.Fire("rain", "Alpha", "255");
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 7);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 0.9, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 0.92, 100); //Extra wind
-        }
-        case 15: {
-          Photon.Fire("rain", "Alpha", "255");
-          CreateTimer(GetRandomFloat(0.1, 1.25), GetRandomWind, 7);
-          CustomSoundEmitterEX(SFXArray[107].realPath, _, _, 65, false, 1, 1.0, 100); //Rain, wind, increased volume
-          //CustomSoundEmitterEX(SFXArray[109].realPath, 45, false, 1, 1.0, 100); //Extra wind
-        }
+  // 0 = Ambience, 1 = On-demand Thunder
+  public void EmitAmbience(int type) {
+    switch (type) {
+      // Storm ambience - wind/rain
+      case 0: {
+        Photon.Fire("SNDSCPE.Calm", "Disable");
+        Photon.Fire("SNDSCPE.Default", "Disable");
+        Photon.Fire("SNDSCPE.HRStorm*", "Disable");
+        Photon.Fire(WDATA.intensity < 5 ? "SNDSCPE.HRStormLow" : WDATA.intensity < 9 ? "SNDSCPE.HRStormMed" : WDATA.intensity < 13 ? "SNDSCPE.HRStormHigh" : "SNDSCPE.HRStormSig", "Enable", _, 0.1);
       }
+      // On-demand Thunder
+      case 1: { CustomSoundEmitterEX(SFXArray[GetRandomInt(27, 34)].realPath, _, _, 65, false, 0, 1.0, 100); }
+    }
   }
   // Gets a safe tick delay to prevent divide by 0 errors / stalls
-  public int getTickDelay() { return GetRandomInt(WDATA.iStormMin < 1 ? 1 : WDATA.iStormMin, WDATA.iStormMax < 2 ? 2 : WDATA.iStormMax); }
+  public int getTickDelay() { return GetRandomInt(Maths().IntMax(WDATA.iStormMin, 1), Maths().IntMax(WDATA.iStormMax, 2)); }
   public void IssueTornadoWarning() {
     if (WaveSystem().IsActive() && WDATA.canTornado && !WDATA.sirenExploded) {
       WDATA.TornadoWarning = true;
@@ -911,52 +863,55 @@ methodmap WEATHERMANAGER {
     CreateTimer((t + GetRandomFloat(5.0, 25.0)), TimedOperator, 41);
   }
   public void Tick() {
+    // If enabled, update fog every 10 ticks
+    if (WDATA.tickFog) {
+      if (++WDATA.ticksFog % 10 == 0) {
+        if (WDATA.fogDensity != WDATA.fogTarget || WDATA.reset) {
+          char targetAlpha[4];
+          char targetDensity[24];
+          WDATA.fogDensity = (WDATA.fogDensity < WDATA.fogTarget) ? Maths().FloatMin(Maths().Adjust(WDATA.fogDensity, WDATA.fogChangeRate), WDATA.fogTarget) : Maths().FloatMax(Maths().Adjust(WDATA.fogDensity, -WDATA.fogChangeRate), WDATA.fogTarget);
+          IntToString(RoundFloat(Maths().FloatMin(255.0 * (WDATA.fogDensity * 1.20), 255.0)), targetAlpha, sizeof(targetAlpha));
+          FloatToString(WDATA.fogDensity, targetDensity, sizeof(targetDensity));
+          Photon.Fire("Weather.FogOutdoor", "SetMaxDensity", targetDensity);
+          Photon.Fire("Weather.FogSky", "Alpha", targetAlpha);
+        }
+        if (WDATA.fogColorR != WDATA.fogColorRTarget || WDATA.fogColorG != WDATA.fogColorGTarget || WDATA.fogColorB != WDATA.fogColorBTarget || WDATA.reset) {
+          char target[24];
+          WDATA.fogColorR = (WDATA.fogColorR < WDATA.fogColorRTarget) ? Maths().FloatMin(WDATA.fogColorR += WDATA.fogChangeRateRGB, WDATA.fogColorRTarget) : Maths().FloatMax(WDATA.fogColorR -= WDATA.fogChangeRateRGB, WDATA.fogColorRTarget);
+          WDATA.fogColorG = (WDATA.fogColorG < WDATA.fogColorGTarget) ? Maths().FloatMin(WDATA.fogColorG += WDATA.fogChangeRateRGB, WDATA.fogColorGTarget) : Maths().FloatMax(WDATA.fogColorG -= WDATA.fogChangeRateRGB, WDATA.fogColorGTarget);
+          WDATA.fogColorB = (WDATA.fogColorB < WDATA.fogColorBTarget) ? Maths().FloatMin(WDATA.fogColorB += WDATA.fogChangeRateRGB, WDATA.fogColorBTarget) : Maths().FloatMax(WDATA.fogColorB -= WDATA.fogChangeRateRGB, WDATA.fogColorBTarget);
+          Format(target, sizeof(target), "%i %i %i", RoundFloat(WDATA.fogColorR), RoundFloat(WDATA.fogColorG), RoundFloat(WDATA.fogColorB));
+          Photon.Fire("Weather.FogIndoor", "SetColor", target);
+          Photon.Fire("Weather.FogIndoor", "SetColorSecondary", target);
+          Photon.Fire("Weather.FogOutdoor", "SetColor", target);
+          Photon.Fire("Weather.FogOutdoor", "SetColorSecondary", target);
+          Photon.Fire("Weather.FogSky", "Color", target);
+          WDATA.reset = false;
+        }
+      }
+    }
+    // Tick Wind
+    if (WDATA.tickWind) { if (++WDATA.ticksWind % 100 == 0) this.EmitAmbience(0); }
+    // Tick Weather
+    if (!WDATA.tickWeather) return;
+    ++WDATA.ticks;
     if (WDATA.TornadoWarning) this.TickSiren();
     // Update intensity / queue wind sounds
-    if (++WDATA.ticks % this.getTickDelay() == 0) {
-      if (!WDATA.tickWeather) return;
-      LightLogger(LOGLVL_DEBUG, "[Hikari's Enhancer] Storm Intensity @ %f% (%i)", (WDATA.intensity / 15.0), WDATA.intensity);
-      this.doLightning();
+    if (this.OnTickInterval(this.getTickDelay())) {
       this.updateIntensity();
-      WDATA.mIntensity = WDATA.intensity - 1;
+      LightLogger(LOGLVL_DEBUG, "[Hikari's Enhancer] Storm Intensity @ %f% (%i)", (WDATA.intensity / 15.0), WDATA.intensity);
+    }
+    // Every 177 - 230 ticks: Update the ambience
+    if (this.OnTickInterval(GetRandomInt(177, 230))) {
       this.SetFogStartQueued(RoundToNearest(float (1000 - (WDATA.intensity * ((1000 - 150) / 15)))));
       this.SetFogEndQueued(RoundToNearest(float (3000 - (WDATA.intensity * ((3000 - 250) / 15)))));
       WDATA.fogTarget = 0.4 + (0.5 * (WDATA.intensity / 15));
-      WDATA.iStormMin = RoundToNearest(float (1000 - (WDATA.intensity * ((1000 - 300) / 15))));
-      WDATA.iStormMax = RoundToNearest(float (3000 - (WDATA.intensity * ((3000 - 700) / 15))));
       Photon.Fire("rain", "Alpha", "%i", _, _, RoundToNearest(255 * (WDATA.intensity / 15.0)));
-      if (!WDATA.TornadoTimerActive && WDATA.intensity > 13 && this.CanFormTornado()) {
-        WDATA.TornadoTimerActive = true;
-        this.StartTornadoTimer(WaveSystem().GetWave() == 4 ? GetRandomFloat(30.0, 90.0) : GetRandomFloat(90.0, 210.0));
-      }
       this.StartFogTransition();
-      this.EmitStormSounds();
     }
+    if (WDATA.intensity > 7 && this.OnTickInterval(GetRandomInt(277, 377))) { this.doLightning(); }
     // Every 240 ticks: Assign player fog controllers.
-    if (WDATA.ticks % 240 == 0) for (int i = 1; i < MaxClients; i++) { if (!IsClientInGame(i) || !IsClientConnected(i)) continue; else { SetVariantString(g_IsPlayerIndoors[i] ? "Weather.FogIndoor" : "Weather.FogOutdoor"); AcceptEntityInput(i, "SetFogController", i, i); }}
-    // Every tick: Update fog
-    if (WDATA.fogDensity != WDATA.fogTarget || WDATA.reset) {
-      char targetAlpha[4];
-      char targetDensity[24];
-      WDATA.fogDensity = (WDATA.fogDensity < WDATA.fogTarget) ? Maths().FloatMin(Maths().Adjust(WDATA.fogDensity, WDATA.fogChangeRate), WDATA.fogTarget) : Maths().FloatMax(Maths().Adjust(WDATA.fogDensity, -WDATA.fogChangeRate), WDATA.fogTarget);
-      IntToString(RoundFloat(Maths().FloatMin(255.0 * (WDATA.fogDensity * 1.20), 255.0)), targetAlpha, sizeof(targetAlpha));
-      FloatToString(WDATA.fogDensity, targetDensity, sizeof(targetDensity));
-      Photon.Fire("Weather.FogOutdoor", "SetMaxDensity", targetDensity);
-      Photon.Fire("Weather.FogSky", "Alpha", targetAlpha);
-    }
-    if (WDATA.fogColorR != WDATA.fogColorRTarget || WDATA.fogColorG != WDATA.fogColorGTarget || WDATA.fogColorB != WDATA.fogColorBTarget || WDATA.reset) {
-      char target[24];
-      WDATA.fogColorR = (WDATA.fogColorR < WDATA.fogColorRTarget) ? Maths().FloatMin(WDATA.fogColorR += WDATA.fogChangeRateRGB, WDATA.fogColorRTarget) : Maths().FloatMax(WDATA.fogColorR -= WDATA.fogChangeRateRGB, WDATA.fogColorRTarget);
-      WDATA.fogColorG = (WDATA.fogColorG < WDATA.fogColorGTarget) ? Maths().FloatMin(WDATA.fogColorG += WDATA.fogChangeRateRGB, WDATA.fogColorGTarget) : Maths().FloatMax(WDATA.fogColorG -= WDATA.fogChangeRateRGB, WDATA.fogColorGTarget);
-      WDATA.fogColorB = (WDATA.fogColorB < WDATA.fogColorBTarget) ? Maths().FloatMin(WDATA.fogColorB += WDATA.fogChangeRateRGB, WDATA.fogColorBTarget) : Maths().FloatMax(WDATA.fogColorB -= WDATA.fogChangeRateRGB, WDATA.fogColorBTarget);
-      Format(target, sizeof(target), "%i %i %i", RoundFloat(WDATA.fogColorR), RoundFloat(WDATA.fogColorG), RoundFloat(WDATA.fogColorB));
-      Photon.Fire("Weather.FogIndoor", "SetColor", target);
-      Photon.Fire("Weather.FogIndoor", "SetColorSecondary", target);
-      Photon.Fire("Weather.FogOutdoor", "SetColor", target);
-      Photon.Fire("Weather.FogOutdoor", "SetColorSecondary", target);
-      Photon.Fire("Weather.FogSky", "Color", target);
-      WDATA.reset = false;
-    }
+    if (this.OnTickInterval(240)) for (int i = 1; i < MaxClients; i++) { if (!IsClientInGame(i) || !IsClientConnected(i)) continue; else { SetVariantString(g_IsPlayerIndoors[i] ? "Weather.FogIndoor" : "Weather.FogOutdoor"); AcceptEntityInput(i, "SetFogController", i, i); }}
     if (WDATA.hasTornado && (WDATA.ticks % GetRandomInt(30, 60) == 0)) { this.TickTornado(); }
   }
   public void TickSiren() {
@@ -1004,7 +959,7 @@ methodmap WEATHERMANAGER {
     float tornadoPos[3];
     bool found = false;
     int tornado = -1;
-    while ((tornado = Photon.Find("tornadotrain", "func_tracktrain")) != -1) { GetEntPropVector(tornado, Prop_Send, "m_vecAbsOrigin", tornadoPos); found = true; break; }
+    while ((tornado = Photon.Find("tornadotrain", "func_tracktrain")) != -1) { GetEntPropVector(tornado, Prop_Send, "m_vecOrigin", tornadoPos); found = true; break; }
     if (!found) { PrintToServer("No tornado found."); return; }
     float dest[3];
     dest[0] = GetRandomFloat(g_WeatherZone.min[0], g_WeatherZone.max[0]);
@@ -1059,13 +1014,22 @@ methodmap WEATHERMANAGER {
     }
   }
   public void updateIntensity() {
-    switch (GetRandomInt(0, 10)) {
-      case 0, 4, 8: {
-        if (WDATA.intensity > 9) GhostHandler.SpawnRandom();
-        if (WDATA.intensity > 0 && (WDATA.intensity - 1 > WDATA.mIntensity)) WDATA.intensity--;
-      }
+    int op = GetRandomInt(0, 10);
+    // Adjust intensity
+    switch (op) {
+      case 0, 4, 8: { if (WDATA.intensity > 0 && (WDATA.intensity - 1 > WDATA.mIntensity)) WDATA.intensity--; }
       case 1, 2, 3, 5, 6, 7, 9, 10: { if (WDATA.intensity < 15) WDATA.intensity++; }
     }
+    WDATA.iStormMin = RoundToNearest(float (1000 - (WDATA.intensity * ((1000 - 300) / 15))));
+    WDATA.iStormMax = RoundToNearest(float (3000 - (WDATA.intensity * ((3000 - 700) / 15))));
+    WDATA.mIntensity = WDATA.intensity - 1;
+    if (!WDATA.TornadoTimerActive && WDATA.intensity > 13 && this.CanFormTornado()) {
+      WDATA.TornadoTimerActive = true;
+      this.StartTornadoTimer(WaveSystem().GetWave() == 4 ? GetRandomFloat(30.0, 90.0) : GetRandomFloat(90.0, 210.0));
+    }
+
+    // Spawn ghosts!
+    if ((op > 5) && (WDATA.intensity > 9)) GhostHandler.SpawnRandom();
   }
   public void OnStartup(int event, const char[] path) {
     char finalPath[PLATFORM_MAX_PATH]; strcopy(finalPath, sizeof(finalPath), path);
@@ -1145,6 +1109,8 @@ methodmap WEATHERMANAGER {
           jsIter = json_object_iter_next(jsHeader, jsIter);
         }
         CloseHandle(jsIter); CloseHandle(jsHeader); CloseHandle(jsHandle);
+        WDATA.tickFog = true;
+        WDATA.tickWind = true;
         LightLogger(LOGLVL_INFO, "[Enhancer @ v%s] WeatherManager is Ready!", HSE_VER);
       }
     }

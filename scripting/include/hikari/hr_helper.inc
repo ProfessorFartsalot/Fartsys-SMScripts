@@ -108,12 +108,18 @@ float GetTotalWeaponDamageBonus() {
 methodmap MATHS {
   // Adjust input by rate. Rate can be either positive (add) or negative (subtract)
   public float Adjust(float input, float rate) { return (input + rate); }
-  // Clamps a value between input and min/max value
+  // Clamps a float value between input and min/max value
   public float Clamp(float input, float min, float max) { return input > max ? max : input < min ? min : input; } 
   // Returns the lesser of two floats
   public float FloatMin(float a, float b) { return a <= b ? a : b; }
   // Returns the greater of two floats
   public float FloatMax(float a, float b) { return a >= b ? a : b; }
+  // Returns the lesser of two ints
+  public int IntMin(int a, int b) { return a <= b ? a : b; }
+  // Returns the greater of two ints
+  public int IntMax(int a, int b) { return a >= b ? a : b; }
+  // Wraps an unsigned int between 0 and (maxSize - 1)
+  public int WrapUINT(int inVal, int maxSize) { return inVal % maxSize; }
 }
 MATHS MathFunc;
 MATHS Maths() {return MathFunc;}
